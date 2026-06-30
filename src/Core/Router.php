@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace AEFS\Core;
 
 use RuntimeException;
-use AEFS\Core\Container;
 
 final class Router
 {
@@ -47,14 +46,23 @@ final class Router
 
     public function dispatch(string $method, string $uri): mixed
     {
-        $uri = '/' . trim(parse_url($uri, PHP_URL_PATH) ?? '/', '/');
+        $uri = parse_url($uri, PHP_URL_PATH) ?? '/';
+
+        // Tijdelijke oplossing voor localhost
+        $basePath = '/aefs-v2/public';
+
+        if (str_starts_with($uri, $basePath)) {
+            $uri = substr($uri, strlen($basePath));
+        }
+
+        $uri = '/' . trim($uri, '/');
 
         if ($uri === '//') {
             $uri = '/';
         }
 
         if (!isset($this->routes[$method][$uri])) {
-            Response::html('<h1>404 - Pagina niet gevonden</h1>',404);
+            Response::html('<h1>404 - Pagina niet gevonden</h1>', 404);
         }
 
         $action = $this->routes[$method][$uri];
@@ -63,14 +71,15 @@ final class Router
             return $action(new Request());
         }
 
-if (is_array($action)) {
+        if (is_array($action)) {
 
-    [$controllerClass, $controllerMethod] = $action;
+            [$controllerClass, $controllerMethod] = $action;
 
-    $controller = Container::get($controllerClass);
+            $controller = Container::get($controllerClass);
 
-    return $controller->$controllerMethod();
-}
+            return $controller->$controllerMethod();
+        }
+
         throw new RuntimeException('Ongeldige route.');
     }
 }

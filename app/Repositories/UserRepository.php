@@ -70,11 +70,15 @@ final class UserRepository
     public function findByEmail(string $email): ?User
 {
     $stmt = $this->database->prepare("
-        SELECT *
-        FROM gebruikers
-        WHERE email = :email
-        LIMIT 1
-    ");
+SELECT
+    g.*,
+    l.voornaam,
+    l.achternaam
+FROM gebruikers g
+LEFT JOIN leden l
+    ON l.lid_id = g.lid_id
+WHERE g.email = :email
+LIMIT 1    ");
 
     $stmt->execute([
         'email' => trim($email)
@@ -176,29 +180,33 @@ final class UserRepository
     }
 
     private function map(array $row): User
-    {
-        return new User(
+{
+    return new User(
 
-            gebruikerId:(int)$row['gebruiker_id'],
+        gebruikerId: (int) $row['gebruiker_id'],
 
-            lidId:(int)$row['lid_id'],
+        lidId: (int) ($row['lid_id'] ?? 0),
 
-            email:$row['email'],
+        email: $row['email'],
 
-            wachtwoordHash:$row['wachtwoord_hash'],
+        rol: $row['rol'],
 
-            rol:$row['rol'],
+        actief: (bool) $row['actief'],
 
-            actief:(bool)$row['actief'],
+        mailBlacklist: (bool) $row['mail_blacklist'],
 
-            mailBlacklist:(bool)$row['mail_blacklist'],
+        wachtwoordMoetWijzigen: (bool) $row['wachtwoord_moet_wijzigen'],
 
-            wachtwoordMoetWijzigen:(bool)$row['wachtwoord_moet_wijzigen'],
+        passwordHash: $row['wachtwoord_hash'],
 
-            resetToken:$row['reset_token'],
+        resetToken: $row['reset_token'],
 
-            resetTokenExpires:$row['reset_token_expires']
+        resetTokenExpires: $row['reset_token_expires'],
 
-        );
-    }
+        voornaam: $row['voornaam'] ?? '',
+
+        achternaam: $row['achternaam'] ?? ''
+
+    );
+}
 }

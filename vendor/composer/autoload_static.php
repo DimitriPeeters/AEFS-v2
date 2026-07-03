@@ -12,6 +12,7 @@ class ComposerStaticInit474dff41a26f56686c4a181f4a2eeda0
             'AEFS\\Services\\' => 14,
             'AEFS\\Repositories\\' => 18,
             'AEFS\\Models\\' => 12,
+            'AEFS\\Middleware\\' => 16,
             'AEFS\\Controllers\\' => 17,
             'AEFS\\' => 5,
         ),
@@ -29,6 +30,10 @@ class ComposerStaticInit474dff41a26f56686c4a181f4a2eeda0
         'AEFS\\Models\\' =>
         array (
             0 => __DIR__ . '/../..' . '/app/Models',
+        ),
+        'AEFS\\Middleware\\' =>
+        array (
+            0 => __DIR__ . '/../..' . '/app/Middleware',
         ),
         'AEFS\\Controllers\\' =>
         array (

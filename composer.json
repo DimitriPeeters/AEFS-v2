@@ -6,8 +6,9 @@
             "AEFS\\": "src/",
             "AEFS\\Controllers\\": "app/Controllers/",
             "AEFS\\Models\\": "app/Models/",
+            "AEFS\\Repositories\\": "app/Repositories/",
             "AEFS\\Services\\": "app/Services/",
-            "AEFS\\Repositories\\": "app/Repositories/"
+            "AEFS\\Middleware\\": "app/Middleware/"
         }
     }
 }

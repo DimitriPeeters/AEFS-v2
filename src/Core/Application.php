@@ -1,5 +1,4 @@
 <?php
-Session::start();
 declare(strict_types=1);
 
 namespace AEFS\Core;

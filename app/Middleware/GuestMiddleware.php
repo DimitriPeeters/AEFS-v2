@@ -8,12 +8,14 @@ use AEFS\Core\Auth;
 use AEFS\Core\Request;
 use AEFS\Core\Response;
 
-final class GuestMiddleware implements MiddlewareInterface
+final class GuestMiddleware
 {
-    public function handle(Request $request): void
+    public function handle(Request $request, callable $next): mixed
     {
         if (Auth::check()) {
             Response::redirect('/dashboard');
         }
+
+        return $next($request);
     }
 }

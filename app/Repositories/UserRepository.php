@@ -8,44 +8,79 @@ use AEFS\Core\Database;
 use AEFS\Models\User;
 use PDO;
 
-final class UserRepository
+final class UserRepository extends BaseRepository
 {
+    protected string $table = 'gebruikers';
+
+    protected string $primaryKey = 'gebruiker_id';
+
     public function __construct(
-        private Database $database
+        Database $database
     ) {
+        parent::__construct($database);
     }
 
+    /**
+     * @return User[]
+     */
     public function all(): array
     {
-        $stmt = $this->database->pdo()->query("
-            SELECT *
-            FROM gebruikers
-            ORDER BY email
+        $stmt = $this->database->prepare("
+            SELECT
+                g.*,
+                l.voornaam,
+                l.achternaam
+            FROM gebruikers g
+            INNER JOIN leden l
+                ON l.lid_id = g.lid_id
+            ORDER BY
+                l.voornaam,
+                l.achternaam
         ");
 
+        $stmt->execute();
+
         return array_map(
-            fn(array $row) => $this->map($row),
+            [$this, 'map'],
             $stmt->fetchAll(PDO::FETCH_ASSOC)
         );
     }
 
-    public function search(string $zoekterm): array
+    /**
+     * @return User[]
+     */
+    public function search(string $zoek): array
     {
         $stmt = $this->database->prepare("
-            SELECT *
-            FROM gebruikers
+            SELECT
+                g.*,
+                l.voornaam,
+                l.achternaam
+            FROM gebruikers g
+            INNER JOIN leden l
+                ON l.lid_id = g.lid_id
             WHERE
-                email LIKE :zoek
-                OR rol LIKE :zoek
-            ORDER BY email
+
+                l.voornaam LIKE :zoek
+
+                OR l.achternaam LIKE :zoek
+
+                OR g.email LIKE :zoek
+
+            ORDER BY
+
+                l.voornaam,
+                l.achternaam
         ");
 
         $stmt->execute([
-            'zoek' => '%' . $zoekterm . '%'
+
+            'zoek' => '%' . $zoek . '%'
+
         ]);
 
         return array_map(
-            fn(array $row) => $this->map($row),
+            [$this, 'map'],
             $stmt->fetchAll(PDO::FETCH_ASSOC)
         );
     }
@@ -53,44 +88,54 @@ final class UserRepository
     public function find(int $id): ?User
     {
         $stmt = $this->database->prepare("
-            SELECT *
-            FROM gebruikers
-            WHERE gebruiker_id=:id
+            SELECT
+                g.*,
+                l.voornaam,
+                l.achternaam
+            FROM gebruikers g
+            INNER JOIN leden l
+                ON l.lid_id = g.lid_id
+            WHERE g.gebruiker_id = ?
         ");
 
-        $stmt->execute([
-            'id'=>$id
-        ]);
+        $stmt->execute([$id]);
 
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        return $row ? $this->map($row) : null;
+        return $row
+            ? $this->map($row)
+            : null;
     }
 
-    public function findByEmail(string $email): ?User
-{
-    $stmt = $this->database->prepare("
-SELECT
-    g.*,
-    l.voornaam,
-    l.achternaam
-FROM gebruikers g
-LEFT JOIN leden l
-    ON l.lid_id = g.lid_id
-WHERE g.email = :email
-LIMIT 1    ");
+    public function findByEmail(
+        string $email
+    ): ?User {
 
-    $stmt->execute([
-        'email' => trim($email)
-    ]);
+        $stmt = $this->database->prepare("
+            SELECT
+                g.*,
+                l.voornaam,
+                l.achternaam
+            FROM gebruikers g
+            INNER JOIN leden l
+                ON l.lid_id = g.lid_id
+            WHERE g.email = ?
+            LIMIT 1
+        ");
 
-    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        $stmt->execute([$email]);
 
-    return $row ? $this->map($row) : null;
-}
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    public function create(array $data): int
-    {
+        return $row
+            ? $this->map($row)
+            : null;
+    }
+
+    public function create(
+        array $data
+    ): int {
+
         $stmt = $this->database->prepare("
             INSERT INTO gebruikers
             (
@@ -99,8 +144,8 @@ LIMIT 1    ");
                 wachtwoord_hash,
                 rol,
                 actief,
-                mail_blacklist,
-                wachtwoord_moet_wijzigen
+                laatste_login,
+                laatste_ip
             )
             VALUES
             (
@@ -109,104 +154,160 @@ LIMIT 1    ");
                 :wachtwoord_hash,
                 :rol,
                 :actief,
-                :mail_blacklist,
-                :wachtwoord_moet_wijzigen
+                NULL,
+                NULL
             )
         ");
 
         $stmt->execute([
-            'lid_id'=>$data['lid_id'],
-            'email'=>$data['email'],
-            'wachtwoord_hash'=>password_hash($data['password'], PASSWORD_DEFAULT),
-            'rol'=>$data['rol'],
-            'actief'=>$data['actief'],
-            'mail_blacklist'=>$data['mail_blacklist'],
-            'wachtwoord_moet_wijzigen'=>$data['wachtwoord_moet_wijzigen']
-        ]);
 
-        return (int)$this->database->pdo()->lastInsertId();
-    }
+            'lid_id' => $data['lid_id'],
 
-    public function update(int $id,array $data): void
-    {
-        $sql="
-            UPDATE gebruikers
-            SET
-                lid_id=:lid_id,
-                email=:email,
-                rol=:rol,
-                actief=:actief,
-                mail_blacklist=:mail_blacklist,
-                wachtwoord_moet_wijzigen=:wachtwoord_moet_wijzigen
-        ";
+            'email' => $data['email'],
 
-        $params=[
-            'lid_id'=>$data['lid_id'],
-            'email'=>$data['email'],
-            'rol'=>$data['rol'],
-            'actief'=>isset($data['actief']) ? 1 : 0,
-            'mail_blacklist'=>isset($data['mail_blacklist']) ? 1 : 0,
-            'wachtwoord_moet_wijzigen'=>isset($data['wachtwoord_moet_wijzigen']) ? 1 : 0,
-            'id'=>$id
-        ];
-
-        if(!empty($data['password'])){
-
-            $sql.=", wachtwoord_hash=:wachtwoord_hash";
-
-            $params['wachtwoord_hash']=password_hash(
+            'wachtwoord_hash' => password_hash(
                 $data['password'],
                 PASSWORD_DEFAULT
-            );
+            ),
+
+            'rol' => $data['rol'],
+
+            'actief' => !empty($data['actief'])
+
+        ]);
+
+        return (int)$this->database->lastInsertId();
+    }
+
+    public function update(
+        int $id,
+        array $data
+    ): void {
+
+        $sql = "
+
+            UPDATE gebruikers
+
+            SET
+
+                lid_id = :lid_id,
+
+                email = :email,
+
+                rol = :rol,
+
+                actief = :actief
+
+        ";
+
+        if (!empty($data['password'])) {
+
+            $sql .= ",
+
+                wachtwoord_hash = :password
+
+            ";
+
         }
 
-        $sql.=" WHERE gebruiker_id=:id";
+        $sql .= "
 
-        $stmt=$this->database->prepare($sql);
+            WHERE gebruiker_id = :id
+
+        ";
+
+        $stmt = $this->database->prepare($sql);
+
+        $params = [
+
+            'id' => $id,
+
+            'lid_id' => $data['lid_id'],
+
+            'email' => $data['email'],
+
+            'rol' => $data['rol'],
+
+            'actief' => !empty($data['actief'])
+
+        ];
+
+        if (!empty($data['password'])) {
+
+            $params['password'] = password_hash(
+
+                $data['password'],
+
+                PASSWORD_DEFAULT
+
+            );
+
+        }
 
         $stmt->execute($params);
     }
 
-    public function delete(int $id): void
-    {
-        $stmt=$this->database->prepare("
-            DELETE FROM gebruikers
-            WHERE gebruiker_id=:id
+    public function delete(
+        int $id
+    ): void {
+
+        $stmt = $this->database->prepare("
+            DELETE
+            FROM gebruikers
+            WHERE gebruiker_id = ?
+        ");
+
+        $stmt->execute([$id]);
+    }
+
+    public function updateLogin(
+        int $id
+    ): void {
+
+        $stmt = $this->database->prepare("
+            UPDATE gebruikers
+            SET
+
+                laatste_login = NOW(),
+
+                laatste_ip = :ip
+
+            WHERE gebruiker_id = :id
         ");
 
         $stmt->execute([
-            'id'=>$id
+
+            'id' => $id,
+
+            'ip' => $_SERVER['REMOTE_ADDR'] ?? null
+
         ]);
     }
 
-    private function map(array $row): User
-{
-    return new User(
+    protected function map(
+        array $row
+    ): User {
 
-        gebruikerId: (int) $row['gebruiker_id'],
+        return new User(
 
-        lidId: (int) ($row['lid_id'] ?? 0),
+            gebruikerId: (int)$row['gebruiker_id'],
 
-        email: $row['email'],
+            lidId: (int)$row['lid_id'],
 
-        rol: $row['rol'],
+            email: $row['email'],
 
-        actief: (bool) $row['actief'],
+            role: $row['rol'],
 
-        mailBlacklist: (bool) $row['mail_blacklist'],
+            actief: (bool)$row['actief'],
 
-        wachtwoordMoetWijzigen: (bool) $row['wachtwoord_moet_wijzigen'],
+            voornaam: $row['voornaam'],
 
-        passwordHash: $row['wachtwoord_hash'],
+            achternaam: $row['achternaam'],
 
-        resetToken: $row['reset_token'],
+            laatsteLogin: $row['laatste_login'],
 
-        resetTokenExpires: $row['reset_token_expires'],
+            laatsteIp: $row['laatste_ip']
 
-        voornaam: $row['voornaam'] ?? '',
-
-        achternaam: $row['achternaam'] ?? ''
-
-    );
-}
+        );
+    }
 }

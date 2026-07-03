@@ -1,41 +1,53 @@
-
 <?php
 
 declare(strict_types=1);
 
 use AEFS\Core\Url;
 
-/** @var AEFS\Models\Member $lid */
-
-$title = 'Lid bewerken';
-
-ob_start();
+/** @var \AEFS\Models\Member $lid */
+/** @var array $errors */
 
 ?>
 
-<div class="card">
+<?= component('page-header', [
 
-    <h1>
+    'title' => $lid->fullName(),
 
-        <?= htmlspecialchars($lid->fullName(), ENT_QUOTES) ?>
+    'subtitle' => 'Lid wijzigen'
 
-    </h1>
+]) ?>
 
-    <br>
+<?php if (!empty($errors)): ?>
 
-    <form
-        method="post"
-        action="<?= Url::to('/leden/' . $lid->lidId) ?>"
-    >
+    <?= component('alert', [
 
-        <?php require __DIR__ . '/form.php'; ?>
+        'type' => 'danger',
 
-    </form>
+        'message' => implode('<br>', $errors)
 
-</div>
+    ]) ?>
 
-<?php
+<?php endif; ?>
 
-$content = ob_get_clean();
+<form
+    method="post"
+    action="<?= Url::to('/members/' . $lid->lidId) ?>"
+>
 
-require dirname(__DIR__) . '/layouts/app.php';
+    <?= csrf_field() ?>
+
+    <?= method_field('PUT') ?>
+
+    <?= component('card', [
+
+        'title' => 'Lidgegevens',
+
+        'content' => component('members/form', [
+
+            'lid' => $lid
+
+        ])
+
+    ]) ?>
+
+</form>

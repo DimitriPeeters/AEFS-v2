@@ -2,146 +2,235 @@
 
 declare(strict_types=1);
 
-$title = 'Dashboard';
+use AEFS\Core\Url;
 
-ob_start();
 ?>
 
-<div class="grid grid-4">
+<?= component('page-header', [
 
-    <div class="card stat-card">
+    'title' => 'Dashboard',
 
-        <div class="stat-title">
-            Leden
-        </div>
+    'subtitle' => 'Welkom in AEFS v2',
 
-        <div class="stat-value">
-            0
-        </div>
+    'actions' => component('button', [
 
-        <div class="stat-footer">
-            Totaal aantal leden
-        </div>
+        'text' => 'Nieuw evenement',
 
-    </div>
+        'type' => 'primary',
 
-    <div class="card stat-card">
+        'href' => Url::to('/events/create')
 
-        <div class="stat-title">
-            Evenementen
-        </div>
+    ])
 
-        <div class="stat-value">
-            0
-        </div>
+]) ?>
 
-        <div class="stat-footer">
-            Actieve evenementen
-        </div>
+<div class="dashboard-grid mb-4">
 
-    </div>
+<?= component('stat-card', [
 
-    <div class="card stat-card">
+    'title' => 'Leden',
 
-        <div class="stat-title">
-            Open shiften
-        </div>
+    'value' => $statistics['members'],
 
-        <div class="stat-value">
-            0
-        </div>
+    'icon' => icon('users'),
 
-        <div class="stat-footer">
-            Nog te bemannen
-        </div>
+    'color' => 'primary'
 
-    </div>
+]) ?>
 
-    <div class="card stat-card">
+<?= component('stat-card', [
 
-        <div class="stat-title">
-            Inschrijvingen
-        </div>
+    'title' => 'Gebruikers',
 
-        <div class="stat-value">
-            0
-        </div>
+    'value' => $statistics['users'],
 
-        <div class="stat-footer">
-            Openstaande inschrijvingen
-        </div>
+    'icon' => icon('user'),
 
-    </div>
+    'color' => 'success'
+
+]) ?>
+
+<?= component('stat-card', [
+
+    'title' => 'Evenementen',
+
+    'value' => $statistics['events'],
+
+    'icon' => icon('calendar'),
+
+    'color' => 'warning'
+
+]) ?>
+
+<?= component('stat-card', [
+
+    'title' => 'Open Shifts',
+
+    'value' => count($openShifts),
+
+    'icon' => icon('clock'),
+
+    'color' => 'danger'
+
+]) ?>
 
 </div>
 
-<br>
+<div class="dashboard-columns">
 
-<div class="grid grid-2">
+    <div>
 
-    <div class="card">
+        <?= component('card', [
 
-        <h2>Welkom</h2>
+            'title' => 'Laatste leden',
 
-        <br>
+            'content' => ''
 
-        <p>
-
-            Welkom in <strong>AEFS v2</strong>.
-
-        </p>
-
-        <br>
-
-        <p>
-
-            Dit dashboard vormt de centrale startpagina van de applicatie.
-            In de volgende stappen zullen hier automatisch statistieken,
-            recente activiteiten, meldingen en snelkoppelingen verschijnen.
-
-        </p>
-
-    </div>
-
-    <div class="card">
-
-        <h2>Systeemstatus</h2>
-
-        <br>
+        ]) ?>
 
         <table class="table">
 
-            <tr>
+            <thead>
 
-                <td>Authenticatie</td>
+                <tr>
 
-                <td>✅ OK</td>
+                    <th>Naam</th>
 
-            </tr>
+                    <th>Gemeente</th>
 
-            <tr>
+                    <th></th>
 
-                <td>Database</td>
+                </tr>
 
-                <td>✅ Verbonden</td>
+            </thead>
 
-            </tr>
+            <tbody>
 
-            <tr>
+            <?php if (empty($latestMembers)): ?>
 
-                <td>Router</td>
+                <tr>
 
-                <td>✅ Actief</td>
+                    <td colspan="3">
 
-            </tr>
+                        Geen leden gevonden.
 
-            <tr>
+                    </td>
 
-                <td>Framework</td>
+                </tr>
 
-                <td>✅ Operationeel</td>
+            <?php else: ?>
 
-            </tr>
+                <?php foreach ($latestMembers as $member): ?>
+
+                    <tr>
+
+                        <td>
+
+                            <?= htmlspecialchars(
+                                $member['voornaam'] . ' ' . $member['achternaam']
+                            ) ?>
+
+                        </td>
+
+                        <td>
+
+                            <?= htmlspecialchars(
+                                $member['gemeente'] ?? '-'
+                            ) ?>
+
+                        </td>
+
+                        <td>
+
+                            <a
+                                href="<?= Url::to('/members/' . $member['lid_id']) ?>"
+                                class="btn btn-sm btn-primary"
+                            >
+
+                                Open
+
+                            </a>
+
+                        </td>
+
+                    </tr>
+
+                <?php endforeach; ?>
+
+            <?php endif; ?>
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+    <div>
+
+        <?= component('card', [
+
+            'title' => 'Komende evenementen',
+
+            'content' => ''
+
+        ]) ?>
+
+        <table class="table">
+
+            <thead>
+
+                <tr>
+
+                    <th>Evenement</th>
+
+                    <th>Datum</th>
+
+                </tr>
+
+            </thead>
+
+            <tbody>
+
+            <?php if (empty($upcomingEvents)): ?>
+
+                <tr>
+
+                    <td colspan="2">
+
+                        Geen evenementen gepland.
+
+                    </td>
+
+                </tr>
+
+            <?php else: ?>
+
+                <?php foreach ($upcomingEvents as $event): ?>
+
+                    <tr>
+
+                        <td>
+
+                            <?= htmlspecialchars($event['titel']) ?>
+
+                        </td>
+
+                        <td>
+
+                            <?= date(
+                                'd/m/Y',
+                                strtotime($event['startdatum'])
+                            ) ?>
+
+                        </td>
+
+                    </tr>
+
+                <?php endforeach; ?>
+
+            <?php endif; ?>
+
+            </tbody>
 
         </table>
 
@@ -149,126 +238,93 @@ ob_start();
 
 </div>
 
-<br>
+<div class="mt-4">
 
-<div class="card">
+    <?= component('card', [
 
-    <h2>Volgende modules</h2>
+        'title' => 'Openstaande shifts',
 
-    <br>
+        'content' => ''
+
+    ]) ?>
 
     <table class="table">
 
         <thead>
 
-        <tr>
+            <tr>
 
-            <th>Module</th>
+                <th>Evenement</th>
 
-            <th>Status</th>
+                <th>Shift</th>
 
-        </tr>
+                <th>Datum</th>
+
+                <th>Bezetting</th>
+
+            </tr>
 
         </thead>
 
         <tbody>
 
-        <tr>
+        <?php if (empty($openShifts)): ?>
 
-            <td>Ledenbeheer</td>
+            <tr>
 
-            <td>⏳ In ontwikkeling</td>
+                <td colspan="4">
 
-        </tr>
+                    Geen openstaande shifts.
 
-        <tr>
+                </td>
 
-            <td>Gebruikersbeheer</td>
+            </tr>
 
-            <td>⏳ In ontwikkeling</td>
+        <?php else: ?>
 
-        </tr>
+            <?php foreach ($openShifts as $shift): ?>
 
-        <tr>
+                <tr>
 
-            <td>Evenementen</td>
+                    <td>
 
-            <td>⏳ In ontwikkeling</td>
+                        <?= htmlspecialchars($shift['event_titel']) ?>
 
-        </tr>
+                    </td>
 
-        <tr>
+                    <td>
 
-            <td>Shiftplanning</td>
+                        <?= htmlspecialchars($shift['naam']) ?>
 
-            <td>⏳ In ontwikkeling</td>
+                    </td>
 
-        </tr>
+                    <td>
 
-        <tr>
+                        <?= date(
+                            'd/m/Y',
+                            strtotime($shift['shift_datum'])
+                        ) ?>
 
-            <td>Mailings</td>
+                    </td>
 
-            <td>⏳ In ontwikkeling</td>
+                    <td>
 
-        </tr>
+                        <?= $shift['ingevuld'] ?>
 
-        <tr>
+                        /
 
-            <td>Rapporten</td>
+                        <?= $shift['max_personen'] ?>
 
-            <td>⏳ In ontwikkeling</td>
+                    </td>
 
-        </tr>
+                </tr>
+
+            <?php endforeach; ?>
+
+        <?php endif; ?>
 
         </tbody>
 
     </table>
 
 </div>
-
-<style>
-
-.stat-card{
-
-    text-align:center;
-
-}
-
-.stat-title{
-
-    color:#6b7280;
-
-    font-size:15px;
-
-    margin-bottom:15px;
-
-}
-
-.stat-value{
-
-    font-size:42px;
-
-    font-weight:bold;
-
-    color:#2563eb;
-
-    margin-bottom:10px;
-
-}
-
-.stat-footer{
-
-    color:#9ca3af;
-
-    font-size:13px;
-
-}
-
-</style>
-
-<?php
-
-$content = ob_get_clean();
-
-require dirname(__DIR__) . '/layouts/app.php';

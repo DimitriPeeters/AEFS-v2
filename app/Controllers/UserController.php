@@ -4,142 +4,186 @@ declare(strict_types=1);
 
 namespace AEFS\Controllers;
 
-use AEFS\Core\Flash;
-use AEFS\Core\Request;
-use AEFS\Core\Response;
+use AEFS\Http\Requests\UserRequest;
+use AEFS\Services\AuditLogService;
+use AEFS\Services\MemberService;
 use AEFS\Services\UserService;
-use AEFS\Validators\UserValidator;
+use Throwable;
 
-final class UserController
+final class UserController extends BaseController
 {
     public function __construct(
-        private UserService $users,
-        private UserValidator $validator
+        private UserService $userService,
+        private MemberService $memberService,
+        private AuditLogService $auditLog
     ) {
+        parent::__construct();
     }
 
-    public function index(Request $request): void
+    public function index(): void
     {
-        $zoekterm = trim((string)$request->query('q', ''));
+        $zoekterm = trim(
+            (string) $this->request->query('zoek', '')
+        );
 
         $gebruikers = $zoekterm === ''
-            ? $this->users->all()
-            : $this->users->search($zoekterm);
+            ? $this->userService->all()
+            : $this->userService->search($zoekterm);
 
-        $title = 'Gebruikers';
-
-        require dirname(__DIR__, 2) . '/resources/views/users/index.php';
+        $this->view(
+            'users.index',
+            [
+                'title'       => 'Gebruikers',
+                'titel'       => 'Gebruikers',
+                'zoekterm'    => $zoekterm,
+                'gebruikers'  => $gebruikers,
+            ]
+        );
     }
 
-    public function show(Request $request): void
+    public function show(): void
     {
-        $id = (int)$request->route('id');
+        $id = (int) $this->request->route('id');
 
-        $gebruiker = $this->users->find($id);
+        $gebruiker = $this->userService->find($id);
 
         if ($gebruiker === null) {
-            Response::notFound();
+
+            http_response_code(404);
+
+            exit('Gebruiker niet gevonden.');
+
         }
 
-        $title = 'Gebruiker';
-
-        require dirname(__DIR__, 2) . '/resources/views/users/show.php';
+        $this->view(
+            'users.show',
+            [
+                'title'      => $gebruiker->fullName(),
+                'titel'      => 'Gebruiker',
+                'gebruiker'  => $gebruiker,
+                'logs'       => $this->auditLog->history(
+                    'user',
+                    $id
+                ),
+            ]
+        );
     }
 
     public function create(): void
     {
-        $gebruiker = null;
-
-        $title = 'Nieuwe gebruiker';
-
-        require dirname(__DIR__, 2) . '/resources/views/users/create.php';
-    }
-
-    public function store(Request $request): never
-    {
-        $data = [
-
-            'lid_id' => (int)$request->post('lid_id'),
-
-            'email' => trim((string)$request->post('email')),
-
-            'rol' => trim((string)$request->post('rol')),
-
-            'actief' => $request->post('actief') ? 1 : 0,
-
-            'mail_blacklist' => $request->post('mail_blacklist') ? 1 : 0,
-
-            'wachtwoord_moet_wijzigen' => $request->post('wachtwoord_moet_wijzigen') ? 1 : 0,
-
-            'password' => (string)$request->post('password'),
-
-        ];
-
-        $errors = $this->validator->validate($data);
-
-        if ($errors !== []) {
-
-            foreach ($errors as $error) {
-                Flash::error($error);
-            }
-
-            Response::redirect('/gebruikers/nieuw');
-        }
-
-        $this->users->create($data);
-
-        Flash::success('Gebruiker succesvol toegevoegd.');
-
-        Response::redirect('/gebruikers');
-    }
-
-    public function edit(Request $request): void
-    {
-        $gebruiker = $this->users->find(
-            (int)$request->route('id')
+        $this->view(
+            'users.create',
+            [
+                'title' => 'Nieuwe gebruiker',
+                'titel' => 'Nieuwe gebruiker',
+                'leden' => $this->memberService->all(),
+            ]
         );
+    }
+
+    public function store(): void
+    {
+        try {
+
+            $request = new UserRequest(
+                $this->request->all()
+            );
+
+            $id = $this->userService->create(
+                $request->all()
+            );
+
+            header('Location: /users/' . $id);
+
+            exit;
+
+        } catch (Throwable $e) {
+
+            $this->view(
+                'users.create',
+                [
+                    'title'  => 'Nieuwe gebruiker',
+                    'titel'  => 'Nieuwe gebruiker',
+                    'leden'  => $this->memberService->all(),
+                    'errors' => [
+                        $e->getMessage(),
+                    ],
+                ]
+            );
+
+        }
+    }
+
+    public function edit(): void
+    {
+        $id = (int) $this->request->route('id');
+
+        $gebruiker = $this->userService->find($id);
 
         if ($gebruiker === null) {
-            Response::notFound();
+
+            http_response_code(404);
+
+            exit('Gebruiker niet gevonden.');
+
         }
 
-        $title = 'Gebruiker bewerken';
-
-        require dirname(__DIR__, 2) . '/resources/views/users/edit.php';
-    }
-
-    public function update(Request $request): never
-    {
-        $id = (int)$request->route('id');
-
-        $data = $_POST;
-
-        $errors = $this->validator->validate($data);
-
-        if ($errors !== []) {
-
-            foreach ($errors as $error) {
-                Flash::error($error);
-            }
-
-            Response::redirect('/gebruikers/' . $id . '/bewerken');
-        }
-
-        $this->users->update($id, $data);
-
-        Flash::success('Gebruiker succesvol bijgewerkt.');
-
-        Response::redirect('/gebruikers');
-    }
-
-    public function delete(Request $request): never
-    {
-        $this->users->delete(
-            (int)$request->route('id')
+        $this->view(
+            'users.edit',
+            [
+                'title'      => 'Gebruiker wijzigen',
+                'titel'      => 'Gebruiker wijzigen',
+                'gebruiker'  => $gebruiker,
+                'leden'      => $this->memberService->all(),
+            ]
         );
+    }
 
-        Flash::success('Gebruiker verwijderd.');
+    public function update(): void
+    {
+        $id = (int) $this->request->route('id');
 
-        Response::redirect('/gebruikers');
+        try {
+
+            $request = new UserRequest(
+                $this->request->all()
+            );
+
+            $this->userService->update(
+                $id,
+                $request->all()
+            );
+
+            header('Location: /users/' . $id);
+
+            exit;
+
+        } catch (Throwable $e) {
+
+            $this->view(
+                'users.edit',
+                [
+                    'title'      => 'Gebruiker wijzigen',
+                    'titel'      => 'Gebruiker wijzigen',
+                    'gebruiker'  => $this->userService->find($id),
+                    'leden'      => $this->memberService->all(),
+                    'errors'     => [
+                        $e->getMessage(),
+                    ],
+                ]
+            );
+
+        }
+    }
+
+    public function delete(): void
+    {
+        $id = (int) $this->request->route('id');
+
+        $this->userService->delete($id);
+
+        header('Location: /users');
+
+        exit;
     }
 }

@@ -2,126 +2,196 @@
 
 declare(strict_types=1);
 
-/** @var AEFS\Models\User|null $gebruiker */
+use AEFS\Core\Url;
+use AEFS\Models\User;
+
+/**
+ * @var User|null $gebruiker
+ * @var array $leden
+ */
+
+$isEdit = isset($gebruiker);
 
 ?>
 
-<div class="grid grid-2">
+<div class="row">
 
-    <div>
+    <div class="col-md-6">
 
-        <label>E-mailadres</label>
+        <?= component('select', [
 
-        <input
-            type="email"
-            name="email"
-            value="<?= htmlspecialchars($gebruiker->email ?? '', ENT_QUOTES) ?>"
-            required
-        >
+            'name' => 'lid_id',
 
-    </div>
+            'label' => 'Lid',
 
-    <div>
+            'required' => true,
 
-        <label>Rol</label>
+            'value' => $gebruiker->lidId ?? '',
 
-        <select name="rol" required>
+            'options' => array_reduce(
 
-            <option value="">-- Kies een rol --</option>
+                $leden,
 
-            <option value="admin" <?= ($gebruiker->rol ?? '') === 'admin' ? 'selected' : '' ?>>
-                Administrator
-            </option>
+                static function (array $options, $lid): array {
 
-            <option value="beheerder" <?= ($gebruiker->rol ?? '') === 'beheerder' ? 'selected' : '' ?>>
-                Beheerder
-            </option>
+                    $options[$lid->lidId] = $lid->fullName();
 
-            <option value="vrijwilliger" <?= ($gebruiker->rol ?? '') === 'vrijwilliger' ? 'selected' : '' ?>>
-                Vrijwilliger
-            </option>
+                    return $options;
 
-        </select>
+                },
 
-    </div>
+                [
 
-    <div>
+                    '' => '-- Selecteer een lid --',
 
-        <label>Lid ID</label>
+                ]
 
-        <input
-            type="number"
-            name="lid_id"
-            value="<?= htmlspecialchars((string)($gebruiker->lidId ?? ''), ENT_QUOTES) ?>"
-        >
+            ),
+
+        ]) ?>
 
     </div>
 
-    <div>
+    <div class="col-md-6">
 
-        <label>Nieuw wachtwoord</label>
+        <?= component('input', [
 
-        <input
-            type="password"
-            name="password"
-        >
+            'name' => 'email',
+
+            'label' => 'E-mailadres',
+
+            'type' => 'email',
+
+            'required' => true,
+
+            'value' => $gebruiker->email ?? '',
+
+        ]) ?>
 
     </div>
 
 </div>
 
-<br>
+<div class="row">
 
-<label>
+    <div class="col-md-6">
 
-    <input
-        type="checkbox"
-        name="actief"
-        value="1"
-        <?= ($gebruiker->actief ?? true) ? 'checked' : '' ?>
-    >
+        <?= component('input', [
 
-    Actief
+            'name' => 'password',
 
-</label>
+            'label' => $isEdit
+                ? 'Nieuw wachtwoord'
+                : 'Wachtwoord',
 
-<br>
+            'type' => 'password',
 
-<label>
+            'required' => !$isEdit,
 
-    <input
-        type="checkbox"
-        name="mail_blacklist"
-        value="1"
-        <?= ($gebruiker->mailBlacklist ?? false) ? 'checked' : '' ?>
-    >
+        ]) ?>
 
-    Geen e-mails ontvangen
+    </div>
 
-</label>
+    <div class="col-md-6">
 
-<br>
+        <?= component('select', [
 
-<label>
+            'name' => 'rol',
 
-    <input
-        type="checkbox"
-        name="wachtwoord_moet_wijzigen"
-        value="1"
-        <?= ($gebruiker->wachtwoordMoetWijzigen ?? false) ? 'checked' : '' ?>
-    >
+            'label' => 'Rol',
 
-    Wachtwoord wijzigen bij volgende login
+            'required' => true,
 
-</label>
+            'value' => $gebruiker->rol ?? '',
 
-<br><br>
+            'options' => [
 
-<button
-    class="btn"
-    type="submit"
->
+                User::ROLE_ADMIN => 'Administrator',
 
-    Opslaan
+                User::ROLE_EVENTMANAGER => 'Eventmanager',
 
-</button>
+                User::ROLE_COORDINATOR => 'Coördinator',
+
+                User::ROLE_MEMBER => 'Lid',
+
+            ],
+
+        ]) ?>
+
+    </div>
+
+</div>
+
+<div class="row">
+
+    <div class="col-md-4">
+
+        <?= component('checkbox', [
+
+            'name' => 'actief',
+
+            'label' => 'Actief',
+
+            'checked' => $gebruiker->actief ?? true,
+
+        ]) ?>
+
+    </div>
+
+    <div class="col-md-4">
+
+        <?= component('checkbox', [
+
+            'name' => 'mail_blacklist',
+
+            'label' => 'Mail blacklist',
+
+            'checked' => $gebruiker->mailBlacklist ?? false,
+
+        ]) ?>
+
+    </div>
+
+    <div class="col-md-4">
+
+        <?= component('checkbox', [
+
+            'name' => 'wachtwoord_moet_wijzigen',
+
+            'label' => 'Wachtwoord wijzigen bij volgende login',
+
+            'checked' => $gebruiker->wachtwoordMoetWijzigen ?? false,
+
+        ]) ?>
+
+    </div>
+
+</div>
+
+<hr>
+
+<div class="d-flex justify-content-between">
+
+    <?= component('button', [
+
+        'href' => Url::to('/users'),
+
+        'text' => 'Annuleren',
+
+        'type' => 'secondary',
+
+    ]) ?>
+
+    <?= component('button', [
+
+        'text' => $isEdit
+            ? 'Gebruiker opslaan'
+            : 'Gebruiker aanmaken',
+
+        'icon' => 'save',
+
+        'type' => 'success',
+
+    ]) ?>
+
+</div>

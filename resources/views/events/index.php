@@ -2,130 +2,59 @@
 
 declare(strict_types=1);
 
-/** @var array<AEFS\Models\Event> $events */
+use AEFS\Core\Url;
+
+/** @var AEFS\Models\Event[] $events */
 /** @var string $zoekterm */
 
-$title = 'Evenementen';
+$zoekterm ??= '';
+
 ?>
 
-<div class="container py-4">
+<?= component('page-header', [
 
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1>Evenementen</h1>
+    'title' => 'Evenementen',
 
-        <a href="/events/create" class="btn btn-primary">
-            Nieuw evenement
-        </a>
-    </div>
+    'subtitle' => 'Overzicht van alle evenementen',
 
-    <form method="get" action="/events" class="row g-2 mb-4">
+    'actions' => component('button', [
 
-        <div class="col-md-8">
-            <input
-                type="text"
-                class="form-control"
-                name="q"
-                value="<?= htmlspecialchars($zoekterm) ?>"
-                placeholder="Zoek op titel of locatie">
-        </div>
+        'text' => 'Nieuw evenement',
 
-        <div class="col-md-2 d-grid">
-            <button class="btn btn-secondary">
-                Zoeken
-            </button>
-        </div>
+        'icon' => 'plus',
 
-        <div class="col-md-2 d-grid">
-            <a href="/events" class="btn btn-outline-secondary">
-                Wissen
-            </a>
-        </div>
+        'type' => 'primary',
 
-    </form>
+        'href' => Url::to('/events/create'),
 
-    <div class="card shadow-sm">
+    ]),
 
-        <div class="table-responsive">
+]) ?>
 
-            <table class="table table-hover align-middle mb-0">
+<?= component('card', [
 
-                <thead class="table-light">
+    'content' => component('search-box', [
 
-                <tr>
-                    <th>Titel</th>
-                    <th>Locatie</th>
-                    <th>Startdatum</th>
-                    <th>Einddatum</th>
-                    <th class="text-end">Acties</th>
-                </tr>
+        'action' => Url::to('/events'),
 
-                </thead>
+        'name' => 'q',
 
-                <tbody>
+        'value' => $zoekterm,
 
-                <?php if (empty($events)): ?>
+        'placeholder' => 'Zoek op titel, locatie of omschrijving...',
 
-                    <tr>
-                        <td colspan="5" class="text-center text-muted py-4">
-                            Geen evenementen gevonden.
-                        </td>
-                    </tr>
+    ]),
 
-                <?php else: ?>
+]) ?>
 
-                    <?php foreach ($events as $event): ?>
+<br>
 
-                        <tr>
+<?= component('card', [
 
-                            <td><?= htmlspecialchars($event->titel) ?></td>
+    'content' => component('events/table', [
 
-                            <td><?= htmlspecialchars($event->locatie ?? '-') ?></td>
+        'events' => $events,
 
-                            <td><?= htmlspecialchars($event->startdatum) ?></td>
+    ]),
 
-                            <td><?= htmlspecialchars($event->einddatum ?? '-') ?></td>
-
-                            <td class="text-end">
-
-                                <a
-                                    href="/events/<?= $event->eventId ?>"
-                                    class="btn btn-sm btn-outline-primary">
-                                    Bekijken
-                                </a>
-
-                                <a
-                                    href="/events/<?= $event->eventId ?>/edit"
-                                    class="btn btn-sm btn-outline-warning">
-                                    Bewerken
-                                </a>
-
-                                <form
-                                    method="post"
-                                    action="/events/<?= $event->eventId ?>/delete"
-                                    class="d-inline">
-
-                                    <button
-                                        class="btn btn-sm btn-outline-danger"
-                                        onclick="return confirm('Evenement verwijderen?')">
-                                        Verwijderen
-                                    </button>
-
-                                </form>
-
-                            </td>
-
-                        </tr>
-
-                    <?php endforeach; ?>
-
-                <?php endif; ?>
-
-                </tbody>
-
-            </table>
-
-        </div>
-
-    </div>
-
-</div>
+]) ?>

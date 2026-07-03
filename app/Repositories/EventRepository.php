@@ -20,19 +20,92 @@ final class EventRepository
      */
     public function all(): array
     {
-        $stmt = $this->database->pdo()->query("
+        $stmt = $this->database->query("
             SELECT *
             FROM evenementen
-            ORDER BY start_datum DESC
+            ORDER BY start_datum DESC, titel ASC
         ");
 
-        $events = [];
+        return array_map(
+            [$this, 'map'],
+            $stmt->fetchAll(PDO::FETCH_ASSOC)
+        );
+    }
 
-        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-            $events[] = $this->map($row);
-        }
+    /**
+     * @return Event[]
+     */
+    public function search(string $zoekterm): array
+    {
+        $zoek = '%' . trim($zoekterm) . '%';
 
-        return $events;
+        $stmt = $this->database->prepare("
+            SELECT *
+            FROM evenementen
+            WHERE
+                titel LIKE :zoek
+                OR omschrijving LIKE :zoek
+                OR locatie LIKE :zoek
+            ORDER BY start_datum DESC, titel ASC
+        ");
+
+        $stmt->execute([
+            'zoek' => $zoek,
+        ]);
+
+        return array_map(
+            [$this, 'map'],
+            $stmt->fetchAll(PDO::FETCH_ASSOC)
+        );
+    }
+
+    /**
+     * @return Event[]
+     */
+    public function paginate(
+        int $page = 1,
+        int $perPage = 25
+    ): array {
+
+        $page = max(1, $page);
+
+        $offset = ($page - 1) * $perPage;
+
+        $stmt = $this->database->prepare("
+            SELECT *
+            FROM evenementen
+            ORDER BY start_datum DESC, titel ASC
+            LIMIT :offset, :limit
+        ");
+
+        $stmt->bindValue(
+            'offset',
+            $offset,
+            PDO::PARAM_INT
+        );
+
+        $stmt->bindValue(
+            'limit',
+            $perPage,
+            PDO::PARAM_INT
+        );
+
+        $stmt->execute();
+
+        return array_map(
+            [$this, 'map'],
+            $stmt->fetchAll(PDO::FETCH_ASSOC)
+        );
+    }
+
+    public function count(): int
+    {
+        return (int) $this->database
+            ->query("
+                SELECT COUNT(*)
+                FROM evenementen
+            ")
+            ->fetchColumn();
     }
 
     public function find(int $id): ?Event
@@ -45,16 +118,14 @@ final class EventRepository
         ");
 
         $stmt->execute([
-            'id' => $id
+            'id' => $id,
         ]);
 
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        if (!$row) {
-            return null;
-        }
-
-        return $this->map($row);
+        return $row
+            ? $this->map($row)
+            : null;
     }
 
     public function create(array $data): int
@@ -86,26 +157,27 @@ final class EventRepository
 
         $stmt->execute($data);
 
-        return (int)$this->database
-            ->pdo()
-            ->lastInsertId();
+        return $this->database->lastInsertId();
     }
 
-    public function update(int $id, array $data): void
-    {
+    public function update(
+        int $id,
+        array $data
+    ): void {
+
         $data['id'] = $id;
 
         $stmt = $this->database->prepare("
             UPDATE evenementen
             SET
-                titel=:titel,
-                omschrijving=:omschrijving,
-                start_datum=:start_datum,
-                eind_datum=:eind_datum,
-                locatie=:locatie,
-                actief=:actief,
-                bijgewerkt_op=NOW()
-            WHERE event_id=:id
+                titel = :titel,
+                omschrijving = :omschrijving,
+                start_datum = :start_datum,
+                eind_datum = :eind_datum,
+                locatie = :locatie,
+                actief = :actief,
+                bijgewerkt_op = NOW()
+            WHERE event_id = :id
         ");
 
         $stmt->execute($data);
@@ -116,11 +188,11 @@ final class EventRepository
         $stmt = $this->database->prepare("
             DELETE
             FROM evenementen
-            WHERE event_id=:id
+            WHERE event_id = :id
         ");
 
         $stmt->execute([
-            'id' => $id
+            'id' => $id,
         ]);
     }
 
@@ -128,7 +200,7 @@ final class EventRepository
     {
         return new Event(
 
-            eventId: (int)$row['event_id'],
+            eventId: (int) $row['event_id'],
 
             titel: $row['titel'],
 
@@ -140,7 +212,7 @@ final class EventRepository
 
             locatie: $row['locatie'],
 
-            actief: (bool)$row['actief'],
+            actief: (bool) $row['actief'],
 
             aangemaaktOp: $row['aangemaakt_op'],
 

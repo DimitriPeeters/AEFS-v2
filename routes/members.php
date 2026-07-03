@@ -8,36 +8,36 @@ use AEFS\Middleware\AuthMiddleware;
 /** @var AEFS\Core\Router $router */
 
 $router
-    ->get('/leden', [MemberController::class, 'index'])
+    ->get('/members', [MemberController::class, 'index'])
     ->middleware(AuthMiddleware::class)
     ->name('members.index');
 
 $router
-    ->get('/leden/nieuw', [MemberController::class, 'create'])
+    ->get('/members/create', [MemberController::class, 'create'])
     ->middleware(AuthMiddleware::class)
     ->name('members.create');
 
 $router
-    ->post('/leden', [MemberController::class, 'store'])
+    ->post('/members', [MemberController::class, 'store'])
     ->middleware(AuthMiddleware::class)
     ->name('members.store');
 
 $router
-    ->get('/leden/{id}', [MemberController::class, 'show'])
+    ->get('/members/{id}', [MemberController::class, 'show'])
     ->middleware(AuthMiddleware::class)
     ->name('members.show');
 
 $router
-    ->get('/leden/{id}/bewerken', [MemberController::class, 'edit'])
+    ->get('/members/{id}/edit', [MemberController::class, 'edit'])
     ->middleware(AuthMiddleware::class)
     ->name('members.edit');
 
 $router
-    ->post('/leden/{id}', [MemberController::class, 'update'])
+    ->post('/members/{id}/update', [MemberController::class, 'update'])
     ->middleware(AuthMiddleware::class)
     ->name('members.update');
 
 $router
-    ->post('/leden/{id}/verwijderen', [MemberController::class, 'delete'])
+    ->post('/members/{id}/delete', [MemberController::class, 'delete'])
     ->middleware(AuthMiddleware::class)
     ->name('members.delete');

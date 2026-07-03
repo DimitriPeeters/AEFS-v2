@@ -4,16 +4,29 @@ declare(strict_types=1);
 
 namespace AEFS\Controllers;
 
-use AEFS\Core\Auth;
-use AEFS\Core\Request;
+use AEFS\Services\DashboardService;
 
-final class DashboardController
+final class DashboardController extends BaseController
 {
-    public function index(Request $request): void
-    {
-        $user = Auth::user();
+    public function __construct(
+        private DashboardService $dashboardService
+    ) {
+        parent::__construct();
+    }
 
-        require dirname(__DIR__, 2)
-            . '/resources/views/dashboard/index.php';
+    public function index(): void
+    {
+        $dashboard = $this->dashboardService->getDashboardData();
+
+        $this->view(
+            'dashboard.index',
+            [
+                'title'           => 'Dashboard',
+                'statistics'      => $dashboard['statistics'],
+                'latestMembers'   => $dashboard['latestMembers'],
+                'upcomingEvents'  => $dashboard['upcomingEvents'],
+                'openShifts'      => $dashboard['openShifts'],
+            ]
+        );
     }
 }

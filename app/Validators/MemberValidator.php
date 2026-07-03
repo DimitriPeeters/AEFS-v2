@@ -4,46 +4,93 @@ declare(strict_types=1);
 
 namespace AEFS\Validators;
 
+use InvalidArgumentException;
+
 final class MemberValidator
 {
-    /**
-     * @return array<string,string>
-     */
-    public function validate(array $data): array
+    public function validate(array $data): void
     {
-        $errors = [];
+        $this->validateVoornaam($data);
 
-        $voornaam = trim((string)($data['voornaam'] ?? ''));
-        $achternaam = trim((string)($data['achternaam'] ?? ''));
+        $this->validateAchternaam($data);
+
+        $this->validateEmail($data);
+
+        $this->validatePostcode($data);
+
+        $this->validateIBAN($data);
+    }
+
+    private function validateVoornaam(array $data): void
+    {
+        if (trim((string)($data['voornaam'] ?? '')) === '') {
+
+            throw new InvalidArgumentException(
+                'Voornaam is verplicht.'
+            );
+
+        }
+    }
+
+    private function validateAchternaam(array $data): void
+    {
+        if (trim((string)($data['achternaam'] ?? '')) === '') {
+
+            throw new InvalidArgumentException(
+                'Achternaam is verplicht.'
+            );
+
+        }
+    }
+
+    private function validateEmail(array $data): void
+    {
         $email = trim((string)($data['email'] ?? ''));
-        $geboortedatum = trim((string)($data['geboortedatum'] ?? ''));
-
-        if ($voornaam === '') {
-            $errors['voornaam'] = 'Voornaam is verplicht.';
-        }
-
-        if ($achternaam === '') {
-            $errors['achternaam'] = 'Achternaam is verplicht.';
-        }
-
-        if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            $errors['email'] = 'Het e-mailadres is ongeldig.';
-        }
 
         if (
-            $geboortedatum !== '' &&
-            strtotime($geboortedatum) === false
+            $email !== '' &&
+            !filter_var($email, FILTER_VALIDATE_EMAIL)
         ) {
-            $errors['geboortedatum'] = 'Ongeldige geboortedatum.';
+            throw new InvalidArgumentException(
+                'Ongeldig e-mailadres.'
+            );
         }
+    }
+
+    private function validatePostcode(array $data): void
+    {
+        $postcode = trim((string)($data['postcode'] ?? ''));
 
         if (
-            !empty($data['rekeningnummer']) &&
-            !preg_match('/^[A-Z]{2}[0-9A-Z ]+$/i', (string)$data['rekeningnummer'])
+            $postcode !== '' &&
+            !ctype_digit($postcode)
         ) {
-            $errors['rekeningnummer'] = 'Ongeldig rekeningnummer.';
+            throw new InvalidArgumentException(
+                'Postcode moet numeriek zijn.'
+            );
+        }
+    }
+
+    private function validateIBAN(array $data): void
+    {
+        $iban = strtoupper(
+            str_replace(
+                ' ',
+                '',
+                trim((string)($data['rekeningnummer'] ?? ''))
+            )
+        );
+
+        if ($iban === '') {
+            return;
         }
 
-        return $errors;
+        if (!preg_match('/^[A-Z]{2}[0-9]{2}[A-Z0-9]+$/', $iban)) {
+
+            throw new InvalidArgumentException(
+                'Ongeldig IBAN-rekeningnummer.'
+            );
+
+        }
     }
 }

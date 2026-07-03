@@ -2,72 +2,174 @@
 
 declare(strict_types=1);
 
-/** @var \AEFS\Models\Event $event */
+use AEFS\Core\Url;
 
-$title = 'Evenement';
+/** @var \AEFS\Models\Event $event */
 
 ?>
 
-<div class="container py-4">
+<?= component('page-header', [
 
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    'title' => $event->titel,
 
-        <h1><?= htmlspecialchars($event->titel) ?></h1>
+    'subtitle' => 'Evenement',
 
-        <div>
+    'actions' =>
 
-            <a href="/events/<?= $event->eventId ?>/edit" class="btn btn-warning">
-                Bewerken
-            </a>
+        component('button', [
 
-            <a href="/events" class="btn btn-secondary">
-                Terug
-            </a>
+            'text' => 'Wijzigen',
 
-        </div>
+            'icon' => 'edit',
+
+            'type' => 'warning',
+
+            'href' => Url::to('/events/' . $event->eventId . '/edit')
+
+        ])
+
+]) ?>
+
+<div class="row">
+
+    <div class="col-lg-8">
+
+        <?= component('card', [
+
+            'title' => 'Algemene gegevens',
+
+            'content' => '
+
+<table class="table table-sm mb-0">
+
+<tr>
+
+    <th width="220">Titel</th>
+
+    <td>' . htmlspecialchars($event->titel) . '</td>
+
+</tr>
+
+<tr>
+
+    <th>Omschrijving</th>
+
+    <td>' . nl2br(htmlspecialchars($event->omschrijving ?? '-')) . '</td>
+
+</tr>
+
+<tr>
+
+    <th>Locatie</th>
+
+    <td>' . htmlspecialchars($event->locatie ?? '-') . '</td>
+
+</tr>
+
+<tr>
+
+    <th>Periode</th>
+
+    <td>' . htmlspecialchars($event->displayDate()) . '</td>
+
+</tr>
+
+<tr>
+
+    <th>Duur</th>
+
+    <td>' . $event->durationDays() . ' dag(en)</td>
+
+</tr>
+
+</table>
+
+'
+
+        ]) ?>
 
     </div>
 
-    <div class="card shadow-sm">
+    <div class="col-lg-4">
 
-        <div class="card-body">
+        <?= component('card', [
 
-            <table class="table table-borderless mb-0">
+            'title' => 'Status',
 
-                <tr>
-                    <th width="220">Titel</th>
-                    <td><?= htmlspecialchars($event->titel) ?></td>
-                </tr>
+            'content' => '
 
-                <tr>
-                    <th>Beschrijving</th>
-                    <td><?= nl2br(htmlspecialchars($event->beschrijving ?? '')) ?></td>
-                </tr>
+<table class="table table-sm mb-0">
 
-                <tr>
-                    <th>Locatie</th>
-                    <td><?= htmlspecialchars($event->locatie ?? '-') ?></td>
-                </tr>
+<tr>
 
-                <tr>
-                    <th>Startdatum</th>
-                    <td><?= htmlspecialchars($event->startdatum) ?></td>
-                </tr>
+    <th width="150">Actief</th>
 
-                <tr>
-                    <th>Einddatum</th>
-                    <td><?= htmlspecialchars($event->einddatum ?? '-') ?></td>
-                </tr>
+    <td>' .
 
-                <tr>
-                    <th>Maximum deelnemers</th>
-                    <td><?= htmlspecialchars((string)($event->maxDeelnemers ?? '-')) ?></td>
-                </tr>
+($event->isActive()
 
-            </table>
+    ? '<span class="badge bg-success">Ja</span>'
 
-        </div>
+    : '<span class="badge bg-danger">Nee</span>')
+
+. '</td>
+
+</tr>
+
+<tr>
+
+    <th>Status</th>
+
+    <td>' .
+
+($event->isToday()
+
+    ? '<span class="badge bg-primary">Vandaag</span>'
+
+    : ($event->isFuture()
+
+        ? '<span class="badge bg-info">Toekomstig</span>'
+
+        : '<span class="badge bg-secondary">Afgelopen</span>'))
+
+. '</td>
+
+</tr>
+
+</table>
+
+'
+
+        ]) ?>
 
     </div>
+
+</div>
+
+<br>
+
+<div class="d-flex justify-content-between">
+
+    <?= component('button', [
+
+        'href' => Url::to('/events'),
+
+        'text' => 'Terug',
+
+        'type' => 'secondary'
+
+    ]) ?>
+
+    <?= component('button', [
+
+        'href' => Url::to('/events/' . $event->eventId . '/edit'),
+
+        'text' => 'Wijzigen',
+
+        'icon' => 'edit',
+
+        'type' => 'warning'
+
+    ]) ?>
 
 </div>

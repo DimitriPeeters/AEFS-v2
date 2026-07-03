@@ -8,19 +8,25 @@ final class Url
 {
     public static function base(): string
     {
-        $config = require dirname(__DIR__, 2) . '/config/app.php';
+        static $base = null;
 
-        if (!empty($config['base_url'])) {
-            return rtrim($config['base_url'], '/');
+        if ($base !== null) {
+            return $base;
         }
 
         $script = $_SERVER['SCRIPT_NAME'] ?? '';
 
-        return rtrim(str_replace(
+        $base = str_replace(
             '\\',
             '/',
             dirname($script)
-        ), '/');
+        );
+
+        if ($base === '/' || $base === '\\') {
+            $base = '';
+        }
+
+        return $base;
     }
 
     public static function to(string $path = ''): string
@@ -28,5 +34,20 @@ final class Url
         $path = '/' . ltrim($path, '/');
 
         return self::base() . $path;
+    }
+
+    public static function asset(string $path): string
+    {
+        return self::to('/assets/' . ltrim($path, '/'));
+    }
+
+    public static function current(): string
+    {
+        return $_SERVER['REQUEST_URI'] ?? '/';
+    }
+
+    public static function is(string $path): bool
+    {
+        return self::current() === self::to($path);
     }
 }

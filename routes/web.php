@@ -12,3 +12,4 @@ require __DIR__ . '/members.php';
 require __DIR__ . '/users.php';
 
 $router->get('/', [HomeController::class, 'index']);
+

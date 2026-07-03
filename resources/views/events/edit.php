@@ -2,27 +2,42 @@
 
 declare(strict_types=1);
 
-/** @var \AEFS\Models\Event $event */
+use AEFS\Core\Url;
 
-$title = 'Evenement bewerken';
+/** @var \AEFS\Models\Event $event */
+/** @var array $errors */
+
 ?>
 
-<div class="container py-4">
+<?= component('page-header', [
 
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    'title' => $event->titel,
 
-        <h1>Evenement bewerken</h1>
+    'subtitle' => 'Evenement wijzigen',
 
-        <a href="/events" class="btn btn-outline-secondary">
-            Terug
-        </a>
+]) ?>
 
-    </div>
+<?php if (!empty($errors)): ?>
 
-    <form method="post" action="/events/<?= $event->eventId ?>/update">
+    <?= component('alert', [
 
-        <?php require __DIR__ . '/form.php'; ?>
+        'type' => 'danger',
 
-    </form>
+        'message' => implode('<br>', $errors),
 
-</div>
+    ]) ?>
+
+<?php endif; ?>
+
+<form
+    method="post"
+    action="<?= Url::to('/events/' . $event->eventId) ?>"
+>
+
+    <?= csrf_field() ?>
+
+    <?= method_field('PUT') ?>
+
+    <?php require __DIR__ . '/form.php'; ?>
+
+</form>

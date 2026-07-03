@@ -4,150 +4,57 @@ declare(strict_types=1);
 
 use AEFS\Core\Url;
 
-/** @var AEFS\Models\User[] $gebruikers */
+/**
+ * @var AEFS\Models\User[] $gebruikers
+ * @var string $zoekterm
+ */
 
-$title = 'Gebruikers';
-
-ob_start();
+$zoekterm ??= '';
 
 ?>
 
-<div class="page-header">
+<?= component('page-header', [
 
-    <div>
+    'title' => 'Gebruikers',
 
-        <h1>Gebruikers</h1>
+    'subtitle' => 'Overzicht van alle gebruikers',
 
-        <small>
+    'actions' => component('button', [
 
-            <?= count($gebruikers) ?> gebruikers
+        'text' => 'Nieuwe gebruiker',
 
-        </small>
+        'icon' => 'plus',
 
-    </div>
+        'type' => 'primary',
 
-</div>
+        'href' => Url::to('/users/create'),
 
-<div class="card">
+    ]),
 
-    <form
-        method="get"
-        action="<?= Url::to('/gebruikers') ?>"
-        style="
-            display:grid;
-            grid-template-columns:1fr 180px;
-            gap:15px;
-            margin-bottom:25px;
-        "
-    >
+]) ?>
 
-        <input
-            type="text"
-            name="q"
-            value="<?= htmlspecialchars($_GET['q'] ?? '', ENT_QUOTES) ?>"
-            placeholder="Zoek gebruiker..."
-        >
+<?= component('card', [
 
-        <button
-            class="btn"
-            type="submit"
-        >
+    'content' => component('search-box', [
 
-            Zoeken
+        'action' => Url::to('/users'),
 
-        </button>
+        'value' => $zoekterm,
 
-    </form>
+        'placeholder' => 'Zoek op naam of e-mailadres...',
 
-    <table class="table">
+    ]),
 
-        <thead>
+]) ?>
 
-        <tr>
+<br>
 
-            <th>ID</th>
+<?= component('card', [
 
-            <th>E-mail</th>
+    'content' => component('users/table', [
 
-            <th>Rol</th>
+        'gebruikers' => $gebruikers,
 
-            <th>Status</th>
+    ]),
 
-            <th width="120"></th>
-
-        </tr>
-
-        </thead>
-
-        <tbody>
-
-        <?php if ($gebruikers === []) : ?>
-
-            <tr>
-
-                <td colspan="5" style="text-align:center;padding:40px;">
-
-                    Geen gebruikers gevonden.
-
-                </td>
-
-            </tr>
-
-        <?php endif; ?>
-
-        <?php foreach ($gebruikers as $gebruiker): ?>
-
-            <tr>
-
-                <td>
-
-                    <?= $gebruiker->gebruikerId ?>
-
-                </td>
-
-                <td>
-
-                    <?= htmlspecialchars($gebruiker->email, ENT_QUOTES) ?>
-
-                </td>
-
-                <td>
-
-                    <?= htmlspecialchars(ucfirst($gebruiker->rol), ENT_QUOTES) ?>
-
-                </td>
-
-                <td>
-
-                    <?= $gebruiker->actief ? 'Actief' : 'Inactief' ?>
-
-                </td>
-
-                <td>
-
-                    <a
-                        class="btn"
-                        href="<?= Url::to('/gebruikers/' . $gebruiker->gebruikerId) ?>"
-                    >
-
-                        Open
-
-                    </a>
-
-                </td>
-
-            </tr>
-
-        <?php endforeach; ?>
-
-        </tbody>
-
-    </table>
-
-</div>
-
-<?php
-
-$content = ob_get_clean();
-
-require dirname(__DIR__) . '/layouts/app.php';
+]) ?>

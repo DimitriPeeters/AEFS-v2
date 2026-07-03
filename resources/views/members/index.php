@@ -5,231 +5,54 @@ declare(strict_types=1);
 use AEFS\Core\Url;
 
 /** @var AEFS\Models\Member[] $leden */
+/** @var string $zoekterm */
 
-$title = 'Leden';
-
-ob_start();
+$zoekterm ??= '';
 
 ?>
 
-<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+<?= component('page-header', [
 
-    <div>
+    'title' => 'Leden',
 
-        <h1>Leden</h1>
+    'subtitle' => 'Overzicht van alle leden',
 
-        <small>
+    'actions' => component('button', [
 
-            <?= count($leden) ?> leden gevonden
+        'text' => 'Nieuw lid',
 
-        </small>
+        'icon' => 'plus',
 
-    </div>
+        'type' => 'primary',
 
-    <div>
+        'href' => Url::to('/members/create'),
 
-        <a
-            class="btn"
-            href="<?= Url::to('/leden/nieuw') ?>"
-        >
+    ]),
 
-            + Nieuw lid
+]) ?>
 
-        </a>
+<?= component('card', [
 
-    </div>
+    'content' => component('search-box', [
 
-</div>
+        'action' => Url::to('/members'),
 
-<div class="card">
+        'value' => $zoekterm,
 
-    <form
-        method="get"
-        action="<?= Url::to('/leden') ?>"
-    >
+        'placeholder' => 'Zoek op naam, e-mail of gemeente...',
 
-        <div
-            style="
-                display:grid;
-                grid-template-columns:1fr 180px;
-                gap:15px;
-                margin-bottom:25px;
-            "
-        >
+    ]),
 
-            <input
-                type="text"
-                name="q"
-                value="<?= htmlspecialchars($_GET['q'] ?? '', ENT_QUOTES) ?>"
-                placeholder="Zoek op naam, e-mail of gemeente..."
-            >
+]) ?>
 
-            <button
-                class="btn"
-                type="submit"
-            >
+<br>
 
-                Zoeken
+<?= component('card', [
 
-            </button>
+    'content' => component('members/table', [
 
-        </div>
+        'leden' => $leden,
 
-    </form>
+    ]),
 
-    <table class="table">
-
-        <thead>
-
-        <tr>
-
-            <th width="80">ID</th>
-
-            <th>Naam</th>
-
-            <th>E-mail</th>
-
-            <th>Gemeente</th>
-
-            <th width="120">Status</th>
-
-            <th width="220"></th>
-
-        </tr>
-
-        </thead>
-
-        <tbody>
-
-        <?php if ($leden === []) : ?>
-
-            <tr>
-
-                <td colspan="6" style="text-align:center;padding:50px;">
-
-                    Geen leden gevonden.
-
-                </td>
-
-            </tr>
-
-        <?php endif; ?>
-
-        <?php foreach ($leden as $lid): ?>
-
-            <tr>
-
-                <td>
-
-                    <?= $lid->lidId ?>
-
-                </td>
-
-                <td>
-
-                    <strong>
-
-                        <?= htmlspecialchars($lid->fullName(), ENT_QUOTES) ?>
-
-                    </strong>
-
-                </td>
-
-                <td>
-
-                    <?= htmlspecialchars($lid->email ?? '', ENT_QUOTES) ?>
-
-                </td>
-
-                <td>
-
-                    <?= htmlspecialchars($lid->gemeente ?? '', ENT_QUOTES) ?>
-
-                </td>
-
-                <td>
-
-                    <?php if ($lid->isActive()): ?>
-
-                        <span style="color:#16a34a;font-weight:bold;">
-
-                            Actief
-
-                        </span>
-
-                    <?php else: ?>
-
-                        <span style="color:#dc2626;font-weight:bold;">
-
-                            Inactief
-
-                        </span>
-
-                    <?php endif; ?>
-
-                </td>
-
-                <td>
-
-                    <div
-                        style="
-                            display:flex;
-                            gap:8px;
-                            justify-content:flex-end;
-                        "
-                    >
-
-                        <a
-                            class="btn"
-                            href="<?= Url::to('/leden/' . $lid->lidId) ?>"
-                        >
-
-                            Open
-
-                        </a>
-
-                        <a
-                            class="btn"
-                            href="<?= Url::to('/leden/' . $lid->lidId . '/bewerken') ?>"
-                        >
-
-                            Bewerken
-
-                        </a>
-
-                        <form
-                            method="post"
-                            action="<?= Url::to('/leden/' . $lid->lidId . '/verwijderen') ?>"
-                            onsubmit="return confirm('Lid verwijderen?');"
-                        >
-
-                            <button
-                                class="btn"
-                                style="background:#dc2626;"
-                            >
-
-                                Verwijderen
-
-                            </button>
-
-                        </form>
-
-                    </div>
-
-                </td>
-
-            </tr>
-
-        <?php endforeach; ?>
-
-        </tbody>
-
-    </table>
-
-</div>
-
-<?php
-
-$content = ob_get_clean();
-
-require dirname(__DIR__) . '/layouts/app.php';
+]) ?>

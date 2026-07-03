@@ -27,8 +27,9 @@ final class EventController
 
         Response::html(
             View::render('events/index', [
-                'events'   => $events,
-                'zoekterm' => $zoekterm,
+                'title'     => 'Evenementen',
+                'events'    => $events,
+                'zoekterm'  => $zoekterm,
             ])
         );
     }
@@ -41,10 +42,12 @@ final class EventController
 
         if ($event === null) {
             Response::notFound();
+            return;
         }
 
         Response::html(
             View::render('events/show', [
+                'title' => $event->titel,
                 'event' => $event,
             ])
         );
@@ -53,7 +56,9 @@ final class EventController
     public function create(): void
     {
         Response::html(
-            View::render('events/create')
+            View::render('events/create', [
+                'title' => 'Nieuw evenement',
+            ])
         );
     }
 
@@ -61,19 +66,23 @@ final class EventController
     {
         try {
 
-            $this->service->create(
+            $id = $this->service->create(
                 $request->all()
             );
 
             $_SESSION['success'] = 'Evenement succesvol aangemaakt.';
 
-            Response::redirect('/events');
+            Response::redirect('/events/' . $id);
 
         } catch (Throwable $e) {
 
-            $_SESSION['error'] = $e->getMessage();
-
-            Response::back();
+            Response::html(
+                View::render('events/create', [
+                    'title'  => 'Nieuw evenement',
+                    'errors' => [$e->getMessage()],
+                    'old'    => $request->all(),
+                ])
+            );
 
         }
     }
@@ -86,10 +95,12 @@ final class EventController
 
         if ($event === null) {
             Response::notFound();
+            return;
         }
 
         Response::html(
             View::render('events/edit', [
+                'title' => 'Evenement wijzigen',
                 'event' => $event,
             ])
         );
@@ -108,13 +119,17 @@ final class EventController
 
             $_SESSION['success'] = 'Evenement succesvol gewijzigd.';
 
-            Response::redirect('/events');
+            Response::redirect('/events/' . $id);
 
         } catch (Throwable $e) {
 
-            $_SESSION['error'] = $e->getMessage();
-
-            Response::back();
+            Response::html(
+                View::render('events/edit', [
+                    'title'  => 'Evenement wijzigen',
+                    'event'  => $this->service->find($id),
+                    'errors' => [$e->getMessage()],
+                ])
+            );
 
         }
     }

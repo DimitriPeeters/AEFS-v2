@@ -5,150 +5,87 @@ declare(strict_types=1);
 use AEFS\Core\Url;
 
 /** @var AEFS\Models\Member $lid */
+/** @var array $logs */
 
-$title = 'Lidfiche';
-
-ob_start();
 ?>
 
-<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+<?= component('page-header', [
 
-    <h1>
+    'title' => $lid->fullName(),
 
-        <?= htmlspecialchars($lid->fullName(), ENT_QUOTES) ?>
+    'subtitle' => 'Ledenfiche',
 
-    </h1>
+    'actions' =>
 
-    <div>
+        component('button', [
 
-        <a
-            class="btn"
-            href="<?= Url::to('/leden') ?>"
-        >
+            'text' => 'Wijzigen',
 
-            ← Terug
+            'icon' => 'edit',
 
-        </a>
+            'type' => 'warning',
 
-    </div>
+            'href' => Url::to('/members/' . $lid->lidId . '/edit')
 
-</div>
+        ])
 
-<div class="grid grid-2">
+]) ?>
 
-    <div class="card">
+<div class="row">
 
-        <h2>Persoonsgegevens</h2>
+    <div class="col-lg-6">
 
-        <table class="table">
+        <?= component('card', [
 
-            <tr>
-                <th width="220">Voornaam</th>
-                <td><?= htmlspecialchars($lid->voornaam, ENT_QUOTES) ?></td>
-            </tr>
+            'title' => 'Persoonsgegevens',
 
-            <tr>
-                <th>Achternaam</th>
-                <td><?= htmlspecialchars($lid->achternaam, ENT_QUOTES) ?></td>
-            </tr>
+            'content' => '
 
-            <tr>
-                <th>Geboortedatum</th>
-                <td><?= htmlspecialchars($lid->geboortedatum ?? '', ENT_QUOTES) ?></td>
-            </tr>
+<table class="table table-sm mb-0">
 
-            <tr>
-                <th>Geslacht</th>
-                <td><?= htmlspecialchars($lid->geslacht ?? '', ENT_QUOTES) ?></td>
-            </tr>
+<tr><th width="180">Voornaam</th><td>' . htmlspecialchars($lid->voornaam) . '</td></tr>
 
-            <tr>
-                <th>T-shirtmaat</th>
-                <td><?= htmlspecialchars($lid->tshirtmaat ?? '', ENT_QUOTES) ?></td>
-            </tr>
+<tr><th>Achternaam</th><td>' . htmlspecialchars($lid->achternaam) . '</td></tr>
 
-            <tr>
-                <th>Status</th>
-                <td>
+<tr><th>E-mail</th><td>' . htmlspecialchars($lid->email) . '</td></tr>
 
-                    <?php if ($lid->isActive()): ?>
+<tr><th>Telefoon</th><td>' . htmlspecialchars($lid->telefoon) . '</td></tr>
 
-                        <span style="color:#16a34a;font-weight:bold;">
+<tr><th>Geboortedatum</th><td>' . htmlspecialchars((string)$lid->geboortedatum) . '</td></tr>
 
-                            Actief
+<tr><th>Geslacht</th><td>' . htmlspecialchars((string)$lid->geslacht) . '</td></tr>
 
-                        </span>
+</table>
 
-                    <?php else: ?>
+'
 
-                        <span style="color:#dc2626;font-weight:bold;">
-
-                            Inactief
-
-                        </span>
-
-                    <?php endif; ?>
-
-                </td>
-
-            </tr>
-
-        </table>
+        ]) ?>
 
     </div>
 
-    <div class="card">
+    <div class="col-lg-6">
 
-        <h2>Contactgegevens</h2>
+        <?= component('card', [
 
-        <table class="table">
+            'title' => 'Adres',
 
-            <tr>
-                <th width="220">E-mail</th>
-                <td><?= htmlspecialchars($lid->email ?? '', ENT_QUOTES) ?></td>
-            </tr>
+            'content' => '
 
-            <tr>
-                <th>Telefoon</th>
-                <td><?= htmlspecialchars($lid->telefoon ?? '', ENT_QUOTES) ?></td>
-            </tr>
+<table class="table table-sm mb-0">
 
-            <tr>
-                <th>GSM</th>
-                <td><?= htmlspecialchars($lid->gsm ?? '', ENT_QUOTES) ?></td>
-            </tr>
+<tr><th width="180">Straat</th><td>' . htmlspecialchars($lid->straat) . '</td></tr>
 
-            <tr>
-                <th>Straat</th>
-                <td><?= htmlspecialchars($lid->straat ?? '', ENT_QUOTES) ?></td>
-            </tr>
+<tr><th>Postcode</th><td>' . htmlspecialchars($lid->postcode) . '</td></tr>
 
-            <tr>
-                <th>Huisnummer</th>
-                <td><?= htmlspecialchars($lid->huisnummer ?? '', ENT_QUOTES) ?></td>
-            </tr>
+<tr><th>Gemeente</th><td>' . htmlspecialchars($lid->gemeente) . '</td></tr>
 
-            <tr>
-                <th>Bus</th>
-                <td><?= htmlspecialchars($lid->bus ?? '', ENT_QUOTES) ?></td>
-            </tr>
+<tr><th>Land</th><td>' . htmlspecialchars((string)$lid->land) . '</td></tr>
 
-            <tr>
-                <th>Postcode</th>
-                <td><?= htmlspecialchars($lid->postcode ?? '', ENT_QUOTES) ?></td>
-            </tr>
+</table>
 
-            <tr>
-                <th>Gemeente</th>
-                <td><?= htmlspecialchars($lid->gemeente ?? '', ENT_QUOTES) ?></td>
-            </tr>
+'
 
-            <tr>
-                <th>Land</th>
-                <td><?= htmlspecialchars($lid->land ?? '', ENT_QUOTES) ?></td>
-            </tr>
-
-        </table>
+        ]) ?>
 
     </div>
 
@@ -156,64 +93,94 @@ ob_start();
 
 <br>
 
-<div class="card">
+<div class="row">
 
-    <h2>Extra informatie</h2>
+    <div class="col-lg-6">
 
-    <table class="table">
+        <?= component('card', [
 
-        <tr>
-            <th width="220">IBAN</th>
-            <td><?= htmlspecialchars($lid->rekeningnummer ?? '', ENT_QUOTES) ?></td>
-        </tr>
+            'title' => 'Lidmaatschap',
 
-        <tr>
-            <th>Rijksregisternummer</th>
-            <td><?= htmlspecialchars($lid->rijksregisternummer ?? '', ENT_QUOTES) ?></td>
-        </tr>
+            'content' => '
 
-        <tr>
-            <th>GDPR toestemming</th>
-            <td><?= $lid->gdprConsent ? 'Ja' : 'Nee' ?></td>
-        </tr>
+<table class="table table-sm mb-0">
 
-        <tr>
-            <th>GDPR datum</th>
-            <td><?= htmlspecialchars($lid->gdprTimestamp ?? '', ENT_QUOTES) ?></td>
-        </tr>
+<tr><th width="180">Actief</th><td>' .
 
-        <tr>
-            <th>Aangemaakt op</th>
-            <td><?= htmlspecialchars($lid->aangemaaktOp ?? '', ENT_QUOTES) ?></td>
-        </tr>
+($lid->actief
+    ? '<span class="badge bg-success">Ja</span>'
+    : '<span class="badge bg-danger">Nee</span>')
 
-        <tr>
-            <th>Bijgewerkt op</th>
-            <td><?= htmlspecialchars($lid->bijgewerktOp ?? '', ENT_QUOTES) ?></td>
-        </tr>
+. '</td></tr>
 
-    </table>
+<tr><th>GDPR</th><td>' .
+
+($lid->gdprConsent
+    ? '<span class="badge bg-success">Ja</span>'
+    : '<span class="badge bg-secondary">Nee</span>')
+
+. '</td></tr>
+
+<tr><th>T-shirt</th><td>' . htmlspecialchars((string)$lid->tshirtmaat) . '</td></tr>
+
+</table>
+
+'
+
+        ]) ?>
+
+    </div>
+
+    <div class="col-lg-6">
+
+        <?= component('card', [
+
+            'title' => 'Opmerkingen',
+
+            'content' => nl2br(
+                htmlspecialchars(
+                    $lid->opmerkingen ?? '-'
+                )
+            )
+
+        ]) ?>
+
+    </div>
 
 </div>
-
-<?php if (!empty($lid->opmerkingen)): ?>
 
 <br>
 
-<div class="card">
+<?= component('audit-log', [
 
-    <h2>Opmerkingen</h2>
+    'logs' => $logs ?? []
 
-    <br>
+]) ?>
 
-    <?= nl2br(htmlspecialchars($lid->opmerkingen, ENT_QUOTES)) ?>
+<br>
+
+<div class="d-flex justify-content-between">
+
+    <?= component('button', [
+
+        'href' => Url::to('/members'),
+
+        'text' => 'Terug',
+
+        'type' => 'secondary'
+
+    ]) ?>
+
+    <?= component('button', [
+
+        'href' => Url::to('/members/' . $lid->lidId . '/edit'),
+
+        'text' => 'Wijzigen',
+
+        'icon' => 'edit',
+
+        'type' => 'warning'
+
+    ]) ?>
 
 </div>
-
-<?php endif; ?>
-
-<?php
-
-$content = ob_get_clean();
-
-require dirname(__DIR__) . '/layouts/app.php';

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace AEFS\Core;
 
 use PDO;
+use RuntimeException;
 
 abstract class BaseRepository
 {
@@ -14,30 +15,37 @@ abstract class BaseRepository
 
     protected string $primaryKey = 'id';
 
-    public function __construct(Database $database)
-    {
+    public function __construct(
+        Database $database
+    ) {
         $this->database = $database;
     }
 
-    abstract protected function map(array $row): object;
-
-    public function all(string $orderBy = ''): array
-    {
+    public function all(
+        string $orderBy = '',
+        string $direction = 'ASC'
+    ): array {
         $sql = "SELECT * FROM {$this->table}";
 
         if ($orderBy !== '') {
-            $sql .= " ORDER BY {$orderBy}";
+            $direction = strtoupper($direction);
+
+            if (!in_array($direction, ['ASC', 'DESC'], true)) {
+                $direction = 'ASC';
+            }
+
+            $sql .= " ORDER BY {$orderBy} {$direction}";
         }
 
         $stmt = $this->database->query($sql);
 
         return array_map(
-            fn(array $row) => $this->map($row),
+            [$this, 'map'],
             $stmt->fetchAll(PDO::FETCH_ASSOC)
         );
     }
 
-    public function find(int $id): ?object
+    public function find(int $id): mixed
     {
         $stmt = $this->database->prepare("
             SELECT *
@@ -55,6 +63,21 @@ abstract class BaseRepository
         return $row ? $this->map($row) : null;
     }
 
+    public function exists(int $id): bool
+    {
+        $stmt = $this->database->prepare("
+            SELECT COUNT(*)
+            FROM {$this->table}
+            WHERE {$this->primaryKey} = :id
+        ");
+
+        $stmt->execute([
+            'id' => $id,
+        ]);
+
+        return (bool) $stmt->fetchColumn();
+    }
+
     public function delete(int $id): void
     {
         $stmt = $this->database->prepare("
@@ -68,20 +91,58 @@ abstract class BaseRepository
         ]);
     }
 
+    public function count(): int
+    {
+        $stmt = $this->database->query("
+            SELECT COUNT(*)
+            FROM {$this->table}
+        ");
+
+        return (int) $stmt->fetchColumn();
+    }
+
+    protected function fetchAll(
+        string $sql,
+        array $params = []
+    ): array {
+        $stmt = $this->database->prepare($sql);
+
+        $stmt->execute($params);
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    protected function fetch(
+        string $sql,
+        array $params = []
+    ): ?array {
+        $stmt = $this->database->prepare($sql);
+
+        $stmt->execute($params);
+
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $row ?: null;
+    }
+
+    protected function execute(
+        string $sql,
+        array $params = []
+    ): bool {
+        $stmt = $this->database->prepare($sql);
+
+        return $stmt->execute($params);
+    }
+
     protected function lastInsertId(): int
     {
-        return (int)$this->database
+        return (int) $this->database
             ->pdo()
             ->lastInsertId();
     }
 
-    protected function query(string $sql)
-    {
-        return $this->database->query($sql);
-    }
-
-    protected function prepare(string $sql)
-    {
-        return $this->database->prepare($sql);
-    }
+    /**
+     * @throws RuntimeException
+     */
+    abstract protected function map(array $row): mixed;
 }

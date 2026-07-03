@@ -6,12 +6,15 @@ namespace AEFS\Services;
 
 use AEFS\Models\Member;
 use AEFS\Repositories\MemberRepository;
+use AEFS\Validators\MemberValidator;
 use InvalidArgumentException;
 
 final class MemberService
 {
     public function __construct(
-        private MemberRepository $repository
+        private MemberRepository $repository,
+        private MemberValidator $validator,
+        private AuditLogService $auditLog
     ) {
     }
 
@@ -31,7 +34,9 @@ final class MemberService
         $zoekterm = trim($zoekterm);
 
         if ($zoekterm === '') {
+
             return $this->all();
+
         }
 
         return $this->repository->search($zoekterm);
@@ -40,7 +45,9 @@ final class MemberService
     public function find(int $id): ?Member
     {
         if ($id <= 0) {
+
             return null;
+
         }
 
         return $this->repository->find($id);
@@ -48,54 +55,127 @@ final class MemberService
 
     public function create(array $data): int
     {
-        $this->validate($data);
+        $this->validator->validate($data);
 
-        return $this->repository->create($this->sanitize($data));
+        $data = $this->sanitize($data);
+
+        $id = $this->repository->create($data);
+
+        $this->auditLog->created(
+
+            entity: 'member',
+
+            id: $id,
+
+            userId: $_SESSION['user_id'] ?? null,
+
+            values: $data
+
+        );
+
+        return $id;
     }
 
-    public function update(int $id, array $data): void
-    {
+    public function update(
+        int $id,
+        array $data
+    ): void {
+
         if ($id <= 0) {
-            throw new InvalidArgumentException('Ongeldig lid.');
+
+            throw new InvalidArgumentException(
+                'Ongeldig lid.'
+            );
+
         }
 
-        $this->validate($data);
+        $this->validator->validate($data);
 
-        $this->repository->update($id, $this->sanitize($data));
+        $oud = $this->repository->find($id);
+
+        if ($oud === null) {
+
+            throw new InvalidArgumentException(
+                'Lid niet gevonden.'
+            );
+
+        }
+
+        $data = $this->sanitize($data);
+
+        $this->repository->update(
+            $id,
+            $data
+        );
+
+        $this->auditLog->updated(
+
+            entity: 'member',
+
+            id: $id,
+
+            userId: $_SESSION['user_id'] ?? null,
+
+            oldValues: get_object_vars($oud),
+
+            newValues: $data
+
+        );
     }
 
     public function delete(int $id): void
     {
         if ($id <= 0) {
-            throw new InvalidArgumentException('Ongeldig lid.');
+
+            throw new InvalidArgumentException(
+                'Ongeldig lid.'
+            );
+
+        }
+
+        $lid = $this->repository->find($id);
+
+        if ($lid === null) {
+
+            return;
+
         }
 
         $this->repository->delete($id);
-    }
 
-    private function validate(array $data): void
-    {
-        if (empty(trim((string)($data['voornaam'] ?? '')))) {
-            throw new InvalidArgumentException('Voornaam is verplicht.');
-        }
+        $this->auditLog->deleted(
 
-        if (empty(trim((string)($data['achternaam'] ?? '')))) {
-            throw new InvalidArgumentException('Achternaam is verplicht.');
-        }
+            entity: 'member',
 
-        $email = trim((string)($data['email'] ?? ''));
+            id: $id,
 
-        if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            throw new InvalidArgumentException('Ongeldig e-mailadres.');
-        }
+            userId: $_SESSION['user_id'] ?? null,
+
+            oldValues: get_object_vars($lid)
+
+        );
     }
 
     private function sanitize(array $data): array
     {
         foreach ($data as $key => $value) {
+
             if (is_string($value)) {
+
                 $data[$key] = trim($value);
+
             }
+
+        }
+
+        $data['actief'] = isset($data['actief']);
+
+        $data['gdpr_consent'] = isset($data['gdpr_consent']);
+
+        if (empty($data['land'])) {
+
+            $data['land'] = 'België';
+
         }
 
         return $data;

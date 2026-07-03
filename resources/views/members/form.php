@@ -2,291 +2,322 @@
 
 declare(strict_types=1);
 
-/** @var AEFS\Models\Member|null $lid */
+use AEFS\Core\Url;
+
+/** @var \AEFS\Models\Member|null $lid */
 
 ?>
 
-<div class="grid grid-2">
+<div class="row">
 
-    <div>
+    <div class="col-md-6">
 
-        <label>Voornaam</label>
+        <?= component('input', [
 
-        <input
-            type="text"
-            name="voornaam"
-            value="<?= htmlspecialchars($lid->voornaam ?? '', ENT_QUOTES) ?>"
-            required
-        >
+            'name' => 'voornaam',
 
-    </div>
+            'label' => 'Voornaam',
 
-    <div>
+            'required' => true,
 
-        <label>Achternaam</label>
+            'value' => $lid->voornaam ?? ''
 
-        <input
-            type="text"
-            name="achternaam"
-            value="<?= htmlspecialchars($lid->achternaam ?? '', ENT_QUOTES) ?>"
-            required
-        >
+        ]) ?>
 
     </div>
 
-    <div>
+    <div class="col-md-6">
 
-        <label>E-mail</label>
+        <?= component('input', [
 
-        <input
-            type="email"
-            name="email"
-            value="<?= htmlspecialchars($lid->email ?? '', ENT_QUOTES) ?>"
-        >
+            'name' => 'achternaam',
 
-    </div>
+            'label' => 'Achternaam',
 
-    <div>
+            'required' => true,
 
-        <label>Telefoon</label>
+            'value' => $lid->achternaam ?? ''
 
-        <input
-            type="text"
-            name="telefoon"
-            value="<?= htmlspecialchars($lid->telefoon ?? '', ENT_QUOTES) ?>"
-        >
-
-    </div>
-
-    <div>
-
-        <label>GSM</label>
-
-        <input
-            type="text"
-            name="gsm"
-            value="<?= htmlspecialchars($lid->gsm ?? '', ENT_QUOTES) ?>"
-        >
-
-    </div>
-
-    <div>
-
-        <label>Geboortedatum</label>
-
-        <input
-            type="date"
-            name="geboortedatum"
-            value="<?= htmlspecialchars($lid->geboortedatum ?? '', ENT_QUOTES) ?>"
-        >
-
-    </div>
-
-    <div>
-
-        <label>Straat</label>
-
-        <input
-            type="text"
-            name="straat"
-            value="<?= htmlspecialchars($lid->straat ?? '', ENT_QUOTES) ?>"
-        >
-
-    </div>
-
-    <div>
-
-        <label>Huisnummer</label>
-
-        <input
-            type="text"
-            name="huisnummer"
-            value="<?= htmlspecialchars($lid->huisnummer ?? '', ENT_QUOTES) ?>"
-        >
-
-    </div>
-
-    <div>
-
-        <label>Bus</label>
-
-        <input
-            type="text"
-            name="bus"
-            value="<?= htmlspecialchars($lid->bus ?? '', ENT_QUOTES) ?>"
-        >
-
-    </div>
-
-    <div>
-
-        <label>Postcode</label>
-
-        <input
-            type="text"
-            name="postcode"
-            value="<?= htmlspecialchars($lid->postcode ?? '', ENT_QUOTES) ?>"
-        >
-
-    </div>
-
-    <div>
-
-        <label>Gemeente</label>
-
-        <input
-            type="text"
-            name="gemeente"
-            value="<?= htmlspecialchars($lid->gemeente ?? '', ENT_QUOTES) ?>"
-        >
-
-    </div>
-
-    <div>
-
-        <label>Land</label>
-
-        <input
-            type="text"
-            name="land"
-            value="<?= htmlspecialchars($lid->land ?? '', ENT_QUOTES) ?>"
-        >
-
-    </div>
-
-    <div>
-
-        <label>Geslacht</label>
-
-        <select name="geslacht">
-
-            <option value=""></option>
-
-            <option value="M" <?= ($lid->geslacht ?? '') === 'M' ? 'selected' : '' ?>>Man</option>
-
-            <option value="V" <?= ($lid->geslacht ?? '') === 'V' ? 'selected' : '' ?>>Vrouw</option>
-
-            <option value="X" <?= ($lid->geslacht ?? '') === 'X' ? 'selected' : '' ?>>X</option>
-
-        </select>
-
-    </div>
-
-    <div>
-
-        <label>T-shirtmaat</label>
-
-        <input
-            type="text"
-            name="tshirtmaat"
-            value="<?= htmlspecialchars($lid->tshirtmaat ?? '', ENT_QUOTES) ?>"
-        >
-
-    </div>
-
-    <div>
-
-        <label>IBAN</label>
-
-        <input
-            type="text"
-            name="rekeningnummer"
-            value="<?= htmlspecialchars($lid->rekeningnummer ?? '', ENT_QUOTES) ?>"
-        >
-
-    </div>
-
-    <div>
-
-        <label>Rijksregisternummer</label>
-
-        <input
-            type="text"
-            name="rijksregisternummer"
-            value="<?= htmlspecialchars($lid->rijksregisternummer ?? '', ENT_QUOTES) ?>"
-        >
+        ]) ?>
 
     </div>
 
 </div>
 
-<br>
+<div class="row">
 
-<label>Opmerkingen</label>
+    <div class="col-md-6">
 
-<textarea
-    name="opmerkingen"
-    rows="6"
-><?= htmlspecialchars($lid->opmerkingen ?? '', ENT_QUOTES) ?></textarea>
+        <?= component('input', [
 
-<br><br>
+            'name' => 'email',
 
-<label>
+            'label' => 'E-mail',
 
-    <input
-        type="checkbox"
-        name="actief"
-        value="1"
-        <?= ($lid->actief ?? true) ? 'checked' : '' ?>
-    >
+            'type' => 'email',
 
-    Actief
+            'value' => $lid->email ?? ''
 
-</label>
+        ]) ?>
 
-<br>
+    </div>
 
-<label>
+    <div class="col-md-6">
 
-    <input
-        type="checkbox"
-        name="gdpr_consent"
-        value="1"
-        <?= ($lid->gdprConsent ?? false) ? 'checked' : '' ?>
-    >
+        <?= component('input', [
 
-    GDPR toestemming
+            'name' => 'telefoon',
 
-</label>
+            'label' => 'Telefoon',
 
-<br><br>
+            'value' => $lid->telefoon ?? ''
 
-<button class="btn">
+        ]) ?>
 
-    Opslaan
+    </div>
 
-</button>
+</div>
 
-<style>
+<div class="row">
 
-input,
-select,
-textarea{
+    <div class="col-md-8">
 
-    width:100%;
+        <?= component('input', [
 
-    padding:10px;
+            'name' => 'straat',
 
-    border:1px solid #d1d5db;
+            'label' => 'Straat',
 
-    border-radius:8px;
+            'value' => $lid->straat ?? ''
 
-}
+        ]) ?>
 
-label{
+    </div>
 
-    display:block;
+    <div class="col-md-4">
 
-    margin-bottom:6px;
+        <?= component('input', [
 
-    font-weight:600;
+            'name' => 'postcode',
 
-}
+            'label' => 'Postcode',
 
-textarea{
+            'value' => $lid->postcode ?? ''
 
-    resize:vertical;
+        ]) ?>
 
-}
+    </div>
 
-</style>
+</div>
+
+<div class="row">
+
+    <div class="col-md-6">
+
+        <?= component('input', [
+
+            'name' => 'gemeente',
+
+            'label' => 'Gemeente',
+
+            'value' => $lid->gemeente ?? ''
+
+        ]) ?>
+
+    </div>
+
+    <div class="col-md-6">
+
+        <?= component('input', [
+
+            'name' => 'land',
+
+            'label' => 'Land',
+
+            'value' => $lid->land ?? 'België'
+
+        ]) ?>
+
+    </div>
+
+</div>
+
+<div class="row">
+
+    <div class="col-md-6">
+
+        <?= component('input', [
+
+            'name' => 'geboortedatum',
+
+            'label' => 'Geboortedatum',
+
+            'type' => 'date',
+
+            'value' => $lid->geboortedatum ?? ''
+
+        ]) ?>
+
+    </div>
+
+    <div class="col-md-6">
+
+        <?= component('select', [
+
+            'name' => 'geslacht',
+
+            'label' => 'Geslacht',
+
+            'value' => $lid->geslacht ?? '',
+
+            'options' => [
+
+                '' => '-- Selecteer --',
+
+                'M' => 'Man',
+
+                'V' => 'Vrouw',
+
+                'X' => 'X'
+
+            ]
+
+        ]) ?>
+
+    </div>
+
+</div>
+
+<div class="row">
+
+    <div class="col-md-6">
+
+        <?= component('input', [
+
+            'name' => 'rekeningnummer',
+
+            'label' => 'IBAN',
+
+            'value' => $lid->rekeningnummer ?? ''
+
+        ]) ?>
+
+    </div>
+
+    <div class="col-md-6">
+
+        <?= component('input', [
+
+            'name' => 'rijksregisternummer',
+
+            'label' => 'Rijksregisternummer',
+
+            'value' => $lid->rijksregisternummer ?? ''
+
+        ]) ?>
+
+    </div>
+
+</div>
+
+<div class="row">
+
+    <div class="col-md-6">
+
+        <?= component('select', [
+
+            'name' => 'tshirtmaat',
+
+            'label' => 'T-shirtmaat',
+
+            'value' => $lid->tshirtmaat ?? '',
+
+            'options' => [
+
+                '' => '-- Selecteer --',
+
+                'XS' => 'XS',
+
+                'S' => 'S',
+
+                'M' => 'M',
+
+                'L' => 'L',
+
+                'XL' => 'XL',
+
+                'XXL' => 'XXL',
+
+                '3XL' => '3XL'
+
+            ]
+
+        ]) ?>
+
+    </div>
+
+    <div class="col-md-6 d-flex align-items-end">
+
+        <?= component('checkbox', [
+
+            'name' => 'actief',
+
+            'label' => 'Actief lid',
+
+            'checked' => $lid->actief ?? true
+
+        ]) ?>
+
+    </div>
+
+</div>
+
+<?= component('textarea', [
+
+    'name' => 'opmerkingen',
+
+    'label' => 'Opmerkingen',
+
+    'rows' => 5,
+
+    'value' => $lid->opmerkingen ?? ''
+
+]) ?>
+
+<?= component('checkbox', [
+
+    'name' => 'gdpr_consent',
+
+    'label' => 'GDPR toestemming',
+
+    'checked' => $lid->gdprConsent ?? false
+
+]) ?>
+
+<hr>
+
+<div class="d-flex justify-content-between">
+
+    <?= component('button', [
+
+        'href' => Url::to('/members'),
+
+        'text' => 'Annuleren',
+
+        'type' => 'secondary'
+
+    ]) ?>
+
+    <?= component('button', [
+
+        'text' => isset($lid)
+            ? 'Lid opslaan'
+            : 'Lid aanmaken',
+
+        'icon' => 'save',
+
+        'type' => 'success'
+
+    ]) ?>
+
+</div>

@@ -4,33 +4,48 @@ declare(strict_types=1);
 
 use AEFS\Core\Url;
 
-$title = 'Nieuwe gebruiker';
-
-$gebruiker = null;
-
-ob_start();
+/** @var array $leden */
+/** @var array $errors */
 
 ?>
 
-<div class="card">
+<?= component('page-header', [
 
-    <h1>Nieuwe gebruiker</h1>
+    'title' => 'Nieuwe gebruiker',
 
-    <br>
+    'subtitle' => 'Gebruiker toevoegen',
 
-    <form
-        method="post"
-        action="<?= Url::to('/gebruikers') ?>"
-    >
+]) ?>
 
-        <?php require __DIR__ . '/form.php'; ?>
+<?php if (!empty($errors)): ?>
 
-    </form>
+    <?= component('alert', [
 
-</div>
+        'type' => 'danger',
 
-<?php
+        'message' => implode('<br>', $errors),
 
-$content = ob_get_clean();
+    ]) ?>
 
-require dirname(__DIR__) . '/../layouts/app.php';
+<?php endif; ?>
+
+<form
+    method="post"
+    action="<?= Url::to('/users') ?>"
+>
+
+    <?= csrf_field() ?>
+
+    <?= component('card', [
+
+        'title' => 'Gebruikersgegevens',
+
+        'content' => component('users/form', [
+
+            'leden' => $leden,
+
+        ]),
+
+    ]) ?>
+
+</form>

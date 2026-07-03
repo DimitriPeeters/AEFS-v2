@@ -2,25 +2,41 @@
 
 declare(strict_types=1);
 
+use AEFS\Core\Url;
+
+/** @var array $errors */
+
 $title = 'Nieuw evenement';
+
 ?>
 
-<div class="container py-4">
+<?= component('page-header', [
 
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    'title' => 'Nieuw evenement',
 
-        <h1>Nieuw evenement</h1>
+    'subtitle' => 'Evenement aanmaken',
 
-        <a href="/events" class="btn btn-outline-secondary">
-            Terug
-        </a>
+]) ?>
 
-    </div>
+<?php if (!empty($errors)): ?>
 
-    <form method="post" action="/events">
+    <?= component('alert', [
 
-        <?php require __DIR__ . '/form.php'; ?>
+        'type' => 'danger',
 
-    </form>
+        'message' => implode('<br>', $errors),
 
-</div>
+    ]) ?>
+
+<?php endif; ?>
+
+<form
+    method="post"
+    action="<?= Url::to('/events') ?>"
+>
+
+    <?= csrf_field() ?>
+
+    <?php require __DIR__ . '/form.php'; ?>
+
+</form>

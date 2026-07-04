@@ -2,8 +2,8 @@
 
 declare(strict_types=1);
 
-use AEFS\Controllers\DashboardController;
-use AEFS\Middleware\AuthMiddleware;
+use App\Controllers\DashboardController;
+use App\Middleware\AuthMiddleware;
 
 /** @var AEFS\Core\Router $router */
 

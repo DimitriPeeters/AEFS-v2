@@ -2,16 +2,16 @@
 
 declare(strict_types=1);
 
-namespace AEFS\Controllers;
+namespace App\Controllers;
 
-use AEFS\Core\Request;
-use AEFS\Core\Response;
+use AEFS\Core\Http\Request;
+use AEFS\Core\Http\Response;
 use AEFS\Core\View;
-use AEFS\Repositories\EventRepository;
-use AEFS\Repositories\ShiftRepository;
-use AEFS\Repositories\ShiftRegistrationRepository;
-use AEFS\Repositories\ShiftTypeRepository;
-use AEFS\Services\ShiftService;
+use App\Repositories\EventRepository;
+use App\Repositories\ShiftRepository;
+use App\Repositories\ShiftRegistrationRepository;
+use App\Repositories\ShiftTypeRepository;
+use App\Services\ShiftService;
 use Throwable;
 
 final class ShiftController extends BaseController

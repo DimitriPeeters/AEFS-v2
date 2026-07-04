@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace AEFS\Controllers;
+namespace App\Controllers;
 
 use AEFS\Http\Requests\MemberRequest;
-use AEFS\Services\AuditLogService;
-use AEFS\Services\MemberService;
+use App\Services\AuditLogService;
+use App\Services\MemberService;
 use Throwable;
 
 final class MemberController extends BaseController

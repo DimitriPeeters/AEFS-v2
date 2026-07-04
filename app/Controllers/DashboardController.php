@@ -2,16 +2,15 @@
 
 declare(strict_types=1);
 
-namespace AEFS\Controllers;
+namespace App\Controllers;
 
-use AEFS\Services\DashboardService;
+use App\Services\DashboardService;
 
 final class DashboardController extends BaseController
 {
     public function __construct(
         private DashboardService $dashboardService
     ) {
-        parent::__construct();
     }
 
     public function index(): void

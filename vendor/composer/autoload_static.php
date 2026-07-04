@@ -9,35 +9,15 @@ class ComposerStaticInit474dff41a26f56686c4a181f4a2eeda0
     public static $prefixLengthsPsr4 = array (
         'A' =>
         array (
-            'AEFS\\Services\\' => 14,
-            'AEFS\\Repositories\\' => 18,
-            'AEFS\\Models\\' => 12,
-            'AEFS\\Middleware\\' => 16,
-            'AEFS\\Controllers\\' => 17,
+            'App\\' => 4,
             'AEFS\\' => 5,
         ),
     );
 
     public static $prefixDirsPsr4 = array (
-        'AEFS\\Services\\' =>
+        'App\\' =>
         array (
-            0 => __DIR__ . '/../..' . '/app/Services',
-        ),
-        'AEFS\\Repositories\\' =>
-        array (
-            0 => __DIR__ . '/../..' . '/app/Repositories',
-        ),
-        'AEFS\\Models\\' =>
-        array (
-            0 => __DIR__ . '/../..' . '/app/Models',
-        ),
-        'AEFS\\Middleware\\' =>
-        array (
-            0 => __DIR__ . '/../..' . '/app/Middleware',
-        ),
-        'AEFS\\Controllers\\' =>
-        array (
-            0 => __DIR__ . '/../..' . '/app/Controllers',
+            0 => __DIR__ . '/../..' . '/app',
         ),
         'AEFS\\' =>
         array (

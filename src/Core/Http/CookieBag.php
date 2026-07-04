@@ -2,18 +2,26 @@
 
 declare(strict_types=1);
 
-namespace AEFS\HTTP;
+namespace AEFS\Core\Http;
 
-final class CookieBag extends ParameterBag
+final class CookieBag
 {
-    public function has(string $name): bool
-    {
-        return parent::has($name);
-    }
+    /**
+     * @var array<string, Cookie>
+     */
+    private array $cookies = [];
 
-    public function get(string $name, mixed $default = null): mixed
+    /**
+     * @param array<string, string> $cookies
+     */
+    public function __construct(array $cookies = [])
     {
-        return parent::get($name, $default);
+        foreach ($cookies as $name => $value) {
+            $this->cookies[$name] = new Cookie(
+                name: $name,
+                value: (string) $value
+            );
+        }
     }
 
     public function set(
@@ -26,72 +34,43 @@ final class CookieBag extends ParameterBag
         bool $httpOnly = true,
         string $sameSite = 'Lax'
     ): void {
-        parent::set($name, $value);
-
-        setcookie(
-            $name,
-            $value,
-            [
-                'expires'  => $expires,
-                'path'     => $path,
-                'domain'   => $domain,
-                'secure'   => $secure,
-                'httponly' => $httpOnly,
-                'samesite' => $sameSite,
-            ]
+        $this->cookies[$name] = new Cookie(
+            name: $name,
+            value: $value,
+            expires: $expires,
+            path: $path,
+            domain: $domain,
+            secure: $secure,
+            httpOnly: $httpOnly,
+            sameSite: $sameSite
         );
     }
 
-    public function forever(
-        string $name,
-        string $value,
-        string $path = '/',
-        string $domain = '',
-        bool $secure = false,
-        bool $httpOnly = true,
-        string $sameSite = 'Lax'
-    ): void {
-        $this->set(
-            $name,
-            $value,
-            strtotime('+5 years'),
-            $path,
-            $domain,
-            $secure,
-            $httpOnly,
-            $sameSite
-        );
-    }
-
-    public function delete(
-        string $name,
-        string $path = '/',
-        string $domain = ''
-    ): void {
-        parent::remove($name);
-
-        setcookie(
-            $name,
-            '',
-            [
-                'expires' => time() - 3600,
-                'path'    => $path,
-                'domain'  => $domain,
-            ]
-        );
-    }
-
-    public function pull(string $name, mixed $default = null): mixed
+    public function get(string $name): ?Cookie
     {
-        $value = $this->get($name, $default);
-
-        $this->delete($name);
-
-        return $value;
+        return $this->cookies[$name] ?? null;
     }
 
-    public function exists(string $name): bool
+    public function has(string $name): bool
     {
-        return $this->has($name);
+        return isset($this->cookies[$name]);
+    }
+
+    public function remove(string $name): void
+    {
+        unset($this->cookies[$name]);
+    }
+
+    /**
+     * @return array<string, Cookie>
+     */
+    public function all(): array
+    {
+        return $this->cookies;
+    }
+
+    public function clear(): void
+    {
+        $this->cookies = [];
     }
 }

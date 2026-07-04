@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-use AEFS\Controllers\AuthController;
-use AEFS\Middleware\AuthMiddleware;
-use AEFS\Middleware\GuestMiddleware;
+use App\Controllers\AuthController;
+use App\Middleware\AuthMiddleware;
+use App\Middleware\GuestMiddleware;
 
 /** @var AEFS\Core\Router $router */
 

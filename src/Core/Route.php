@@ -133,4 +133,26 @@ final class Route
 
         return $parameters;
     }
+
+    public function allows(string $method): bool
+{
+    return strtoupper($this->method) === strtoupper($method);
+}
+
+public function uri(): string
+{
+    return $this->uri;
+}
+
+public function action(): mixed
+{
+    return $this->action;
+}
+
+public function method(): string
+{
+    return $this->method;
+}
+
+
 }

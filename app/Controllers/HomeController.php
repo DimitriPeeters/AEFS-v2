@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace AEFS\Controllers;
+namespace App\Controllers;
 
-use AEFS\Repositories\HomeRepository;
+use App\Repositories\HomeRepository;
 
 final class HomeController extends BaseController
 {

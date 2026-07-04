@@ -2,110 +2,48 @@
 
 declare(strict_types=1);
 
-namespace AEFS\Services;
+namespace App\Services;
 
-use AEFS\Core\Auth;
-use AEFS\Models\User;
-use AEFS\Repositories\UserRepository;
+use AEFS\Database\DB;
 
 final class AuthenticationService
 {
-    public function __construct(
-        private UserRepository $users
-    ) {
+    public function check(): bool
+    {
+        return isset($_SESSION['user_id']);
     }
 
-    /**
-     * Probeer een gebruiker aan te melden.
-     */
     public function attempt(string $email, string $password): bool
     {
-        $user = $this->users->findByEmail($email);
+        $user = DB::table('gebruikers')
+            ->where('email', '=', $email)
+            ->first();
 
         if ($user === null) {
             return false;
         }
 
-        if (!$user->isActive()) {
+        if (!password_verify($password, (string) $user['wachtwoord_hash'])) {
             return false;
         }
 
-        if (!password_verify($password, $user->passwordHash)) {
+        if ((int) ($user['actief'] ?? 0) !== 1) {
             return false;
         }
 
-        Auth::login($user);
+        $_SESSION['user_id'] = (int) $user['gebruiker_id'];
+        $_SESSION['user_email'] = (string) $user['email'];
+        $_SESSION['user_role'] = (string) ($user['rol'] ?? 'lid');
 
         return true;
     }
 
-    /**
-     * Uitloggen.
-     */
     public function logout(): void
     {
-        Auth::logout();
-    }
-
-    /**
-     * Is een gebruiker aangemeld?
-     */
-    public function check(): bool
-    {
-        return Auth::check();
-    }
-
-    /**
-     * Haal de huidige gebruiker op.
-     */
-    public function user(): ?User
-    {
-        if (!Auth::check()) {
-            return null;
-        }
-
-        $session = Auth::user();
-
-        if ($session === null) {
-            return null;
-        }
-
-        return $this->users->findByEmail($session['email']);
-    }
-
-    /**
-     * Is de gebruiker administrator?
-     */
-    public function isAdmin(): bool
-    {
-        return Auth::isAdmin();
-    }
-
-    /**
-     * Is de gebruiker een gewoon lid?
-     */
-    public function isMember(): bool
-    {
-        return Auth::isMember();
-    }
-
-    /**
-     * Vereis administratorrechten.
-     */
-    public function requireAdmin(): void
-    {
-        if (!$this->isAdmin()) {
-            abort(403);
-        }
-    }
-
-    /**
-     * Vereis een aangemelde gebruiker.
-     */
-    public function requireAuthentication(): void
-    {
-        if (!$this->check()) {
-            abort(401);
-        }
+        unset(
+            $_SESSION['user_id'],
+            $_SESSION['user_email'],
+            $_SESSION['user_role']
+        );
     }
 }

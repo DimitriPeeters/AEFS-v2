@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace AEFS\HTTP;
+namespace AEFS\Core\Http;
 
 use JsonException;
 
@@ -52,10 +52,21 @@ class Request
         return $this->server->uri();
     }
 
-    public function path(): string
-    {
-        return $this->server->path();
+public function path(): string
+{
+    $path = $this->server->path();
+
+    $scriptName = (string) ($_SERVER['SCRIPT_NAME'] ?? '');
+    $basePath = str_replace('\\', '/', dirname($scriptName));
+
+    if ($basePath !== '/' && str_starts_with($path, $basePath)) {
+        $path = substr($path, strlen($basePath));
     }
+
+    $path = '/' . ltrim($path, '/');
+
+    return $path === '' ? '/' : $path;
+}
 
     public function host(): string
     {
@@ -100,6 +111,24 @@ class Request
 
         return $json[$key] ?? $default;
     }
+
+    public function post(?string $key = null, mixed $default = null): mixed
+{
+    if ($key === null) {
+        return $this->request->all();
+    }
+
+    return $this->request->get($key, $default);
+}
+
+public function get(?string $key = null, mixed $default = null): mixed
+{
+    if ($key === null) {
+        return $this->query->all();
+    }
+
+    return $this->query->get($key, $default);
+}
 
     public function all(): array
     {

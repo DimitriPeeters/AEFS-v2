@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace AEFS\Controllers;
+namespace App\Controllers;
 
-use AEFS\Core\Request;
-use AEFS\Core\Response;
+use AEFS\Core\Http\Request;
+use AEFS\Core\Http\Response;
 use AEFS\Core\View;
-use AEFS\Services\EventService;
+use App\Services\EventService;
 use Throwable;
 
 final class EventController

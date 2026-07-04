@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace AEFS\HTTP;
+namespace AEFS\Core\Http;
 
 final class ServerBag extends ParameterBag
 {

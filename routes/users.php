@@ -2,8 +2,8 @@
 
 declare(strict_types=1);
 
-use AEFS\Controllers\UserController;
-use AEFS\Middleware\AuthMiddleware;
+use App\Controllers\UserController;
+use App\Middleware\AuthMiddleware;
 
 /** @var AEFS\Core\Router $router */
 

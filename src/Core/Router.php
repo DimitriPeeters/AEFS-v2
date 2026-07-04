@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace AEFS\Core;
 
-use AEFS\HTTP\Request;
-use AEFS\HTTP\Response;
+use AEFS\Core\Http\Request;
+use AEFS\Core\Http\Response;
 use RuntimeException;
 
 final class Router
@@ -13,6 +13,7 @@ final class Router
     private RouteCollection $routes;
 
     public function __construct(
+        private readonly Container $container,
         ?RouteCollection $routes = null
     ) {
         $this->routes = $routes ?? new RouteCollection();
@@ -58,11 +59,15 @@ final class Router
     }
 
     /**
-     * @param array<int,string> $methods
+     * @param array<int, string> $methods
      */
     public function map(array $methods, string $uri, mixed $action): Route
     {
-        $route = new Route($methods, $uri, $action);
+        $route = new Route(
+            implode('|', $methods),
+            $uri,
+            $action
+        );
 
         $this->routes->add($route);
 
@@ -83,10 +88,7 @@ final class Router
             return $this->dispatchRoute($route);
         }
 
-        return new Response(
-            '404 Not Found',
-            404
-        );
+        return new Response('404 Not Found', 404);
     }
 
     public function routes(): RouteCollection
@@ -94,34 +96,44 @@ final class Router
         return $this->routes;
     }
 
-    private function dispatchRoute(Route $route): Response
-    {
-        $action = $route->action();
+private function dispatchRoute(Route $route): Response
+{
+    $action = $route->action();
 
-        if (is_callable($action)) {
-            $response = $action();
+    if (is_callable($action)) {
+        $response = $action();
 
-            if ($response instanceof Response) {
-                return $response;
-            }
-
-            return new Response((string) $response);
-        }
-
-        if (is_array($action) && count($action) === 2) {
-            [$class, $method] = $action;
-
-            $controller = new $class();
-
-            $response = $controller->{$method}();
-
-            if ($response instanceof Response) {
-                return $response;
-            }
-
-            return new Response((string) $response);
-        }
-
-        throw new RuntimeException('Invalid route action.');
+        return $response instanceof Response
+            ? $response
+            : new Response((string) $response);
     }
+
+    if (is_array($action) && count($action) === 2) {
+        [$controllerClass, $method] = $action;
+
+        if (!is_string($controllerClass) || !is_string($method)) {
+            throw new RuntimeException('Invalid controller action.');
+        }
+
+        $controller = $this->container->get($controllerClass);
+
+        if (!method_exists($controller, $method)) {
+            throw new RuntimeException(sprintf(
+                'Controller method [%s::%s] does not exist.',
+                $controllerClass,
+                $method
+            ));
+        }
+
+        $request = $this->container->get(Request::class);
+
+        $response = $controller->{$method}($request);
+
+        return $response instanceof Response
+            ? $response
+            : new Response((string) $response);
+    }
+
+    throw new RuntimeException('Invalid route action.');
+}
 }

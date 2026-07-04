@@ -22,27 +22,21 @@ final class Container
      */
     private array $instances = [];
 
-    public function bind(string $abstract, Closure|string $concrete): void
-    {
-        $this->bindings[$abstract] = $concrete;
-    }
+public function bind(string $abstract, object|string|null $concrete = null): void
+{
+    $this->bindings[$abstract] = [
+        'concrete' => $concrete ?? $abstract,
+        'shared' => false,
+    ];
+}
 
-    public function singleton(string $abstract, Closure|string|object $concrete): void
-    {
-        if (is_object($concrete) && !($concrete instanceof Closure)) {
-            $this->instances[$abstract] = $concrete;
-
-            return;
-        }
-
-        $this->bindings[$abstract] = function (Container $container) use ($concrete): object {
-            if ($concrete instanceof Closure) {
-                return $concrete($container);
-            }
-
-            return $container->build($concrete);
-        };
-    }
+public function singleton(string $abstract, object|string|null $concrete = null): void
+{
+    $this->bindings[$abstract] = [
+        'concrete' => $concrete ?? $abstract,
+        'shared' => true,
+    ];
+}
 
     public function instance(string $abstract, object $instance): void
     {
@@ -54,33 +48,51 @@ final class Container
         return isset($this->instances[$abstract]) || isset($this->bindings[$abstract]);
     }
 
-    public function get(string $abstract): object
-    {
-        if (isset($this->instances[$abstract])) {
-            return $this->instances[$abstract];
-        }
+public function get(string $abstract): object
+{
+    if (isset($this->instances[$abstract])) {
+        return $this->instances[$abstract];
+    }
 
-        if (isset($this->bindings[$abstract])) {
-            $binding = $this->bindings[$abstract];
+    if (isset($this->bindings[$abstract])) {
+        $binding = $this->bindings[$abstract];
 
-            if ($binding instanceof Closure) {
-                $object = $binding($this);
+        if ($binding instanceof Closure) {
+            $object = $binding($this);
 
-                if (!is_object($object)) {
-                    throw new RuntimeException(sprintf(
-                        'Container binding [%s] did not return an object.',
-                        $abstract
-                    ));
-                }
-
-                return $object;
+            if (!is_object($object)) {
+                throw new RuntimeException(sprintf(
+                    'Container binding [%s] did not return an object.',
+                    $abstract
+                ));
             }
 
-            return $this->build($binding);
+            return $object;
         }
 
-        return $this->build($abstract);
+        $concrete = $binding['concrete'] ?? $binding;
+        $shared = (bool) ($binding['shared'] ?? false);
+
+        $object = $concrete instanceof Closure
+            ? $concrete($this)
+            : $this->build($concrete);
+
+        if (!is_object($object)) {
+            throw new RuntimeException(sprintf(
+                'Container binding [%s] did not resolve to an object.',
+                $abstract
+            ));
+        }
+
+        if ($shared) {
+            $this->instances[$abstract] = $object;
+        }
+
+        return $object;
     }
+
+    return $this->build($abstract);
+}
 
     /**
      * @template T of object

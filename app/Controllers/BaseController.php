@@ -2,72 +2,43 @@
 
 declare(strict_types=1);
 
-namespace AEFS\Controllers;
+namespace App\Controllers;
 
-use AEFS\Core\Config;
-use AEFS\Core\Container;
-use AEFS\Core\Database;
-use AEFS\Core\Logger;
-use AEFS\Core\Request;
-use AEFS\Core\Url;
-use AEFS\Core\View;
+use AEFS\Core\Http\RedirectResponse;
+use AEFS\Core\Http\Request;
+use AEFS\Core\Http\Response;
 
 abstract class BaseController
 {
-    protected Database $db;
-
-    protected Config $config;
-
-    protected Logger $logger;
-
-    protected Request $request;
-
-    public function __construct()
+    protected function view(string $view, array $data = []): Response
     {
-        $this->db = Container::get(Database::class);
+        extract($data, EXTR_SKIP);
 
-        $this->config = Container::get(Config::class);
+        ob_start();
 
-        $this->logger = Container::get(Logger::class);
+        require dirname(__DIR__, 2) . '/resources/views/' . str_replace('.', '/', $view) . '.php';
 
-        $this->request = new Request();
+        return new Response((string) ob_get_clean());
     }
 
-    protected function view(string $view, array $data = []): void
+    protected function redirect(string $url): RedirectResponse
     {
-        View::render($view, $data);
-    }
-
-    protected function redirect(string $url): never
-    {
-        header('Location: ' . Url::to($url));
-        exit;
-    }
-
-    protected function back(): never
-    {
-        header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? Url::to('/')));
-        exit;
+        return new RedirectResponse($url);
     }
 
     protected function request(): Request
     {
-        return $this->request;
+        return Request::capture();
     }
 
-    protected function input(string $key, mixed $default = null): mixed
+    protected function input(Request $request, string $key, mixed $default = null): mixed
     {
-        return $this->request->input($key, $default);
+        return $request->input($key, $default);
     }
 
-    protected function post(string $key, mixed $default = null): mixed
+    protected function post(Request $request, string $key, mixed $default = null): mixed
     {
-        return $this->request->post($key, $default);
-    }
-
-    protected function query(string $key, mixed $default = null): mixed
-    {
-        return $this->request->query($key, $default);
+        return $request->post($key, $default);
     }
 
     protected function flash(string $type, string $message): void

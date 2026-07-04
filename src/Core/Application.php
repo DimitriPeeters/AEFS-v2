@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace AEFS\Core;
 
-use AEFS\HTTP\Request;
-use AEFS\HTTP\Response;
-use AEFS\Routing\Router;
+use AEFS\Core\Http\Request;
+use AEFS\Core\Http\Response;
+use AEFS\Core\Router;
 
 final class Application
 {
@@ -72,19 +72,15 @@ final class Application
         return $this->container;
     }
 
-    public function bind(string $abstract, \Closure|string $concrete): self
-    {
-        $this->container->bind($abstract, $concrete);
+public function bind(string $abstract, object|string|null $concrete = null): void
+{
+    $this->container->bind($abstract, $concrete);
+}
 
-        return $this;
-    }
-
-    public function singleton(string $abstract, \Closure|string|object $concrete): self
-    {
-        $this->container->singleton($abstract, $concrete);
-
-        return $this;
-    }
+public function singleton(string $abstract, object|string|null $concrete = null): void
+{
+    $this->container->singleton($abstract, $concrete);
+}
 
     public function instanceBinding(string $abstract, object $instance): self
     {

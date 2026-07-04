@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace AEFS\Controllers;
+namespace App\Controllers;
 
 use AEFS\Http\Requests\UserRequest;
-use AEFS\Services\AuditLogService;
-use AEFS\Services\MemberService;
-use AEFS\Services\UserService;
+use App\Services\AuditLogService;
+use App\Services\MemberService;
+use App\Services\UserService;
 use Throwable;
 
 final class UserController extends BaseController

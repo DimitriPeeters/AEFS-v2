@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use AEFS\Controllers\HomeController;
+use App\Controllers\HomeController;
 
 /** @var AEFS\Core\Router $router */
 

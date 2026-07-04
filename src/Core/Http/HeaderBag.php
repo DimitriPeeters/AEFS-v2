@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace AEFS\HTTP;
+namespace AEFS\Core\Http;
 
 final class HeaderBag
 {
@@ -103,8 +103,35 @@ final class HeaderBag
         );
     }
 
-    public function contains(string $name, string $value): bool
+public function contains(string $name, string $value): bool
+{
+    $values = $this->get($name, []);
 
-    public function first(string $name): ?string
-    
+    if (is_string($values)) {
+        $values = [$values];
+    }
+
+    foreach ($values as $headerValue) {
+        if (strcasecmp((string) $headerValue, $value) === 0) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+public function first(string $name): ?string
+{
+    $values = $this->get($name);
+
+    if ($values === null) {
+        return null;
+    }
+
+    if (is_array($values)) {
+        return isset($values[0]) ? (string) $values[0] : null;
+    }
+
+    return (string) $values;
+}    
 }

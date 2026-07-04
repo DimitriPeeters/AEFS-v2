@@ -2,11 +2,12 @@
 
 declare(strict_types=1);
 
-namespace AEFS\Controllers;
+namespace App\Controllers;
 
-use AEFS\Core\Request;
-use AEFS\Core\Response;
-use AEFS\Services\AuthenticationService;
+use AEFS\Core\Http\RedirectResponse;
+use AEFS\Core\Http\Request;
+use AEFS\Core\Http\Response;
+use App\Services\AuthenticationService;
 
 final class AuthController
 {
@@ -15,44 +16,39 @@ final class AuthController
     ) {
     }
 
-    /**
-     * Toon het loginformulier.
-     */
-    public function login(Request $request): void
+    public function login(Request $request): Response
     {
         if ($this->auth->check()) {
-            Response::redirect('/dashboard');
+            return new RedirectResponse('/dashboard');
         }
 
+        ob_start();
+
         require dirname(__DIR__, 2) . '/resources/views/auth/login.php';
+
+        return new Response((string) ob_get_clean());
     }
 
-    /**
-     * Verwerk de login.
-     */
-    public function authenticate(Request $request): never
+    public function authenticate(Request $request): Response
     {
         $email = trim((string) $request->post('email'));
         $password = (string) $request->post('password');
 
         if ($email === '' || $password === '') {
-            Response::redirect('/login?error=missing');
+           return new RedirectResponse('/aefs-v2/public/login?error=missing');
         }
 
         if (!$this->auth->attempt($email, $password)) {
-            Response::redirect('/login?error=invalid');
+           return new RedirectResponse('/aefs-v2/public/login?error=invalid');
         }
 
-        Response::redirect('/dashboard');
+        return new RedirectResponse('/aefs-v2/public/dashboard');
     }
 
-    /**
-     * Uitloggen.
-     */
-    public function logout(Request $request): never
+    public function logout(Request $request): Response
     {
         $this->auth->logout();
 
-        Response::redirect('/login?logout=1');
+        return new RedirectResponse('/aefs-v2/public/login?logout=1');
     }
 }

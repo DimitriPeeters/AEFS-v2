@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-require dirname(__DIR__) . '/bootstrap.php';
-
 use AEFS\Core\Application;
-use AEFS\Core\Session;
 
-Session::start();
+define('AEFS_START', microtime(true));
 
-$app = new Application();
+require dirname(__DIR__) . '/vendor/autoload.php';
+
+/** @var Application $app */
+$app = require dirname(__DIR__) . '/bootstrap/app.php';
 
 $app->run();

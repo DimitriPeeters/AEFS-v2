@@ -1,0 +1,237 @@
+<?php
+
+declare(strict_types=1);
+
+namespace AEFS\HTTP;
+
+use JsonException;
+
+class Request
+{
+    public readonly ParameterBag $query;
+    public readonly ParameterBag $request;
+    public readonly ParameterBag $attributes;
+    public readonly ServerBag $server;
+    public readonly HeaderBag $headers;
+    public readonly CookieBag $cookies;
+    public readonly FileBag $files;
+
+    private ?array $json = null;
+
+    public function __construct(
+        ?array $query = null,
+        ?array $request = null,
+        ?array $server = null,
+        ?array $cookies = null,
+        ?array $files = null
+    ) {
+        $this->query = new ParameterBag($query ?? $_GET);
+        $this->request = new ParameterBag($request ?? $_POST);
+        $this->attributes = new ParameterBag();
+
+        $server ??= $_SERVER;
+
+        $this->server = new ServerBag($server);
+        $this->headers = new HeaderBag($this->extractHeaders($server));
+        $this->cookies = new CookieBag($cookies ?? $_COOKIE);
+        $this->files = new FileBag($files ?? $_FILES);
+    }
+
+    public static function capture(): self
+    {
+        return new self();
+    }
+
+    public function method(): string
+    {
+        return $this->server->method();
+    }
+
+    public function uri(): string
+    {
+        return $this->server->uri();
+    }
+
+    public function path(): string
+    {
+        return $this->server->path();
+    }
+
+    public function host(): string
+    {
+        return $this->server->host();
+    }
+
+    public function scheme(): string
+    {
+        return $this->server->scheme();
+    }
+
+    public function url(): string
+    {
+        return sprintf(
+            '%s://%s%s',
+            $this->scheme(),
+            $this->host(),
+            $this->path()
+        );
+    }
+
+    public function fullUrl(): string
+    {
+        $query = $this->server->queryString();
+
+        return $query === ''
+            ? $this->url()
+            : $this->url() . '?' . $query;
+    }
+
+    public function input(string $key, mixed $default = null): mixed
+    {
+        if ($this->request->has($key)) {
+            return $this->request->get($key);
+        }
+
+        if ($this->query->has($key)) {
+            return $this->query->get($key);
+        }
+
+        $json = $this->json();
+
+        return $json[$key] ?? $default;
+    }
+
+    public function all(): array
+    {
+        return array_merge(
+            $this->query->all(),
+            $this->request->all(),
+            $this->json()
+        );
+    }
+
+    public function only(array $keys): array
+    {
+        $data = [];
+
+        foreach ($keys as $key) {
+            if (($value = $this->input($key)) !== null) {
+                $data[$key] = $value;
+            }
+        }
+
+        return $data;
+    }
+
+    public function except(array $keys): array
+    {
+        $data = $this->all();
+
+        foreach ($keys as $key) {
+            unset($data[$key]);
+        }
+
+        return $data;
+    }
+
+    public function file(string $key): UploadedFile|array|null
+    {
+        return $this->files->get($key);
+    }
+
+    public function header(string $key, ?string $default = null): ?string
+    {
+        return $this->headers->get($key, $default);
+    }
+
+    public function cookie(string $key, mixed $default = null): mixed
+    {
+        return $this->cookies->get($key, $default);
+    }
+
+    public function isMethod(string $method): bool
+    {
+        return strtoupper($method) === $this->method();
+    }
+
+    public function isAjax(): bool
+    {
+        return $this->server->isAjax();
+    }
+
+    public function acceptsJson(): bool
+    {
+        return $this->server->acceptsJson();
+    }
+
+    public function ip(): string
+    {
+        return $this->server->ip();
+    }
+
+    public function bearerToken(): ?string
+    {
+        return $this->server->bearerToken();
+    }
+
+    /**
+     * @return array<string,mixed>
+     */
+    public function json(): array
+    {
+        if ($this->json !== null) {
+            return $this->json;
+        }
+
+        $body = file_get_contents('php://input');
+
+        if ($body === false || $body === '') {
+            return $this->json = [];
+        }
+
+        try {
+            $decoded = json_decode(
+                $body,
+                true,
+                512,
+                JSON_THROW_ON_ERROR
+            );
+        } catch (JsonException) {
+            return $this->json = [];
+        }
+
+        return $this->json = is_array($decoded)
+            ? $decoded
+            : [];
+    }
+
+    /**
+     * @param array<string,mixed> $server
+     * @return array<string,string>
+     */
+    private function extractHeaders(array $server): array
+    {
+        $headers = [];
+
+        foreach ($server as $key => $value) {
+            if (str_starts_with($key, 'HTTP_')) {
+                $name = str_replace('_', '-', substr($key, 5));
+                $headers[$name] = (string) $value;
+            }
+        }
+
+        if (isset($server['CONTENT_TYPE'])) {
+            $headers['Content-Type'] = (string) $server['CONTENT_TYPE'];
+        }
+
+        if (isset($server['CONTENT_LENGTH'])) {
+            $headers['Content-Length'] = (string) $server['CONTENT_LENGTH'];
+        }
+
+        if (isset($server['CONTENT_MD5'])) {
+            $headers['Content-MD5'] = (string) $server['CONTENT_MD5'];
+        }
+
+        return $headers;
+    }
+}

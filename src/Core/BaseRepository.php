@@ -15,9 +15,8 @@ abstract class BaseRepository
 
     protected string $primaryKey = 'id';
 
-    public function __construct(
-        Database $database
-    ) {
+    public function __construct(Database $database)
+    {
         $this->database = $database;
     }
 
@@ -37,68 +36,161 @@ abstract class BaseRepository
             $sql .= " ORDER BY {$orderBy} {$direction}";
         }
 
-        $stmt = $this->database->query($sql);
-
         return array_map(
             [$this, 'map'],
-            $stmt->fetchAll(PDO::FETCH_ASSOC)
+            $this->fetchAll($sql)
         );
     }
 
     public function find(int $id): mixed
     {
-        $stmt = $this->database->prepare("
+        $row = $this->fetch("
             SELECT *
             FROM {$this->table}
             WHERE {$this->primaryKey} = :id
             LIMIT 1
-        ");
-
-        $stmt->execute([
+        ", [
             'id' => $id,
         ]);
-
-        $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
         return $row ? $this->map($row) : null;
     }
 
-    public function exists(int $id): bool
+    public function findBy(array $criteria): array
     {
-        $stmt = $this->database->prepare("
-            SELECT COUNT(*)
+        [$where, $params] = $this->buildWhereClause($criteria);
+
+        return array_map(
+            [$this, 'map'],
+            $this->fetchAll("
+                SELECT *
+                FROM {$this->table}
+                {$where}
+            ", $params)
+        );
+    }
+
+    public function findOneBy(array $criteria): mixed
+    {
+        [$where, $params] = $this->buildWhereClause($criteria);
+
+        $row = $this->fetch("
+            SELECT *
             FROM {$this->table}
+            {$where}
+            LIMIT 1
+        ", $params);
+
+        return $row ? $this->map($row) : null;
+    }
+
+    public function exists(array|int $criteria): bool
+    {
+        if (is_int($criteria)) {
+            $criteria = [
+                $this->primaryKey => $criteria,
+            ];
+        }
+
+        [$where, $params] = $this->buildWhereClause($criteria);
+
+        $row = $this->fetch("
+            SELECT COUNT(*) AS aantal
+            FROM {$this->table}
+            {$where}
+        ", $params);
+
+        return (int) ($row['aantal'] ?? 0) > 0;
+    }
+
+    public function count(array $criteria = []): int
+    {
+        [$where, $params] = $this->buildWhereClause($criteria);
+
+        $row = $this->fetch("
+            SELECT COUNT(*) AS aantal
+            FROM {$this->table}
+            {$where}
+        ", $params);
+
+        return (int) ($row['aantal'] ?? 0);
+    }
+
+    public function insert(array $data): int
+    {
+        if ($data === []) {
+            throw new RuntimeException('Insert data mag niet leeg zijn.');
+        }
+
+        $columns = array_keys($data);
+
+        $columnSql = implode(', ', $columns);
+        $valueSql = implode(', ', array_map(
+            static fn (string $column): string => ':' . $column,
+            $columns
+        ));
+
+        $this->execute("
+            INSERT INTO {$this->table}
+            ({$columnSql})
+            VALUES
+            ({$valueSql})
+        ", $data);
+
+        return $this->lastInsertId();
+    }
+
+    public function updateById(
+        int $id,
+        array $data
+    ): bool {
+        if ($data === []) {
+            return false;
+        }
+
+        $setSql = implode(', ', array_map(
+            static fn (string $column): string => "{$column} = :{$column}",
+            array_keys($data)
+        ));
+
+        $data['id'] = $id;
+
+        return $this->execute("
+            UPDATE {$this->table}
+            SET {$setSql}
             WHERE {$this->primaryKey} = :id
-        ");
-
-        $stmt->execute([
-            'id' => $id,
-        ]);
-
-        return (bool) $stmt->fetchColumn();
+        ", $data);
     }
 
     public function delete(int $id): void
     {
-        $stmt = $this->database->prepare("
+        $this->deleteById($id);
+    }
+
+    public function deleteById(int $id): bool
+    {
+        return $this->execute("
             DELETE
             FROM {$this->table}
             WHERE {$this->primaryKey} = :id
-        ");
-
-        $stmt->execute([
+        ", [
             'id' => $id,
         ]);
     }
 
-    public function count(): int
+    public function beginTransaction(): bool
     {
-        $stmt = $this->database->query("
-            SELECT COUNT(*)
-            FROM {$this->table}
-        ");
+        return $this->database->beginTransaction();
+    }
 
-        return (int) $stmt->fetchColumn();
+    public function commit(): bool
+    {
+        return $this->database->commit();
+    }
+
+    public function rollBack(): bool
+    {
+        return $this->database->rollback();
     }
 
     protected function fetchAll(
@@ -106,7 +198,6 @@ abstract class BaseRepository
         array $params = []
     ): array {
         $stmt = $this->database->prepare($sql);
-
         $stmt->execute($params);
 
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -117,7 +208,6 @@ abstract class BaseRepository
         array $params = []
     ): ?array {
         $stmt = $this->database->prepare($sql);
-
         $stmt->execute($params);
 
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -141,8 +231,32 @@ abstract class BaseRepository
             ->lastInsertId();
     }
 
-    /**
-     * @throws RuntimeException
-     */
+    protected function buildWhereClause(array $criteria): array
+    {
+        if ($criteria === []) {
+            return ['', []];
+        }
+
+        $where = [];
+        $params = [];
+
+        foreach ($criteria as $column => $value) {
+            $param = str_replace('.', '_', (string) $column);
+
+            if ($value === null) {
+                $where[] = "{$column} IS NULL";
+                continue;
+            }
+
+            $where[] = "{$column} = :{$param}";
+            $params[$param] = $value;
+        }
+
+        return [
+            'WHERE ' . implode(' AND ', $where),
+            $params,
+        ];
+    }
+
     abstract protected function map(array $row): mixed;
 }

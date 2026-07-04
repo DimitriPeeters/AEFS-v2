@@ -4,171 +4,124 @@ declare(strict_types=1);
 
 namespace AEFS\Core;
 
+use AEFS\HTTP\Request;
+use AEFS\HTTP\Response;
 use RuntimeException;
 
 final class Router
 {
     private RouteCollection $routes;
 
-    private MiddlewarePipeline $pipeline;
-
-    public function __construct()
-    {
-        $this->routes = new RouteCollection();
-        $this->pipeline = new MiddlewarePipeline();
+    public function __construct(
+        ?RouteCollection $routes = null
+    ) {
+        $this->routes = $routes ?? new RouteCollection();
     }
 
-    public function get(string $uri, callable|array $action): Route
+    public function get(string $uri, mixed $action): Route
     {
-        return $this->add('GET', $uri, $action);
+        return $this->map(['GET'], $uri, $action);
     }
 
-    public function post(string $uri, callable|array $action): Route
+    public function post(string $uri, mixed $action): Route
     {
-        return $this->add('POST', $uri, $action);
+        return $this->map(['POST'], $uri, $action);
     }
 
-    public function put(string $uri, callable|array $action): Route
+    public function put(string $uri, mixed $action): Route
     {
-        return $this->add('PUT', $uri, $action);
+        return $this->map(['PUT'], $uri, $action);
     }
 
-    public function delete(string $uri, callable|array $action): Route
+    public function patch(string $uri, mixed $action): Route
     {
-        return $this->add('DELETE', $uri, $action);
+        return $this->map(['PATCH'], $uri, $action);
     }
 
-    private function add(
-        string $method,
-        string $uri,
-        callable|array $action
-    ): Route {
+    public function delete(string $uri, mixed $action): Route
+    {
+        return $this->map(['DELETE'], $uri, $action);
+    }
 
-        $uri = '/' . trim($uri, '/');
+    public function options(string $uri, mixed $action): Route
+    {
+        return $this->map(['OPTIONS'], $uri, $action);
+    }
 
-        if ($uri === '//') {
-            $uri = '/';
-        }
-
-        $route = new Route(
-            method: strtoupper($method),
-            uri: $uri,
-            action: $action
+    public function any(string $uri, mixed $action): Route
+    {
+        return $this->map(
+            ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+            $uri,
+            $action
         );
+    }
+
+    /**
+     * @param array<int,string> $methods
+     */
+    public function map(array $methods, string $uri, mixed $action): Route
+    {
+        $route = new Route($methods, $uri, $action);
 
         $this->routes->add($route);
 
         return $route;
     }
 
-    public function dispatch(
-        string $method,
-        string $uri
-    ): mixed {
-
-        $method = strtoupper($method);
-        $uri = $this->normalizeUri($uri);
-
-        $route = $this->routes->get($method, $uri);
-
-        if ($route === null) {
-            Response::html(
-                '<h1>404 - Pagina niet gevonden</h1>',
-                404
-            );
-        }
-
-        $request = new Request();
-
-        $request->setRouteParameters(
-            $route->parameters()
-        );
-
-        return $this->pipeline->handle(
-
-            $request,
-
-            $route->getMiddleware(),
-
-            function (Request $request) use ($route) {
-
-                $action = $route->action;
-
-                if (is_callable($action)) {
-                    return $action($request);
-                }
-
-                if (is_array($action)) {
-
-                    [$controllerClass, $controllerMethod] = $action;
-
-                    $controller = Container::get($controllerClass);
-
-                    if (!method_exists($controller, $controllerMethod)) {
-                        throw new RuntimeException(
-                            sprintf(
-                                'Methode %s::%s bestaat niet.',
-                                $controllerClass,
-                                $controllerMethod
-                            )
-                        );
-                    }
-
-                    return $controller->$controllerMethod($request);
-                }
-
-                throw new RuntimeException(
-                    'Ongeldige route actie.'
-                );
+    public function dispatch(Request $request): Response
+    {
+        foreach ($this->routes as $route) {
+            if (!$route->allows($request->method())) {
+                continue;
             }
 
-        );
-    }
+            if ($route->uri() !== $request->path()) {
+                continue;
+            }
 
-    private function normalizeUri(string $uri): string
-    {
-        $uri = parse_url(
-            $uri,
-            PHP_URL_PATH
-        ) ?? '/';
-
-        $basePath = $this->detectBasePath();
-
-        if (
-            $basePath !== ''
-            && str_starts_with($uri, $basePath)
-        ) {
-            $uri = substr(
-                $uri,
-                strlen($basePath)
-            );
+            return $this->dispatchRoute($route);
         }
 
-        $uri = '/' . trim($uri, '/');
-
-        return $uri === '//'
-            ? '/'
-            : $uri;
-    }
-
-    private function detectBasePath(): string
-    {
-        $script = $_SERVER['SCRIPT_NAME'] ?? '';
-
-        $path = str_replace(
-            '\\',
-            '/',
-            dirname($script)
+        return new Response(
+            '404 Not Found',
+            404
         );
-
-        return rtrim($path, '/');
     }
 
-    /**
-     * @return RouteCollection
-     */
     public function routes(): RouteCollection
     {
         return $this->routes;
+    }
+
+    private function dispatchRoute(Route $route): Response
+    {
+        $action = $route->action();
+
+        if (is_callable($action)) {
+            $response = $action();
+
+            if ($response instanceof Response) {
+                return $response;
+            }
+
+            return new Response((string) $response);
+        }
+
+        if (is_array($action) && count($action) === 2) {
+            [$class, $method] = $action;
+
+            $controller = new $class();
+
+            $response = $controller->{$method}();
+
+            if ($response instanceof Response) {
+                return $response;
+            }
+
+            return new Response((string) $response);
+        }
+
+        throw new RuntimeException('Invalid route action.');
     }
 }

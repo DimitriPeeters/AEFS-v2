@@ -4,70 +4,32 @@ declare(strict_types=1);
 
 namespace AEFS\Core;
 
-final class RouteCollection
+use Countable;
+use IteratorAggregate;
+use ArrayIterator;
+use Traversable;
+
+final class RouteCollection implements IteratorAggregate, Countable
 {
     /**
-     * @var array<string, array<string, Route>>
+     * @var array<int, Route>
      */
-    private array $staticRoutes = [];
+    private array $routes = [];
 
     /**
-     * @var array<string, array<int, Route>>
+     * @var array<string, Route>
      */
-    private array $dynamicRoutes = [];
+    private array $namedRoutes = [];
 
-    public function add(Route $route): void
+    public function add(Route $route): self
     {
-        if (str_contains($route->uri, '{')) {
+        $this->routes[] = $route;
 
-            $this->dynamicRoutes[$route->method][] = $route;
-
-            return;
+        if ($route->getName() !== null) {
+            $this->namedRoutes[$route->getName()] = $route;
         }
 
-        $this->staticRoutes[$route->method][$route->uri] = $route;
-    }
-
-    public function get(string $method, string $uri): ?Route
-    {
-        // Exacte route eerst
-
-        if (isset($this->staticRoutes[$method][$uri])) {
-            return $this->staticRoutes[$method][$uri];
-        }
-
-        // Daarna dynamische routes
-
-        foreach ($this->dynamicRoutes[$method] ?? [] as $route) {
-
-            $parameters = $route->compile($uri);
-
-            if ($parameters === null) {
-                continue;
-            }
-
-            $route->setParameters($parameters);
-
-            return $route;
-        }
-
-        return null;
-    }
-
-    /**
-     * @return array<string, array<string, Route>>
-     */
-    public function staticRoutes(): array
-    {
-        return $this->staticRoutes;
-    }
-
-    /**
-     * @return array<string, array<int, Route>>
-     */
-    public function dynamicRoutes(): array
-    {
-        return $this->dynamicRoutes;
+        return $this;
     }
 
     /**
@@ -75,31 +37,51 @@ final class RouteCollection
      */
     public function all(): array
     {
-        $routes = [];
-
-        foreach ($this->staticRoutes as $methodRoutes) {
-            foreach ($methodRoutes as $route) {
-                $routes[] = $route;
-            }
-        }
-
-        foreach ($this->dynamicRoutes as $methodRoutes) {
-            foreach ($methodRoutes as $route) {
-                $routes[] = $route;
-            }
-        }
-
-        return $routes;
+        return $this->routes;
     }
 
-    public function count(): int
+    public function findByName(string $name): ?Route
     {
-        return count($this->all());
+        return $this->namedRoutes[$name] ?? null;
+    }
+
+    public function hasNamed(string $name): bool
+    {
+        return isset($this->namedRoutes[$name]);
     }
 
     public function clear(): void
     {
-        $this->staticRoutes = [];
-        $this->dynamicRoutes = [];
+        $this->routes = [];
+        $this->namedRoutes = [];
+    }
+
+    public function count(): int
+    {
+        return count($this->routes);
+    }
+
+    public function isEmpty(): bool
+    {
+        return $this->routes === [];
+    }
+
+    public function first(): ?Route
+    {
+        return $this->routes[0] ?? null;
+    }
+
+    public function last(): ?Route
+    {
+        if ($this->routes === []) {
+            return null;
+        }
+
+        return $this->routes[array_key_last($this->routes)];
+    }
+
+    public function getIterator(): Traversable
+    {
+        return new ArrayIterator($this->routes);
     }
 }

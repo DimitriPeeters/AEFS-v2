@@ -6,144 +6,183 @@ namespace AEFS\Core;
 
 use Closure;
 use ReflectionClass;
+use ReflectionException;
 use ReflectionNamedType;
 use RuntimeException;
 
 final class Container
 {
     /**
-     * @var array<string,Closure>
+     * @var array<string, Closure|class-string|object>
      */
-    private static array $bindings = [];
+    private array $bindings = [];
 
     /**
-     * @var array<string,object>
+     * @var array<string, object>
      */
-    private static array $instances = [];
+    private array $instances = [];
 
-    public static function bind(
-        string $abstract,
-        Closure $factory
-    ): void {
-        self::$bindings[$abstract] = $factory;
+    public function bind(string $abstract, Closure|string $concrete): void
+    {
+        $this->bindings[$abstract] = $concrete;
     }
 
-    public static function singleton(
-        string $abstract,
-        Closure $factory
-    ): void {
+    public function singleton(string $abstract, Closure|string|object $concrete): void
+    {
+        if (is_object($concrete) && !($concrete instanceof Closure)) {
+            $this->instances[$abstract] = $concrete;
 
-        self::$bindings[$abstract] = function () use (
-            $abstract,
-            $factory
-        ) {
+            return;
+        }
 
-            if (!isset(self::$instances[$abstract])) {
-
-                self::$instances[$abstract] = $factory();
-
+        $this->bindings[$abstract] = function (Container $container) use ($concrete): object {
+            if ($concrete instanceof Closure) {
+                return $concrete($container);
             }
 
-            return self::$instances[$abstract];
-
+            return $container->build($concrete);
         };
     }
 
-    public static function has(string $abstract): bool
+    public function instance(string $abstract, object $instance): void
     {
-        return isset(self::$bindings[$abstract]);
+        $this->instances[$abstract] = $instance;
     }
 
-    public static function get(string $abstract): mixed
+    public function has(string $abstract): bool
     {
-        if (isset(self::$instances[$abstract])) {
-
-            return self::$instances[$abstract];
-
-        }
-
-        if (isset(self::$bindings[$abstract])) {
-
-            return self::$bindings[$abstract]();
-
-        }
-
-        return self::build($abstract);
+        return isset($this->instances[$abstract]) || isset($this->bindings[$abstract]);
     }
 
-    private static function build(string $class): object
+    public function get(string $abstract): object
     {
-        if (!class_exists($class)) {
-
-            throw new RuntimeException(
-                "Class {$class} bestaat niet."
-            );
-
+        if (isset($this->instances[$abstract])) {
+            return $this->instances[$abstract];
         }
 
-        $reflection = new ReflectionClass($class);
+        if (isset($this->bindings[$abstract])) {
+            $binding = $this->bindings[$abstract];
+
+            if ($binding instanceof Closure) {
+                $object = $binding($this);
+
+                if (!is_object($object)) {
+                    throw new RuntimeException(sprintf(
+                        'Container binding [%s] did not return an object.',
+                        $abstract
+                    ));
+                }
+
+                return $object;
+            }
+
+            return $this->build($binding);
+        }
+
+        return $this->build($abstract);
+    }
+
+    /**
+     * @template T of object
+     *
+     * @param class-string<T> $class
+     *
+     * @return T
+     */
+    public function build(string $class): object
+    {
+        try {
+            $reflection = new ReflectionClass($class);
+        } catch (ReflectionException $e) {
+            throw new RuntimeException(sprintf(
+                'Class [%s] does not exist.',
+                $class
+            ), previous: $e);
+        }
 
         if (!$reflection->isInstantiable()) {
-
-            throw new RuntimeException(
-                "{$class} is niet instantieerbaar."
-            );
-
+            throw new RuntimeException(sprintf(
+                'Class [%s] is not instantiable.',
+                $class
+            ));
         }
 
         $constructor = $reflection->getConstructor();
 
         if ($constructor === null) {
-
-            return new $class();
-
+            return $reflection->newInstance();
         }
 
         $arguments = [];
 
         foreach ($constructor->getParameters() as $parameter) {
-
             $type = $parameter->getType();
 
-            if (!$type instanceof ReflectionNamedType) {
-
-                throw new RuntimeException(
-                    "Kan parameter {$parameter->getName()} niet oplossen."
-                );
-
-            }
-
-            if ($type->isBuiltin()) {
-
+            if (!$type instanceof ReflectionNamedType || $type->isBuiltin()) {
                 if ($parameter->isDefaultValueAvailable()) {
-
                     $arguments[] = $parameter->getDefaultValue();
 
                     continue;
-
                 }
 
-                throw new RuntimeException(
-                    "Primitive parameter {$parameter->getName()} kan niet geïnjecteerd worden."
-                );
-
+                throw new RuntimeException(sprintf(
+                    'Unable to resolve parameter [$%s] in [%s].',
+                    $parameter->getName(),
+                    $class
+                ));
             }
 
-            $arguments[] = self::get(
-                $type->getName()
-            );
-
+            $arguments[] = $this->get($type->getName());
         }
 
-        return $reflection->newInstanceArgs(
-            $arguments
-        );
+        return $reflection->newInstanceArgs($arguments);
     }
 
-    public static function clear(): void
+    /**
+     * @param callable|array{0:object|string,1:string} $callable
+     */
+    public function call(callable|array $callable): mixed
     {
-        self::$bindings = [];
+        if (is_array($callable)) {
+            $target = is_string($callable[0])
+                ? $this->get($callable[0])
+                : $callable[0];
 
-        self::$instances = [];
+            $method = $callable[1];
+
+            $reflection = new \ReflectionMethod($target, $method);
+        } else {
+            $reflection = new \ReflectionFunction(Closure::fromCallable($callable));
+            $target = null;
+        }
+
+        $arguments = [];
+
+        foreach ($reflection->getParameters() as $parameter) {
+            $type = $parameter->getType();
+
+            if ($type instanceof ReflectionNamedType && !$type->isBuiltin()) {
+                $arguments[] = $this->get($type->getName());
+
+                continue;
+            }
+
+            if ($parameter->isDefaultValueAvailable()) {
+                $arguments[] = $parameter->getDefaultValue();
+
+                continue;
+            }
+
+            throw new RuntimeException(sprintf(
+                'Unable to resolve parameter [$%s].',
+                $parameter->getName()
+            ));
+        }
+
+        if ($reflection instanceof \ReflectionMethod) {
+            return $reflection->invokeArgs($target, $arguments);
+        }
+
+        return $reflection->invokeArgs($arguments);
     }
 }

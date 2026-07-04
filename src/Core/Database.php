@@ -10,80 +10,36 @@ use RuntimeException;
 
 final class Database
 {
-    private static ?Database $instance = null;
-
     private PDO $pdo;
 
-    private function __construct()
+    public function __construct(Config $config)
     {
-        $config = require dirname(__DIR__, 2) . '/config/database.php';
+        $host = $config->get('database.host', 'localhost');
+        $port = $config->get('database.port', '3306');
+        $database = $config->get('database.database');
+        $username = $config->get('database.username');
+        $password = $config->get('database.password');
+        $charset = $config->get('database.charset', 'utf8mb4');
 
-        $host = $config['host'];
-        $db   = $config['database'];
-        $user = $config['username'];
-        $pass = $config['password'];
-        $charset = $config['charset'];
+        if (!$database || !$username) {
+            throw new RuntimeException('Database configuration is incomplete.');
+        }
 
-        $dsn = "mysql:host={$host};dbname={$db};charset={$charset}";
+        $dsn = "mysql:host={$host};port={$port};dbname={$database};charset={$charset}";
 
         try {
-
-            $this->pdo = new PDO(
-                $dsn,
-                $user,
-                $pass,
-                [
-                    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-                    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-                    PDO::ATTR_EMULATE_PREPARES => false,
-                ]
-            );
-
-        } catch (PDOException $e) {
-
-            throw new RuntimeException(
-                'Databaseverbinding mislukt: ' . $e->getMessage()
-            );
-
+            $this->pdo = new PDO($dsn, $username, $password, [
+                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+                PDO::ATTR_EMULATE_PREPARES => false,
+            ]);
+        } catch (PDOException $exception) {
+            throw new RuntimeException('Database connection failed: ' . $exception->getMessage());
         }
-    }
-
-    public static function getInstance(): Database
-    {
-        if (self::$instance === null) {
-            self::$instance = new Database();
-        }
-
-        return self::$instance;
     }
 
     public function pdo(): PDO
     {
         return $this->pdo;
     }
-
-    public function beginTransaction(): bool
-    {
-        return $this->pdo->beginTransaction();
-    }
-
-    public function commit(): bool
-    {
-        return $this->pdo->commit();
-    }
-
-    public function rollback(): bool
-    {
-        return $this->pdo->rollBack();
-    }
-
-    public function query(string $sql)
-{
-    return $this->pdo->query($sql);
-}
-
-public function prepare(string $sql)
-{
-    return $this->pdo->prepare($sql);
-}
 }

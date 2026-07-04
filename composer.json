@@ -1,17 +1,15 @@
 {
-    "name": "aefs/v2",
-    "type": "project",
-    "autoload": {
-        "psr-4": {
-            
-            "AEFS\\Controllers\\": "app/Controllers/",
-            "AEFS\\Models\\": "app/Models/",
-            "AEFS\\Repositories\\": "app/Repositories/",
-            "AEFS\\Services\\": "app/Services/",
-            "AEFS\\Middleware\\": "app/Middleware/",
-            "AEFS\\":"app/"
-        },
-
-        "files":["app/helpers.php"]
+  "name": "aefs/aefs-v2",
+  "description": "AEFS v2 custom MVC framework",
+  "type": "project",
+  "require": {
+    "php": "^8.4",
+    "ext-pdo": "*"
+  },
+  "autoload": {
+    "psr-4": {
+      "AEFS\\": "src/",
+      "App\\": "app/"
     }
+  }
 }

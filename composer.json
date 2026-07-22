@@ -11,5 +11,13 @@
       "AEFS\\": "src/",
       "App\\": "app/"
     }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Tests\\": "tests/"
+    }
+  },
+  "scripts": {
+    "test:view": "php bin/test-view.php"
   }
 }

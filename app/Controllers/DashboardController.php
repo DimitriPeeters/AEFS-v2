@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
+use AEFS\Core\Http\Request;
+use AEFS\Core\Http\Response;
 use App\Services\DashboardService;
 
 final class DashboardController extends BaseController
@@ -13,19 +15,11 @@ final class DashboardController extends BaseController
     ) {
     }
 
-    public function index(): void
+    public function index(Request $request): Response
     {
-        $dashboard = $this->dashboardService->getDashboardData();
-
-        $this->view(
+        return $this->view(
             'dashboard.index',
-            [
-                'title'           => 'Dashboard',
-                'statistics'      => $dashboard['statistics'],
-                'latestMembers'   => $dashboard['latestMembers'],
-                'upcomingEvents'  => $dashboard['upcomingEvents'],
-                'openShifts'      => $dashboard['openShifts'],
-            ]
+            $this->dashboardService->getDashboardData()
         );
     }
 }

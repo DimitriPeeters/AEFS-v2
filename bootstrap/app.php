@@ -5,13 +5,13 @@ declare(strict_types=1);
 use AEFS\Core\Application;
 use AEFS\Core\Config;
 use AEFS\Core\Container;
+use AEFS\Core\Http\Request;
 use AEFS\Core\Kernel;
 use AEFS\Core\Router;
 use AEFS\Core\Session;
 use AEFS\Core\View;
 use AEFS\Database\DatabaseManager;
 use AEFS\Database\DB;
-use AEFS\Core\Http\Request;
 
 $basePath = dirname(__DIR__);
 
@@ -31,10 +31,21 @@ $databaseManager = new DatabaseManager(
 
 DB::setManager($databaseManager);
 
-$container->instance(DatabaseManager::class, $databaseManager);
+$container->instance(
+    DatabaseManager::class,
+    $databaseManager
+);
 
 $container->singleton(Session::class);
-$container->instance(Request::class, Request::capture());
+$container->instance(
+    Request::class,
+    Request::capture()
+);
+
+require __DIR__
+    . DIRECTORY_SEPARATOR
+    . 'view.php';
+
 $container->singleton(View::class);
 $container->singleton(Router::class);
 $container->singleton(Kernel::class);

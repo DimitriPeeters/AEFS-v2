@@ -4,20 +4,27 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Repositories\DashboardRepository;
+
 final class DashboardService
 {
+    public function __construct(
+        private DashboardRepository $dashboardRepository
+    ) {
+    }
+
     public function getDashboardData(): array
     {
         return [
             'statistics' => [
-                'members' => 0,
-                'users' => 0,
-                'events' => 0,
-                'shifts' => 0,
+                'members' => $this->dashboardRepository->countMembers(),
+                'users' => $this->dashboardRepository->countUsers(),
+                'events' => $this->dashboardRepository->countEvents(),
+                'shifts' => $this->dashboardRepository->countOpenShifts(),
             ],
-            'latestMembers' => [],
-            'upcomingEvents' => [],
-            'openShifts' => [],
+            'latestMembers' => $this->dashboardRepository->latestMembers(),
+            'upcomingEvents' => $this->dashboardRepository->upcomingEvents(),
+            'openShifts' => $this->dashboardRepository->openShifts(),
         ];
     }
 }

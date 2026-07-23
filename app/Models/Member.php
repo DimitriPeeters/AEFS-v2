@@ -60,10 +60,19 @@ final class Member
 
     public function initials(): string
     {
-        return strtoupper(
-            mb_substr($this->voornaam, 0, 1) .
-            mb_substr($this->achternaam, 0, 1)
-        );
+        $firstNameInitial = function_exists('mb_substr')
+            ? mb_substr($this->voornaam, 0, 1)
+            : substr($this->voornaam, 0, 1);
+
+        $lastNameInitial = function_exists('mb_substr')
+            ? mb_substr($this->achternaam, 0, 1)
+            : substr($this->achternaam, 0, 1);
+
+        $initials = $firstNameInitial . $lastNameInitial;
+
+        return function_exists('mb_strtoupper')
+            ? mb_strtoupper($initials)
+            : strtoupper($initials);
     }
 
     public function isActive(): bool

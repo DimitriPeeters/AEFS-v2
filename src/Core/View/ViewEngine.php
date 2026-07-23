@@ -303,16 +303,24 @@ final class ViewEngine implements ViewEngineInterface
             }
 
             $componentData = array_replace(
+                $this->sharedData,
                 $instance->data(),
                 $data,
                 [
                     'slot' => $componentContext->defaultSlot(),
                     'slots' => $componentContext->slots(),
                     'component' => $instance,
+                    'view' => $this,
+                    'helpers' => $this->helpers,
                 ]
             );
 
-            return $this->include(
+            $componentData = $this->compose(
+                $instance->view(),
+                $componentData
+            );
+
+            return $this->renderNamedView(
                 $instance->view(),
                 $componentData
             );

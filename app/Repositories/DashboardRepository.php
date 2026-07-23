@@ -5,22 +5,64 @@ declare(strict_types=1);
 namespace App\Repositories;
 
 use AEFS\Database\DB;
+use AEFS\Database\Query\Expression;
+use App\Models\User;
 
 final class DashboardRepository
 {
-    public function countMembers(): int
+    public function countActiveMembers(): int
     {
-        return (int) DB::table('leden')->count();
+        return DB::table('leden as l')
+            ->join(
+                'gebruikers as g',
+                'g.lid_id',
+                '=',
+                'l.lid_id'
+            )
+            ->where('l.actief', '=', 1)
+            ->where('g.actief', '=', 1)
+            ->where(
+                'g.goedkeuringsstatus',
+                '=',
+                User::APPROVAL_APPROVED
+            )
+            ->count('l.lid_id');
     }
 
-    public function countUsers(): int
+    public function countPendingRegistrations(): int
     {
-        return (int) DB::table('gebruikers')->count();
+        return DB::table('gebruikers')
+            ->where(
+                'goedkeuringsstatus',
+                '=',
+                User::APPROVAL_PENDING
+            )
+            ->count();
     }
 
-    public function countEvents(): int
+    public function countActiveUsers(): int
     {
-        return (int) DB::table('evenementen')->count();
+        return DB::table('gebruikers')
+            ->where('actief', '=', 1)
+            ->where(
+                'goedkeuringsstatus',
+                '=',
+                User::APPROVAL_APPROVED
+            )
+            ->count();
+    }
+
+    public function countUpcomingEvents(): int
+    {
+        return DB::table('evenementen')
+            ->where(
+                Expression::raw(
+                    'COALESCE(`einddatum`, `startdatum`)'
+                ),
+                '>=',
+                date('Y-m-d')
+            )
+            ->count();
     }
 
     public function countOpenShifts(): int
@@ -31,11 +73,60 @@ final class DashboardRepository
     /**
      * @return array<int, array<string, mixed>>
      */
-    public function latestMembers(int $limit = 5): array
+    public function latestApprovedMembers(int $limit = 5): array
     {
-        return DB::table('leden')
-            ->orderBy('lid_id', 'DESC')
-            ->limit($limit)
+        return DB::table('leden as l')
+            ->select(
+                'l.lid_id',
+                'l.voornaam',
+                'l.achternaam',
+                'l.gemeente'
+            )
+            ->join(
+                'gebruikers as g',
+                'g.lid_id',
+                '=',
+                'l.lid_id'
+            )
+            ->where('l.actief', '=', 1)
+            ->where('g.actief', '=', 1)
+            ->where(
+                'g.goedkeuringsstatus',
+                '=',
+                User::APPROVAL_APPROVED
+            )
+            ->orderBy('l.lid_id', 'DESC')
+            ->limit(max(1, $limit))
+            ->get();
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    public function pendingRegistrations(int $limit = 5): array
+    {
+        return DB::table('gebruikers as g')
+            ->select(
+                'g.gebruiker_id',
+                'g.email',
+                'g.rol',
+                'g.goedkeuringsstatus',
+                'l.voornaam',
+                'l.achternaam'
+            )
+            ->join(
+                'leden as l',
+                'l.lid_id',
+                '=',
+                'g.lid_id'
+            )
+            ->where(
+                'g.goedkeuringsstatus',
+                '=',
+                User::APPROVAL_PENDING
+            )
+            ->orderBy('g.gebruiker_id', 'DESC')
+            ->limit(max(1, $limit))
             ->get();
     }
 
@@ -45,8 +136,15 @@ final class DashboardRepository
     public function upcomingEvents(int $limit = 5): array
     {
         return DB::table('evenementen')
+            ->where(
+                Expression::raw(
+                    'COALESCE(`einddatum`, `startdatum`)'
+                ),
+                '>=',
+                date('Y-m-d')
+            )
             ->orderBy('startdatum', 'ASC')
-            ->limit($limit)
+            ->limit(max(1, $limit))
             ->get();
     }
 
@@ -57,7 +155,7 @@ final class DashboardRepository
     {
         return DB::table('event_shifts')
             ->orderBy('shift_id', 'DESC')
-            ->limit($limit)
+            ->limit(max(1, $limit))
             ->get();
     }
 }

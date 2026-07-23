@@ -3,16 +3,11 @@
 declare(strict_types=1);
 
 use App\Controllers\AuthController;
+use App\Controllers\RegistrationController;
 use App\Middleware\AuthMiddleware;
 use App\Middleware\GuestMiddleware;
 
 /** @var AEFS\Core\Router $router */
-
-/*
-|--------------------------------------------------------------------------
-| Gast routes
-|--------------------------------------------------------------------------
-*/
 
 $router
     ->get('/login', [AuthController::class, 'login'])
@@ -24,11 +19,15 @@ $router
     ->middleware(GuestMiddleware::class)
     ->name('login.attempt');
 
-/*
-|--------------------------------------------------------------------------
-| Beveiligde routes
-|--------------------------------------------------------------------------
-*/
+$router
+    ->get('/register', [RegistrationController::class, 'create'])
+    ->middleware(GuestMiddleware::class)
+    ->name('register');
+
+$router
+    ->post('/register', [RegistrationController::class, 'store'])
+    ->middleware(GuestMiddleware::class)
+    ->name('register.store');
 
 $router
     ->post('/logout', [AuthController::class, 'logout'])

@@ -3,27 +3,37 @@
 declare(strict_types=1);
 
 use App\Controllers\UserController;
+use App\Middleware\AdminMiddleware;
 use App\Middleware\AuthMiddleware;
 
 /** @var AEFS\Core\Router $router */
 
-$router->get('/gebruikers',[UserController::class,'index'])
-    ->middleware(AuthMiddleware::class);
+$userMiddleware = [
+    AuthMiddleware::class,
+    AdminMiddleware::class,
+];
 
-$router->get('/gebruikers/nieuw',[UserController::class,'create'])
-    ->middleware(AuthMiddleware::class);
+$router
+    ->get('/users', [UserController::class, 'index'])
+    ->middleware(...$userMiddleware)
+    ->name('users.index');
 
-$router->post('/gebruikers',[UserController::class,'store'])
-    ->middleware(AuthMiddleware::class);
+$router
+    ->get('/users/{id}', [UserController::class, 'show'])
+    ->middleware(...$userMiddleware)
+    ->name('users.show');
 
-$router->get('/gebruikers/{id}',[UserController::class,'show'])
-    ->middleware(AuthMiddleware::class);
+$router
+    ->get('/users/{id}/edit', [UserController::class, 'edit'])
+    ->middleware(...$userMiddleware)
+    ->name('users.edit');
 
-$router->get('/gebruikers/{id}/bewerken',[UserController::class,'edit'])
-    ->middleware(AuthMiddleware::class);
+$router
+    ->post('/users/{id}/approve', [UserController::class, 'approve'])
+    ->middleware(...$userMiddleware)
+    ->name('users.approve');
 
-$router->post('/gebruikers/{id}',[UserController::class,'update'])
-    ->middleware(AuthMiddleware::class);
-
-$router->post('/gebruikers/{id}/verwijderen',[UserController::class,'delete'])
-    ->middleware(AuthMiddleware::class);
+$router
+    ->post('/users/{id}/update', [UserController::class, 'update'])
+    ->middleware(...$userMiddleware)
+    ->name('users.update');

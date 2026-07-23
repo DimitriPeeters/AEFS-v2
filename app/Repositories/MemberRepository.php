@@ -126,6 +126,10 @@ final class MemberRepository
 
     public function find(int $id): ?Member
     {
+        if ($id <= 0) {
+            return null;
+        }
+
         $statement = $this->database->prepare(
             '
             SELECT *
@@ -141,11 +145,37 @@ final class MemberRepository
 
         $row = $statement->fetch(PDO::FETCH_ASSOC);
 
-        if ($row === false) {
+        return is_array($row)
+            ? $this->mapper->fromDatabase($row)
+            : null;
+    }
+
+    public function findByEmail(string $email): ?Member
+    {
+        $email = strtolower(trim($email));
+
+        if ($email === '') {
             return null;
         }
 
-        return $this->mapper->fromDatabase($row);
+        $statement = $this->database->prepare(
+            '
+            SELECT *
+            FROM leden
+            WHERE LOWER(email) = :email
+            LIMIT 1
+            '
+        );
+
+        $statement->execute([
+            'email' => $email,
+        ]);
+
+        $row = $statement->fetch(PDO::FETCH_ASSOC);
+
+        return is_array($row)
+            ? $this->mapper->fromDatabase($row)
+            : null;
     }
 
     /**
@@ -248,17 +278,23 @@ final class MemberRepository
         $statement->execute($data);
     }
 
-    public function delete(int $id): void
-    {
+    public function updateActiveStatus(
+        int $id,
+        bool $active
+    ): void {
         $statement = $this->database->prepare(
             '
-            DELETE FROM leden
+            UPDATE leden
+            SET
+                actief = :actief,
+                bijgewerkt_op = NOW()
             WHERE lid_id = :id
             '
         );
 
         $statement->execute([
             'id' => $id,
+            'actief' => $active ? 1 : 0,
         ]);
     }
 

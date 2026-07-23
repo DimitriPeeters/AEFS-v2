@@ -1,49 +1,38 @@
 <?php
 
+/** @var string|null $title */
+/** @var string|null $content */
+/** @var string|null $footer */
 
+$title = isset($title)
+    ? trim((string) $title)
+    : '';
 
-/**
+$content = isset($content)
+    ? (string) $content
+    : '';
 
-$title
-
-$content
-
-$footer
-
-*/
-
+$footer = isset($footer)
+    ? (string) $footer
+    : '';
 ?>
 
-<div class="card">
-
-    <?php if(!empty($title)): ?>
-
-        <div class="card-header">
-
-            <div class="card-title">
-
-                <?= htmlspecialchars($title) ?>
-
-            </div>
-
-        </div>
-
+<section class="card">
+    <?php if ($title !== ''): ?>
+        <header class="card__header">
+            <h2 class="card__title">
+                <?= $this->escape($title) ?>
+            </h2>
+        </header>
     <?php endif; ?>
 
-    <div class="card-body">
-
-        <?= $content ?? '' ?>
-
+    <div class="card__body">
+        <?= $content ?>
     </div>
 
-    <?php if(!empty($footer)): ?>
-
-        <div class="card-footer">
-
+    <?php if ($footer !== ''): ?>
+        <footer class="card__footer">
             <?= $footer ?>
-
-        </div>
-
+        </footer>
     <?php endif; ?>
-
-</div>
+</section>

@@ -4,46 +4,58 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use AEFS\Database\DB;
+use AEFS\Core\Auth;
+use App\Repositories\UserRepository;
 
 final class AuthenticationService
 {
-    public function check(): bool
-    {
-        return isset($_SESSION['user_id']);
+    public function __construct(
+        private readonly UserRepository $users
+    ) {
     }
 
-    public function attempt(string $email, string $password): bool
+    public function check(): bool
     {
-        $user = DB::table('gebruikers')
-            ->where('email', '=', $email)
-            ->first();
+        return Auth::check();
+    }
+
+    public function attempt(
+        string $email,
+        string $password
+    ): bool {
+        $email = strtolower(trim($email));
+
+        if ($email === '' || $password === '') {
+            return false;
+        }
+
+        $user = $this->users->findByEmail($email);
 
         if ($user === null) {
             return false;
         }
 
-        if (!password_verify($password, (string) $user['wachtwoord_hash'])) {
+        if (!$user->isApproved() || !$user->isActive()) {
             return false;
         }
 
-        if ((int) ($user['actief'] ?? 0) !== 1) {
+        if (
+            $user->passwordHash === ''
+            || !password_verify(
+                $password,
+                $user->passwordHash
+            )
+        ) {
             return false;
         }
 
-        $_SESSION['user_id'] = (int) $user['gebruiker_id'];
-        $_SESSION['user_email'] = (string) $user['email'];
-        $_SESSION['user_role'] = (string) ($user['rol'] ?? 'lid');
+        Auth::login($user);
 
         return true;
     }
 
     public function logout(): void
     {
-        unset(
-            $_SESSION['user_id'],
-            $_SESSION['user_email'],
-            $_SESSION['user_role']
-        );
+        Auth::logout();
     }
 }

@@ -1,56 +1,41 @@
 <?php
 
-
-
 use AEFS\Core\View\Helper\ViewHelpers;
 
-/** @var array $leden */
-/** @var array $errors */
+/** @var ViewHelpers $helpers */
+/** @var array<int, App\Models\Member> $leden */
+/** @var string|null $title */
 
-
-
-$this->extend('layouts.app', ['title' => $title ?? null]);
+$this->extend(
+    'layouts.app',
+    [
+        'title' => $title ?? 'Nieuwe gebruiker',
+    ]
+);
 ?>
+
 <?php $this->startSection('content'); ?>
+<div class="user-page">
+    <header>
+        <h1>Nieuwe gebruiker</h1>
+        <p>Koppel een gebruikersaccount aan een lid.</p>
+    </header>
 
-<?= $this->component('page-header', [
-
-    'title' => 'Nieuwe gebruiker',
-
-    'subtitle' => 'Gebruiker toevoegen',
-
-]) ?>
-
-<?php if (!empty($errors)): ?>
-
-    <?= $this->component('alert', [
-
-        'type' => 'danger',
-
-        'message' => implode('<br>', $errors),
-
-    ]) ?>
-
-<?php endif; ?>
-
-<form
-    method="post"
-    action="<?= $helpers->url->to('/users') ?>"
->
-
-    <?= csrf_field() ?>
-
-    <?= $this->component('card', [
-
-        'title' => 'Gebruikersgegevens',
-
-        'content' => $this->component('users/form', [
-
-            'leden' => $leden,
-
-        ]),
-
-    ]) ?>
-
-</form>
+    <section class="card">
+        <form
+            method="post"
+            action="<?= $this->escape(
+                $helpers->url->to('/users')
+            ) ?>"
+            novalidate
+        >
+            <?= $this->component(
+                'users/form',
+                [
+                    'leden' => $leden,
+                ]
+            ) ?>
+        </form>
+    </section>
+</div>
 <?php $this->endSection(); ?>

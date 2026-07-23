@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Repositories;
 
+use AEFS\Core\BaseRepository;
 use AEFS\Core\Database;
 use App\Models\User;
 use PDO;
@@ -23,9 +24,14 @@ final class UserRepository extends BaseRepository
     /**
      * @return User[]
      */
-    public function all(): array
-    {
-        $stmt = $this->database->prepare("
+    public function all(
+        string $orderBy = '',
+        string $direction = 'ASC'
+    ): array {
+        unset($orderBy, $direction);
+
+        $statement = $this->database->prepare(
+            '
             SELECT
                 g.*,
                 l.voornaam,
@@ -34,24 +40,39 @@ final class UserRepository extends BaseRepository
             INNER JOIN leden l
                 ON l.lid_id = g.lid_id
             ORDER BY
-                l.voornaam,
-                l.achternaam
-        ");
+                CASE
+                    WHEN g.goedkeuringsstatus = :pending_status THEN 0
+                    ELSE 1
+                END ASC,
+                g.actief ASC,
+                l.voornaam ASC,
+                l.achternaam ASC
+            '
+        );
 
-        $stmt->execute();
+        $statement->execute([
+            'pending_status' => User::APPROVAL_PENDING,
+        ]);
 
         return array_map(
-            [$this, 'map'],
-            $stmt->fetchAll(PDO::FETCH_ASSOC)
+            fn (array $row): User => $this->map($row),
+            $statement->fetchAll(PDO::FETCH_ASSOC)
         );
     }
 
     /**
      * @return User[]
      */
-    public function search(string $zoek): array
+    public function search(string $search): array
     {
-        $stmt = $this->database->prepare("
+        $search = trim($search);
+
+        if ($search === '') {
+            return $this->all();
+        }
+
+        $statement = $this->database->prepare(
+            '
             SELECT
                 g.*,
                 l.voornaam,
@@ -59,35 +80,43 @@ final class UserRepository extends BaseRepository
             FROM gebruikers g
             INNER JOIN leden l
                 ON l.lid_id = g.lid_id
-            WHERE
-
-                l.voornaam LIKE :zoek
-
-                OR l.achternaam LIKE :zoek
-
-                OR g.email LIKE :zoek
-
+            WHERE l.voornaam LIKE :search_first_name
+               OR l.achternaam LIKE :search_last_name
+               OR g.email LIKE :search_email
             ORDER BY
+                CASE
+                    WHEN g.goedkeuringsstatus = :pending_status THEN 0
+                    ELSE 1
+                END ASC,
+                g.actief ASC,
+                l.voornaam ASC,
+                l.achternaam ASC
+            '
+        );
 
-                l.voornaam,
-                l.achternaam
-        ");
+        $value = '%' . $search . '%';
 
-        $stmt->execute([
-
-            'zoek' => '%' . $zoek . '%'
-
+        $statement->execute([
+            'search_first_name' => $value,
+            'search_last_name' => $value,
+            'search_email' => $value,
+            'pending_status' => User::APPROVAL_PENDING,
         ]);
 
         return array_map(
-            [$this, 'map'],
-            $stmt->fetchAll(PDO::FETCH_ASSOC)
+            fn (array $row): User => $this->map($row),
+            $statement->fetchAll(PDO::FETCH_ASSOC)
         );
     }
 
     public function find(int $id): ?User
     {
-        $stmt = $this->database->prepare("
+        if ($id <= 0) {
+            return null;
+        }
+
+        $statement = $this->database->prepare(
+            '
             SELECT
                 g.*,
                 l.voornaam,
@@ -95,57 +124,103 @@ final class UserRepository extends BaseRepository
             FROM gebruikers g
             INNER JOIN leden l
                 ON l.lid_id = g.lid_id
-            WHERE g.gebruiker_id = ?
-        ");
-
-        $stmt->execute([$id]);
-
-        $row = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        return $row
-            ? $this->map($row)
-            : null;
-    }
-
-    public function findByEmail(
-        string $email
-    ): ?User {
-
-        $stmt = $this->database->prepare("
-            SELECT
-                g.*,
-                l.voornaam,
-                l.achternaam
-            FROM gebruikers g
-            INNER JOIN leden l
-                ON l.lid_id = g.lid_id
-            WHERE g.email = ?
+            WHERE g.gebruiker_id = :id
             LIMIT 1
-        ");
+            '
+        );
 
-        $stmt->execute([$email]);
+        $statement->execute([
+            'id' => $id,
+        ]);
 
-        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        $row = $statement->fetch(PDO::FETCH_ASSOC);
 
-        return $row
+        return is_array($row)
             ? $this->map($row)
             : null;
     }
 
-    public function create(
-        array $data
-    ): int {
+    public function findByEmail(string $email): ?User
+    {
+        $email = strtolower(trim($email));
 
-        $stmt = $this->database->prepare("
+        if ($email === '') {
+            return null;
+        }
+
+        $statement = $this->database->prepare(
+            '
+            SELECT
+                g.*,
+                l.voornaam,
+                l.achternaam
+            FROM gebruikers g
+            INNER JOIN leden l
+                ON l.lid_id = g.lid_id
+            WHERE LOWER(g.email) = :email
+            LIMIT 1
+            '
+        );
+
+        $statement->execute([
+            'email' => $email,
+        ]);
+
+        $row = $statement->fetch(PDO::FETCH_ASSOC);
+
+        return is_array($row)
+            ? $this->map($row)
+            : null;
+    }
+
+    public function findByMemberId(int $memberId): ?User
+    {
+        if ($memberId <= 0) {
+            return null;
+        }
+
+        $statement = $this->database->prepare(
+            '
+            SELECT
+                g.*,
+                l.voornaam,
+                l.achternaam
+            FROM gebruikers g
+            INNER JOIN leden l
+                ON l.lid_id = g.lid_id
+            WHERE g.lid_id = :member_id
+            LIMIT 1
+            '
+        );
+
+        $statement->execute([
+            'member_id' => $memberId,
+        ]);
+
+        $row = $statement->fetch(PDO::FETCH_ASSOC);
+
+        return is_array($row)
+            ? $this->map($row)
+            : null;
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     */
+    public function create(array $data): int
+    {
+        $statement = $this->database->prepare(
+            '
             INSERT INTO gebruikers
             (
                 lid_id,
                 email,
                 wachtwoord_hash,
                 rol,
+                goedkeuringsstatus,
+                goedgekeurd_op,
                 actief,
-                laatste_login,
-                laatste_ip
+                mail_blacklist
             )
             VALUES
             (
@@ -153,161 +228,146 @@ final class UserRepository extends BaseRepository
                 :email,
                 :wachtwoord_hash,
                 :rol,
+                :goedkeuringsstatus,
+                :goedgekeurd_op,
                 :actief,
-                NULL,
-                NULL
+                :mail_blacklist
             )
-        ");
+            '
+        );
 
-        $stmt->execute([
-
-            'lid_id' => $data['lid_id'],
-
-            'email' => $data['email'],
-
+        $statement->execute([
+            'lid_id' => (int) $data['lid_id'],
+            'email' => strtolower(trim((string) $data['email'])),
             'wachtwoord_hash' => password_hash(
-                $data['password'],
+                (string) $data['password'],
                 PASSWORD_DEFAULT
             ),
-
-            'rol' => $data['rol'],
-
-            'actief' => !empty($data['actief'])
-
+            'rol' => (string) $data['rol'],
+            'goedkeuringsstatus' => (string) (
+                $data['goedkeuringsstatus']
+                ?? User::APPROVAL_APPROVED
+            ),
+            'goedgekeurd_op' => $data['goedgekeurd_op'] ?? null,
+            'actief' => !empty($data['actief']) ? 1 : 0,
+            'mail_blacklist' => !empty($data['mail_blacklist']) ? 1 : 0,
         ]);
 
-        return (int)$this->database->lastInsertId();
+        return $this->database->lastInsertId();
     }
 
-    public function update(
+    /**
+     * @param array<string, mixed> $data
+     */
+    public function updateAccess(
         int $id,
         array $data
     ): void {
-
-        $sql = "
-
+        $statement = $this->database->prepare(
+            '
             UPDATE gebruikers
-
             SET
-
-                lid_id = :lid_id,
-
-                email = :email,
-
                 rol = :rol,
-
-                actief = :actief
-
-        ";
-
-        if (!empty($data['password'])) {
-
-            $sql .= ",
-
-                wachtwoord_hash = :password
-
-            ";
-
-        }
-
-        $sql .= "
-
+                actief = :actief,
+                mail_blacklist = :mail_blacklist
             WHERE gebruiker_id = :id
+            '
+        );
 
-        ";
-
-        $stmt = $this->database->prepare($sql);
-
-        $params = [
-
+        $statement->execute([
             'id' => $id,
-
-            'lid_id' => $data['lid_id'],
-
-            'email' => $data['email'],
-
-            'rol' => $data['rol'],
-
-            'actief' => !empty($data['actief'])
-
-        ];
-
-        if (!empty($data['password'])) {
-
-            $params['password'] = password_hash(
-
-                $data['password'],
-
-                PASSWORD_DEFAULT
-
-            );
-
-        }
-
-        $stmt->execute($params);
-    }
-
-    public function delete(
-        int $id
-    ): void {
-
-        $stmt = $this->database->prepare("
-            DELETE
-            FROM gebruikers
-            WHERE gebruiker_id = ?
-        ");
-
-        $stmt->execute([$id]);
-    }
-
-    public function updateLogin(
-        int $id
-    ): void {
-
-        $stmt = $this->database->prepare("
-            UPDATE gebruikers
-            SET
-
-                laatste_login = NOW(),
-
-                laatste_ip = :ip
-
-            WHERE gebruiker_id = :id
-        ");
-
-        $stmt->execute([
-
-            'id' => $id,
-
-            'ip' => $_SERVER['REMOTE_ADDR'] ?? null
-
+            'rol' => (string) $data['rol'],
+            'actief' => !empty($data['actief']) ? 1 : 0,
+            'mail_blacklist' => !empty($data['mail_blacklist']) ? 1 : 0,
         ]);
     }
 
-    protected function map(
-        array $row
-    ): User {
-
-        return new User(
-
-            gebruikerId: (int)$row['gebruiker_id'],
-
-            lidId: (int)$row['lid_id'],
-
-            email: $row['email'],
-
-            role: $row['rol'],
-
-            actief: (bool)$row['actief'],
-
-            voornaam: $row['voornaam'],
-
-            achternaam: $row['achternaam'],
-
-            laatsteLogin: $row['laatste_login'],
-
-            laatsteIp: $row['laatste_ip']
-
+    /**
+     * @param array<string, mixed> $data
+     */
+    public function approve(
+        int $id,
+        array $data
+    ): void {
+        $statement = $this->database->prepare(
+            '
+            UPDATE gebruikers
+            SET
+                rol = :rol,
+                goedkeuringsstatus = :approval_status,
+                goedgekeurd_op = NOW(),
+                actief = 1,
+                mail_blacklist = :mail_blacklist
+            WHERE gebruiker_id = :id
+            '
         );
+
+        $statement->execute([
+            'id' => $id,
+            'rol' => (string) $data['rol'],
+            'approval_status' => User::APPROVAL_APPROVED,
+            'mail_blacklist' => !empty($data['mail_blacklist']) ? 1 : 0,
+        ]);
+    }
+
+    public function updateEmailAndActiveByMemberId(
+        int $memberId,
+        string $email,
+        bool $active
+    ): void {
+        $statement = $this->database->prepare(
+            '
+            UPDATE gebruikers
+            SET
+                email = :email,
+                actief = :actief
+            WHERE lid_id = :member_id
+            '
+        );
+
+        $statement->execute([
+            'member_id' => $memberId,
+            'email' => strtolower(trim($email)),
+            'actief' => $active ? 1 : 0,
+        ]);
+    }
+
+    protected function map(array $row): User
+    {
+        return new User(
+            gebruikerId: (int) ($row['gebruiker_id'] ?? 0),
+            lidId: (int) ($row['lid_id'] ?? 0),
+            email: (string) ($row['email'] ?? ''),
+            rol: (string) ($row['rol'] ?? User::ROLE_MEMBER),
+            actief: (bool) ($row['actief'] ?? false),
+            mailBlacklist: (bool) ($row['mail_blacklist'] ?? false),
+            passwordHash: (string) ($row['wachtwoord_hash'] ?? ''),
+            resetToken: $this->nullableString($row['reset_token'] ?? null),
+            resetTokenExpires: $this->nullableString(
+                $row['reset_token_expires'] ?? null
+            ),
+            voornaam: (string) ($row['voornaam'] ?? ''),
+            achternaam: (string) ($row['achternaam'] ?? ''),
+            goedkeuringsstatus: (string) (
+                $row['goedkeuringsstatus']
+                ?? User::APPROVAL_APPROVED
+            ),
+            goedgekeurdOp: $this->nullableString(
+                $row['goedgekeurd_op'] ?? null
+            )
+        );
+    }
+
+    private function nullableString(mixed $value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        $value = trim((string) $value);
+
+        return $value === ''
+            ? null
+            : $value;
     }
 }

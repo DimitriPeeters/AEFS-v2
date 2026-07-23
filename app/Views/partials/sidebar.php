@@ -1,5 +1,6 @@
 <?php
 
+use AEFS\Core\Auth;
 use AEFS\Core\View\Helper\ViewHelpers;
 
 /** @var ViewHelpers $helpers */
@@ -11,51 +12,24 @@ $defaultItems = [
         'path' => '/dashboard',
     ],
     [
+        'label' => 'Mijn profiel',
+        'path' => '/profile',
+    ],
+];
+
+if (Auth::isAdmin()) {
+    $defaultItems[] = [
         'label' => 'Leden',
         'path' => '/members',
-    ],
-    [
+    ];
+
+    $defaultItems[] = [
         'label' => 'Gebruikers',
         'path' => '/users',
-    ],
-    [
-        'label' => 'Evenementen',
-        'path' => '/events',
-    ],
-    [
-        'label' => 'Shiften',
-        'path' => '/shifts',
-    ],
-    [
-        'label' => 'Inschrijvingen',
-        'path' => '/registrations',
-    ],
-    [
-        'label' => 'Mailings',
-        'path' => '/mailings',
-    ],
-    [
-        'label' => 'Rapporten',
-        'path' => '/reports',
-    ],
-    [
-        'label' => 'Instellingen',
-        'path' => '/settings',
-    ],
-];
+    ];
+}
 
 $items = $navigationItems ?? $defaultItems;
-
-$legacyPathMap = [
-    '/leden' => '/members',
-    '/gebruikers' => '/users',
-    '/evenementen' => '/events',
-    '/shiften' => '/shifts',
-    '/inschrijvingen' => '/registrations',
-    '/rapporten' => '/reports',
-    '/instellingen' => '/settings',
-];
-
 $normalizedItems = [];
 
 foreach ($items as $item) {
@@ -72,10 +46,6 @@ foreach ($items as $item) {
         $path = rtrim($path, '/');
     }
 
-    if (isset($legacyPathMap[$path])) {
-        $path = $legacyPathMap[$path];
-    }
-
     $normalizedItems[] = [
         'label' => $label,
         'path' => $path,
@@ -83,19 +53,13 @@ foreach ($items as $item) {
 }
 
 $currentPath = parse_url(
-    $_SERVER['REQUEST_URI'] ?? '',
+    $_SERVER['REQUEST_URI'] ?? '/',
     PHP_URL_PATH
 );
 
 $currentPath = is_string($currentPath)
-    ? $currentPath
+    ? '/' . ltrim($currentPath, '/')
     : '/';
-
-$currentPath = '/' . ltrim($currentPath, '/');
-
-if ($currentPath !== '/') {
-    $currentPath = rtrim($currentPath, '/');
-}
 
 $scriptName = str_replace(
     '\\',
@@ -162,10 +126,7 @@ if ($currentPath !== '/') {
             <?php foreach ($normalizedItems as $item): ?>
                 <?php
                 $itemPath = $item['path'];
-
-                $itemUrl = $helpers->url->to(
-                    $itemPath
-                );
+                $itemUrl = $helpers->url->to($itemPath);
 
                 $active = $currentPath === $itemPath
                     || (
@@ -186,9 +147,7 @@ if ($currentPath !== '/') {
                         href="<?= $this->escape($itemUrl) ?>"
                     >
                         <span class="sidebar__link-label">
-                            <?= $this->escape(
-                                $item['label']
-                            ) ?>
+                            <?= $this->escape($item['label']) ?>
                         </span>
                     </a>
                 </li>

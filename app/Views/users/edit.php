@@ -1,61 +1,46 @@
 <?php
 
-
-
 use AEFS\Core\View\Helper\ViewHelpers;
+use App\Models\User;
 
-/** @var AEFS\Models\User $gebruiker */
-/** @var array $leden */
-/** @var array $errors */
+/** @var ViewHelpers $helpers */
+/** @var User $gebruiker */
+/** @var string|null $title */
 
-
-
-$this->extend('layouts.app', ['title' => $title ?? null]);
+$this->extend(
+    'layouts.app',
+    [
+        'title' => $title ?? 'Account beheren',
+    ]
+);
 ?>
+
 <?php $this->startSection('content'); ?>
+<div class="user-page">
+    <header>
+        <h1><?= $this->escape($gebruiker->fullName()) ?></h1>
+        <p>Keur het account goed en beheer de gebruikersrol.</p>
+    </header>
 
-<?= $this->component('page-header', [
-
-    'title' => $gebruiker->fullName(),
-
-    'subtitle' => 'Gebruiker wijzigen',
-
-]) ?>
-
-<?php if (!empty($errors)): ?>
-
-    <?= $this->component('alert', [
-
-        'type' => 'danger',
-
-        'message' => implode('<br>', $errors),
-
-    ]) ?>
-
-<?php endif; ?>
-
-<form
-    method="post"
-    action="<?= $helpers->url->to('/users/' . $gebruiker->gebruikerId) ?>"
->
-
-    <?= csrf_field() ?>
-
-    <?= method_field('PUT') ?>
-
-    <?= $this->component('card', [
-
-        'title' => 'Gebruikersgegevens',
-
-        'content' => $this->component('users/form', [
-
-            'gebruiker' => $gebruiker,
-
-            'leden' => $leden,
-
-        ]),
-
-    ]) ?>
-
-</form>
+    <section class="card">
+        <form
+            method="post"
+            action="<?= $this->escape(
+                $helpers->url->to(
+                    '/users/'
+                    . $gebruiker->gebruikerId
+                    . '/update'
+                )
+            ) ?>"
+            novalidate
+        >
+            <?= $this->component(
+                'users/form',
+                [
+                    'gebruiker' => $gebruiker,
+                ]
+            ) ?>
+        </form>
+    </section>
+</div>
 <?php $this->endSection(); ?>

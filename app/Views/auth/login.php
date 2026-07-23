@@ -124,7 +124,13 @@ $email = (string) $helpers->old->get('email', '');
             <?= $helpers->form->close() ?>
         </div>
 
-        <footer class="card__footer">
+        <footer class="card__footer auth-card__footer-links">
+            <a href="<?= $this->escape(
+                $helpers->url->to('/register')
+            ) ?>">
+                Nog geen account? Registreren
+            </a>
+
             <a href="<?= $this->escape(
                 $helpers->url->to('/forgot-password')
             ) ?>">
@@ -133,5 +139,15 @@ $email = (string) $helpers->old->get('email', '');
         </footer>
     </section>
 </div>
+
+<style>
+    .auth-card__footer-links {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+</style>
 
 <?php $this->endSection(); ?>

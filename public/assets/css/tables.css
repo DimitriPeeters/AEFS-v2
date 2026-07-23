@@ -37,12 +37,17 @@
     background: var(--color-primary-soft);
 }
 
-.table a {
+.table a:not(.btn) {
     color: var(--color-primary);
     font-weight: 600;
     text-decoration: none;
 }
 
-.table a:hover {
+.table a:not(.btn):hover {
     text-decoration: underline;
+}
+
+.table-responsive {
+    width: 100%;
+    overflow-x: auto;
 }

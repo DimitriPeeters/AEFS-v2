@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\ViewComposers;
 
+use AEFS\Core\Auth;
 use AEFS\Core\View\Composer\AbstractViewComposer;
 
 final class NavigationViewComposer extends AbstractViewComposer
@@ -17,45 +18,64 @@ final class NavigationViewComposer extends AbstractViewComposer
         string $view,
         array $data
     ): array {
-        return [
-            'navigationItems' => [
-                [
-                    'label' => 'Dashboard',
-                    'path' => '/dashboard',
-                ],
-                [
-                    'label' => 'Leden',
-                    'path' => '/leden',
-                ],
-                [
-                    'label' => 'Gebruikers',
-                    'path' => '/gebruikers',
-                ],
-                [
-                    'label' => 'Evenementen',
-                    'path' => '/evenementen',
-                ],
-                [
-                    'label' => 'Shiften',
-                    'path' => '/shiften',
-                ],
-                [
-                    'label' => 'Inschrijvingen',
-                    'path' => '/inschrijvingen',
-                ],
-                [
-                    'label' => 'Mailings',
-                    'path' => '/mailings',
-                ],
-                [
-                    'label' => 'Rapporten',
-                    'path' => '/rapporten',
-                ],
-                [
-                    'label' => 'Instellingen',
-                    'path' => '/instellingen',
-                ],
+        unset($view, $data);
+
+        $items = [
+            [
+                'label' => 'Dashboard',
+                'path' => '/dashboard',
             ],
+            [
+                'label' => 'Mijn profiel',
+                'path' => '/profile',
+            ],
+        ];
+
+        if (Auth::isAdmin()) {
+            $items[] = [
+                'label' => 'Leden',
+                'path' => '/members',
+            ];
+
+            $items[] = [
+                'label' => 'Gebruikers',
+                'path' => '/users',
+            ];
+        }
+
+        $items = [
+            ...$items,
+            [
+                'label' => 'Evenementen',
+                'path' => '/events',
+            ],
+            [
+                'label' => 'Shiften',
+                'path' => '/shifts',
+            ],
+            [
+                'label' => 'Inschrijvingen',
+                'path' => '/registrations',
+            ],
+            [
+                'label' => 'Mailings',
+                'path' => '/mailings',
+            ],
+            [
+                'label' => 'Rapporten',
+                'path' => '/reports',
+            ],
+        ];
+
+        if (Auth::isAdmin()) {
+            $items[] = [
+                'label' => 'Instellingen',
+                'path' => '/settings',
+            ];
+        }
+
+        return [
+            'navigationItems' => $items,
         ];
     }
 }

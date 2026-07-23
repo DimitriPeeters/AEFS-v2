@@ -10,6 +10,13 @@
     padding: 1.75rem 1.75rem 1rem;
 }
 
+.card__title {
+    margin: 0;
+    color: var(--color-text);
+    font-size: 1rem;
+    font-weight: 700;
+}
+
 .card__body {
     padding: 1rem 1.75rem 1.75rem;
 }

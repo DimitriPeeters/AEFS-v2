@@ -36,7 +36,7 @@ final class ApplicationBuilder
         return $this;
     }
 
-    public function register(string $abstract, string|object|\Closure $concrete): self
+    public function register(string $abstract, string|object $concrete): self
     {
         if (is_object($concrete) && !($concrete instanceof \Closure)) {
             $this->application->instanceBinding($abstract, $concrete);

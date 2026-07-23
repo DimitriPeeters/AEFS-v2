@@ -168,12 +168,62 @@ final class Router
         Route $route,
         Request $request
     ): Response {
+        $destination = function (Request $request) use ($route): Response {
+            return $this->dispatchAction(
+                $route,
+                $request
+            );
+        };
+
+        $pipeline = array_reduce(
+            array_reverse($route->getMiddleware()),
+            function (
+                callable $next,
+                string $middlewareClass
+            ): callable {
+                return function (Request $request) use (
+                    $middlewareClass,
+                    $next
+                ): Response {
+                    $middleware = $this->container->get(
+                        $middlewareClass
+                    );
+
+                    if (!method_exists($middleware, 'handle')) {
+                        throw new RuntimeException(
+                            sprintf(
+                                'Middleware [%s] heeft geen handle()-methode.',
+                                $middlewareClass
+                            )
+                        );
+                    }
+
+                    return $this->normalizeResponse(
+                        $middleware->handle(
+                            $request,
+                            $next
+                        )
+                    );
+                };
+            },
+            $destination
+        );
+
+        return $this->normalizeResponse(
+            $pipeline($request)
+        );
+    }
+
+    private function dispatchAction(
+        Route $route,
+        Request $request
+    ): Response {
         $action = $route->action();
 
         if (is_callable($action)) {
-            $response = $action($request);
-
-            return $this->normalizeResponse($response);
+            return $this->normalizeResponse(
+                $action($request)
+            );
         }
 
         if (
@@ -205,11 +255,9 @@ final class Router
                 );
             }
 
-            $response = $controller->{$method}(
-                $request
+            return $this->normalizeResponse(
+                $controller->{$method}($request)
             );
-
-            return $this->normalizeResponse($response);
         }
 
         throw new RuntimeException(

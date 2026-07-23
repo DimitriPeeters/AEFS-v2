@@ -223,21 +223,10 @@ $this->extend(
             <h1 class="members-page__title">Leden</h1>
 
             <p class="members-page__subtitle">
-                Beheer de leden van AEFS Eventbeheer.
+                Bekijk en beheer de ledenprofielen die via de website werden geregistreerd.
             </p>
         </div>
 
-        <div class="members-page__actions">
-            <a
-                href="<?= $this->escape(
-                    $helpers->url->to('/members/create')
-                ) ?>"
-                class="btn btn-primary"
-            >
-                <span aria-hidden="true">+</span>
-                <span>Nieuw lid</span>
-            </a>
-        </div>
     </header>
 
     <form

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\View;
 
 use AEFS\Core\View\ViewEngineInterface;
+use App\Models\User;
 use RuntimeException;
 
 final readonly class ViewEngineSmokeTest
@@ -118,6 +119,56 @@ final readonly class ViewEngineSmokeTest
             'app__content',
             $html
         );
+
+        $this->assertUsersView();
+    }
+
+
+    private function assertUsersView(): void
+    {
+        $user = new User(
+            1,
+            1,
+            'test@example.com',
+            User::ROLE_ADMIN,
+            true,
+            false,
+            '',
+            null,
+            null,
+            'Test',
+            'Gebruiker'
+        );
+
+        $html = $this->view->render(
+            'users.index',
+            [
+                'title' => 'Gebruikers',
+                'zoekterm' => '',
+                'gebruikers' => [$user],
+            ]
+        );
+
+        $this->assertContains(
+            'Alle gebruikers',
+            $html
+        );
+
+        $this->assertContains(
+            'Gebruiker zoeken',
+            $html
+        );
+
+        $this->assertContains(
+            'Wijzigen',
+            $html
+        );
+
+        if (substr_count($html, 'card__title') !== 1) {
+            throw new RuntimeException(
+                'Componentdata lekt nog naar de gebruikerskaarten.'
+            );
+        }
     }
 
     private function assertViewExists(string $view): void

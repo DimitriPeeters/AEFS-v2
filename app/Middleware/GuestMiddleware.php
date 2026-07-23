@@ -2,20 +2,30 @@
 
 declare(strict_types=1);
 
-namespace AEFS\Middleware;
+namespace App\Middleware;
 
 use AEFS\Core\Auth;
-use AEFS\Core\Request;
-use AEFS\Core\Response;
+use AEFS\Core\Http\RedirectResponse;
+use AEFS\Core\Http\Request;
+use AEFS\Core\Http\Response;
+use AEFS\Core\Url;
 
-final class GuestMiddleware
+final class GuestMiddleware implements MiddlewareInterface
 {
-    public function handle(Request $request, callable $next): mixed
-    {
+    public function handle(
+        Request $request,
+        callable $next
+    ): Response {
         if (Auth::check()) {
-            Response::redirect('/dashboard');
+            return new RedirectResponse(
+                Url::to('/dashboard')
+            );
         }
 
-        return $next($request);
+        $response = $next($request);
+
+        return $response instanceof Response
+            ? $response
+            : new Response((string) $response);
     }
 }

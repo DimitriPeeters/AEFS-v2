@@ -30,7 +30,7 @@ abstract class ServiceProvider
         $this->app->bind($abstract, $concrete);
     }
 
-    protected function singleton(string $abstract, \Closure|string|object $concrete): void
+    protected function singleton(string $abstract, string|object $concrete): void
     {
         $this->app->singleton($abstract, $concrete);
     }

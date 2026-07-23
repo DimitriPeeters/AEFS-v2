@@ -4,17 +4,20 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use AEFS\Core\Auth;
+use AEFS\Core\Database;
 use App\Models\User;
-use App\Repositories\UserRepository;
 use App\Repositories\MemberRepository;
+use App\Repositories\UserRepository;
 use InvalidArgumentException;
 
 final class UserService
 {
     public function __construct(
-        private UserRepository $userRepository,
-        private MemberRepository $memberRepository,
-        private AuditLogService $auditLog
+        private readonly Database $database,
+        private readonly UserRepository $users,
+        private readonly MemberRepository $members,
+        private readonly AuditLogService $auditLog
     ) {
     }
 
@@ -23,246 +26,200 @@ final class UserService
      */
     public function all(): array
     {
-        return $this->userRepository->all();
+        return $this->users->all();
     }
 
     /**
      * @return User[]
      */
-    public function search(string $zoek): array
+    public function search(string $search): array
     {
-        $zoek = trim($zoek);
+        $search = trim($search);
 
-        if ($zoek === '') {
-
-            return $this->all();
-
-        }
-
-        return $this->userRepository->search($zoek);
+        return $search === ''
+            ? $this->all()
+            : $this->users->search($search);
     }
 
     public function find(int $id): ?User
     {
-        return $this->userRepository->find($id);
-    }
-
-    public function create(array $data): int
-    {
-        $this->validate($data);
-
-        if ($this->userRepository->findByEmail($data['email']) !== null) {
-
-            throw new InvalidArgumentException(
-                'Dit e-mailadres is reeds in gebruik.'
-            );
-
+        if ($id <= 0) {
+            return null;
         }
 
-        if ($this->memberRepository->find(
-            (int)$data['lid_id']
-        ) === null) {
-
-            throw new InvalidArgumentException(
-                'Ongeldig lid.'
-            );
-
-        }
-
-        $data = $this->sanitize($data);
-
-        $id = $this->userRepository->create($data);
-
-        $this->auditLog->created(
-
-            entity: 'user',
-
-            id: $id,
-
-            userId: $_SESSION['user_id'] ?? null,
-
-            values: [
-
-                'lid_id' => $data['lid_id'],
-
-                'email' => $data['email'],
-
-                'rol' => $data['rol'],
-
-                'actief' => $data['actief']
-
-            ]
-
-        );
-
-        return $id;
+        return $this->users->find($id);
     }
 
+    /**
+     * @param array<string, mixed> $data
+     */
     public function update(
         int $id,
         array $data
     ): void {
-
         $user = $this->find($id);
 
         if ($user === null) {
-
             throw new InvalidArgumentException(
                 'Gebruiker niet gevonden.'
             );
-
         }
 
-        $this->validate($data, false);
-
         $data = $this->sanitize($data);
+        $this->validate($data);
 
-        $this->userRepository->update(
-            $id,
-            $data
+        $member = $this->members->find($user->lidId);
+
+        if ($member === null) {
+            throw new InvalidArgumentException(
+                'Het gekoppelde ledenprofiel werd niet gevonden.'
+            );
+        }
+
+        if (Auth::id() === $id) {
+            if (!$data['actief']) {
+                throw new InvalidArgumentException(
+                    'Je kunt je eigen gebruikersaccount niet deactiveren.'
+                );
+            }
+
+            if ($data['rol'] !== User::ROLE_ADMIN) {
+                throw new InvalidArgumentException(
+                    'Je kunt je eigen administratorrol niet verwijderen.'
+                );
+            }
+        }
+
+        $approvePendingRegistration = $user->isPending()
+            && $data['actief'];
+
+        $this->database->transaction(
+            function () use (
+                $id,
+                $user,
+                $data,
+                $approvePendingRegistration
+            ): void {
+                if ($approvePendingRegistration) {
+                    $this->users->approve(
+                        $id,
+                        $data
+                    );
+                } else {
+                    $this->users->updateAccess(
+                        $id,
+                        $data
+                    );
+                }
+
+                $this->members->updateActiveStatus(
+                    $user->lidId,
+                    $data['actief']
+                );
+            }
         );
+
+        $newApprovalStatus = $approvePendingRegistration
+            ? User::APPROVAL_APPROVED
+            : $user->goedkeuringsstatus;
 
         $this->auditLog->updated(
-
             entity: 'user',
-
             id: $id,
-
-            userId: $_SESSION['user_id'] ?? null,
-
-            oldValues: get_object_vars($user),
-
+            userId: Auth::id(),
+            oldValues: [
+                'rol' => $user->rol,
+                'goedkeuringsstatus' => $user->goedkeuringsstatus,
+                'actief' => $user->actief,
+                'mail_blacklist' => $user->mailBlacklist,
+            ],
             newValues: [
-
-                'lid_id' => $data['lid_id'],
-
-                'email' => $data['email'],
-
                 'rol' => $data['rol'],
-
-                'actief' => $data['actief']
-
+                'goedkeuringsstatus' => $newApprovalStatus,
+                'actief' => $data['actief'],
+                'mail_blacklist' => $data['mail_blacklist'],
             ]
-
         );
+
+        if ($member->actief !== $data['actief']) {
+            $this->auditLog->updated(
+                entity: 'member',
+                id: $member->lidId,
+                userId: Auth::id(),
+                oldValues: [
+                    'actief' => $member->actief,
+                ],
+                newValues: [
+                    'actief' => $data['actief'],
+                ]
+            );
+        }
     }
 
-    public function delete(int $id): void
+    public function approve(int $id): void
     {
         $user = $this->find($id);
 
         if ($user === null) {
-
-            return;
-
+            throw new InvalidArgumentException(
+                'Gebruiker niet gevonden.'
+            );
         }
 
-        $this->userRepository->delete($id);
+        if (!$user->isPending()) {
+            throw new InvalidArgumentException(
+                'Deze registratie is al beoordeeld.'
+            );
+        }
 
-        $this->auditLog->deleted(
-
-            entity: 'user',
-
-            id: $id,
-
-            userId: $_SESSION['user_id'] ?? null,
-
-            oldValues: get_object_vars($user)
-
+        $this->update(
+            $id,
+            [
+                'rol' => $user->rol,
+                'actief' => true,
+                'mail_blacklist' => $user->mailBlacklist,
+            ]
         );
     }
 
-    public function updateLogin(int $id): void
+    /**
+     * @param array<string, mixed> $data
+     */
+    private function validate(array $data): void
     {
-        $this->userRepository->updateLogin($id);
-    }
-
-    private function validate(
-        array $data,
-        bool $creating = true
-    ): void {
-
-        if (empty($data['lid_id'])) {
-
-            throw new InvalidArgumentException(
-                'Selecteer een lid.'
-            );
-
-        }
-
-        if (empty($data['email'])) {
-
-            throw new InvalidArgumentException(
-                'E-mailadres is verplicht.'
-            );
-
-        }
-
-        if (!filter_var(
-            $data['email'],
-            FILTER_VALIDATE_EMAIL
-        )) {
-
-            throw new InvalidArgumentException(
-                'Ongeldig e-mailadres.'
-            );
-
-        }
-
-        if ($creating && empty($data['password'])) {
-
-            throw new InvalidArgumentException(
-                'Wachtwoord is verplicht.'
-            );
-
-        }
-
         if (
-            !empty($data['password']) &&
-            strlen($data['password']) < 8
+            !in_array(
+                $data['rol'],
+                [
+                    User::ROLE_ADMIN,
+                    User::ROLE_MEMBER,
+                ],
+                true
+            )
         ) {
-
-            throw new InvalidArgumentException(
-                'Het wachtwoord moet minstens 8 tekens bevatten.'
-            );
-
-        }
-
-        $rollen = [
-
-            User::ROLE_ADMIN,
-
-            User::ROLE_EVENTMANAGER,
-
-            User::ROLE_COORDINATOR,
-
-            User::ROLE_MEMBER
-
-        ];
-
-        if (!in_array(
-            $data['rol'],
-            $rollen,
-            true
-        )) {
-
             throw new InvalidArgumentException(
                 'Ongeldige rol.'
             );
-
         }
     }
 
+    /**
+     * @param array<string, mixed> $data
+     *
+     * @return array{rol: string, actief: bool, mail_blacklist: bool}
+     */
     private function sanitize(array $data): array
     {
-        $data['email'] = strtolower(
-            trim($data['email'])
-        );
-
-        $data['actief'] = !empty(
-            $data['actief']
-        );
-
-        return $data;
+        return [
+            'rol' => trim((string) ($data['rol'] ?? '')),
+            'actief' => filter_var(
+                $data['actief'] ?? false,
+                FILTER_VALIDATE_BOOL
+            ),
+            'mail_blacklist' => filter_var(
+                $data['mail_blacklist'] ?? false,
+                FILTER_VALIDATE_BOOL
+            ),
+        ];
     }
 }

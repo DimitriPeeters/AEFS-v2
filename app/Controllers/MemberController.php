@@ -54,17 +54,10 @@ final class MemberController extends BaseController
     public function show(): Response
     {
         $id = $this->routeId();
-
         $lid = $this->service->find($id);
 
         if ($lid === null) {
-            return $this->view(
-                'core::errors.404',
-                [
-                    'message' => 'Lid niet gevonden.',
-                ],
-                404
-            );
+            return $this->notFound();
         }
 
         return $this->view(
@@ -81,74 +74,13 @@ final class MemberController extends BaseController
         );
     }
 
-    public function create(): Response
-    {
-        return $this->view(
-            'members.create',
-            [
-                'title' => 'Nieuw lid',
-                'titel' => 'Nieuw lid',
-            ]
-        );
-    }
-
-    public function store(): Response
-    {
-        $input = $this->request()->request->all();
-
-        Session::flash(
-            '_old_input',
-            $input
-        );
-
-        try {
-            $memberRequest = new MemberRequest($input);
-
-            $id = $this->service->create(
-                $memberRequest->all()
-            );
-
-            $this->success(
-                'Het lid werd succesvol aangemaakt.'
-            );
-
-            return $this->redirect(
-                '/members/' . $id
-            );
-        } catch (Throwable $throwable) {
-            Session::flash(
-                '_errors',
-                [
-                    'form' => [
-                        $throwable->getMessage(),
-                    ],
-                ]
-            );
-
-            $this->error(
-                'Het lid kon niet worden aangemaakt.'
-            );
-
-            return $this->redirect(
-                '/members/create'
-            );
-        }
-    }
-
     public function edit(): Response
     {
         $id = $this->routeId();
-
         $lid = $this->service->find($id);
 
         if ($lid === null) {
-            return $this->view(
-                'core::errors.404',
-                [
-                    'message' => 'Lid niet gevonden.',
-                ],
-                404
-            );
+            return $this->notFound();
         }
 
         return $this->view(
@@ -165,7 +97,6 @@ final class MemberController extends BaseController
     {
         $id = $this->routeId();
         $input = $this->request()->request->all();
-
 
         Session::flash(
             '_old_input',
@@ -187,54 +118,24 @@ final class MemberController extends BaseController
             return $this->redirect(
                 '/members/' . $id
             );
-} catch (Throwable $throwable) {
-    Session::flash(
-        '_errors',
-        [
-            'form' => [
-                $throwable->getMessage(),
-            ],
-        ]
-    );
-
-    $this->error(
-        'Het lid kon niet worden gewijzigd.'
-    );
-
-    return $this->redirect(
-        '/members/' . $id . '/edit'
-    );
-}    }
-
-    public function delete(): Response
-    {
-        $id = $this->routeId();
-
-        $lid = $this->service->find($id);
-
-        if ($lid === null) {
-            return $this->view(
-                'core::errors.404',
-                [
-                    'message' => 'Lid niet gevonden.',
-                ],
-                404
-            );
-        }
-
-        try {
-            $this->service->delete($id);
-
-            $this->success(
-                'Het lid werd succesvol verwijderd.'
-            );
         } catch (Throwable $throwable) {
+            Session::flash(
+                '_errors',
+                [
+                    'form' => [
+                        $throwable->getMessage(),
+                    ],
+                ]
+            );
+
             $this->error(
-                $throwable->getMessage()
+                'Het lid kon niet worden gewijzigd.'
+            );
+
+            return $this->redirect(
+                '/members/' . $id . '/edit'
             );
         }
-
-        return $this->redirect('/members');
     }
 
     private function routeId(): int
@@ -242,6 +143,17 @@ final class MemberController extends BaseController
         return (int) $this->request()->route(
             'id',
             0
+        );
+    }
+
+    private function notFound(): Response
+    {
+        return $this->view(
+            'core::errors.404',
+            [
+                'message' => 'Lid niet gevonden.',
+            ],
+            404
         );
     }
 }

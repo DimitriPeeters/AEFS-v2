@@ -4,27 +4,58 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use AEFS\Core\Auth;
 use App\Repositories\DashboardRepository;
 
 final class DashboardService
 {
     public function __construct(
-        private DashboardRepository $dashboardRepository
+        private readonly DashboardRepository $dashboardRepository
     ) {
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function getDashboardData(): array
     {
-        return [
+        $isAdmin = Auth::isAdmin();
+
+        $data = [
+            'isAdmin' => $isAdmin,
             'statistics' => [
-                'members' => $this->dashboardRepository->countMembers(),
-                'users' => $this->dashboardRepository->countUsers(),
-                'events' => $this->dashboardRepository->countEvents(),
-                'shifts' => $this->dashboardRepository->countOpenShifts(),
+                'events' => $this->dashboardRepository
+                    ->countUpcomingEvents(),
+                'shifts' => $this->dashboardRepository
+                    ->countOpenShifts(),
             ],
-            'latestMembers' => $this->dashboardRepository->latestMembers(),
-            'upcomingEvents' => $this->dashboardRepository->upcomingEvents(),
-            'openShifts' => $this->dashboardRepository->openShifts(),
+            'upcomingEvents' => $this->dashboardRepository
+                ->upcomingEvents(),
+            'openShifts' => $this->dashboardRepository
+                ->openShifts(),
+            'latestMembers' => [],
+            'pendingRegistrations' => [],
         ];
+
+        if (!$isAdmin) {
+            return $data;
+        }
+
+        $data['statistics']['members'] = $this->dashboardRepository
+            ->countActiveMembers();
+
+        $data['statistics']['pending'] = $this->dashboardRepository
+            ->countPendingRegistrations();
+
+        $data['statistics']['users'] = $this->dashboardRepository
+            ->countActiveUsers();
+
+        $data['latestMembers'] = $this->dashboardRepository
+            ->latestApprovedMembers();
+
+        $data['pendingRegistrations'] = $this->dashboardRepository
+            ->pendingRegistrations();
+
+        return $data;
     }
 }

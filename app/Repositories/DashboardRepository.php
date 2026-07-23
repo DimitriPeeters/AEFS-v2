@@ -6,6 +6,7 @@ namespace App\Repositories;
 
 use AEFS\Database\DB;
 use AEFS\Database\Query\Expression;
+use App\Models\Event;
 use App\Models\User;
 
 final class DashboardRepository
@@ -52,17 +53,27 @@ final class DashboardRepository
             ->count();
     }
 
-    public function countUpcomingEvents(): int
-    {
-        return DB::table('evenementen')
+    public function countUpcomingEvents(
+        bool $visibleToMembersOnly = false
+    ): int {
+        $query = DB::table('evenementen')
             ->where(
                 Expression::raw(
                     'COALESCE(`einddatum`, `startdatum`)'
                 ),
                 '>=',
                 date('Y-m-d')
-            )
-            ->count();
+            );
+
+        if ($visibleToMembersOnly) {
+            $query->where(
+                'status',
+                '<>',
+                Event::STATUS_CONCEPT
+            );
+        }
+
+        return $query->count();
     }
 
     public function countOpenShifts(): int
@@ -133,16 +144,28 @@ final class DashboardRepository
     /**
      * @return array<int, array<string, mixed>>
      */
-    public function upcomingEvents(int $limit = 5): array
-    {
-        return DB::table('evenementen')
+    public function upcomingEvents(
+        int $limit = 5,
+        bool $visibleToMembersOnly = false
+    ): array {
+        $query = DB::table('evenementen')
             ->where(
                 Expression::raw(
                     'COALESCE(`einddatum`, `startdatum`)'
                 ),
                 '>=',
                 date('Y-m-d')
-            )
+            );
+
+        if ($visibleToMembersOnly) {
+            $query->where(
+                'status',
+                '<>',
+                Event::STATUS_CONCEPT
+            );
+        }
+
+        return $query
             ->orderBy('startdatum', 'ASC')
             ->limit(max(1, $limit))
             ->get();

@@ -1,48 +1,56 @@
 <?php
 
-
-
 use AEFS\Core\View\Helper\ViewHelpers;
+use App\Models\Event;
 
-/** @var \AEFS\Models\Event $event */
-/** @var array $errors */
+/** @var ViewHelpers $helpers */
+/** @var Event $event */
+/** @var string|null $title */
 
-
-
-$this->extend('layouts.app', ['title' => $title ?? null]);
+$this->extend(
+    'layouts.app',
+    [
+        'title' => $title ?? 'Evenement wijzigen',
+    ]
+);
 ?>
+
 <?php $this->startSection('content'); ?>
+<div class="event-form-page">
+    <?= $this->component(
+        'page-header',
+        [
+            'title' => $event->titel,
+            'subtitle' => 'Evenement wijzigen',
+        ]
+    ) ?>
 
-<?= $this->component('page-header', [
+    <form
+        method="post"
+        action="<?= $this->escape(
+            $helpers->url->to(
+                '/events/' . $event->eventId . '/update'
+            )
+        ) ?>"
+        novalidate
+    >
+        <?= $helpers->csrf->field() ?>
 
-    'title' => $event->titel,
+        <?= $this->component(
+            'events/form',
+            [
+                'event' => $event,
+            ]
+        ) ?>
+    </form>
+</div>
+<?php $this->endSection(); ?>
 
-    'subtitle' => 'Evenement wijzigen',
-
-]) ?>
-
-<?php if (!empty($errors)): ?>
-
-    <?= $this->component('alert', [
-
-        'type' => 'danger',
-
-        'message' => implode('<br>', $errors),
-
-    ]) ?>
-
-<?php endif; ?>
-
-<form
-    method="post"
-    action="<?= $helpers->url->to('/events/' . $event->eventId) ?>"
->
-
-    <?= csrf_field() ?>
-
-    <?= method_field('PUT') ?>
-
-    <?= $this->component('events/form', ['event' => $event]) ?>
-
-</form>
+<?php $this->startSection('styles'); ?>
+<style>
+    .event-form-page {
+        display: grid;
+        gap: 1.25rem;
+    }
+</style>
 <?php $this->endSection(); ?>

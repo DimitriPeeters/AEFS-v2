@@ -18,7 +18,7 @@ return [
     |--------------------------------------------------------------------------
     |
     | Leeg laten = automatisch detecteren.
-    | Op one.com kan hier later bv.
+    | Op one.com kan hier later bijvoorbeeld
     | https://leden.aefs.be ingevuld worden.
     |
     */
@@ -32,6 +32,19 @@ return [
     */
 
     'environment' => 'development',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Timezone
+    |--------------------------------------------------------------------------
+    |
+    | Alle datums en tijdstippen binnen AEFS worden geïnterpreteerd volgens
+    | deze tijdzone. Dit voorkomt datumverschillen tussen de lokale omgeving,
+    | UTC en de uiteindelijke productieserver.
+    |
+    */
+
+    'timezone' => 'Europe/Brussels',
 
     /*
     |--------------------------------------------------------------------------

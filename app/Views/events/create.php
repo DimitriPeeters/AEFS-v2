@@ -1,47 +1,50 @@
 <?php
 
-
-
 use AEFS\Core\View\Helper\ViewHelpers;
 
-/** @var array $errors */
+/** @var ViewHelpers $helpers */
+/** @var string|null $title */
 
-$title = 'Nieuw evenement';
-
-
-
-$this->extend('layouts.app', ['title' => $title ?? null]);
+$this->extend(
+    'layouts.app',
+    [
+        'title' => $title ?? 'Nieuw evenement',
+    ]
+);
 ?>
+
 <?php $this->startSection('content'); ?>
+<div class="event-form-page">
+    <?= $this->component(
+        'page-header',
+        [
+            'title' => 'Nieuw evenement',
+            'subtitle' => 'Maak een evenement aan en bepaal wanneer leden het kunnen bekijken.',
+        ]
+    ) ?>
 
-<?= $this->component('page-header', [
+    <form
+        method="post"
+        action="<?= $this->escape($helpers->url->to('/events/store')) ?>"
+        novalidate
+    >
+        <?= $helpers->csrf->field() ?>
 
-    'title' => 'Nieuw evenement',
+        <?= $this->component(
+            'events/form',
+            [
+                'event' => null,
+            ]
+        ) ?>
+    </form>
+</div>
+<?php $this->endSection(); ?>
 
-    'subtitle' => 'Evenement aanmaken',
-
-]) ?>
-
-<?php if (!empty($errors)): ?>
-
-    <?= $this->component('alert', [
-
-        'type' => 'danger',
-
-        'message' => implode('<br>', $errors),
-
-    ]) ?>
-
-<?php endif; ?>
-
-<form
-    method="post"
-    action="<?= $helpers->url->to('/events') ?>"
->
-
-    <?= csrf_field() ?>
-
-    <?= $this->component('events/form', ['event' => $event ?? null]) ?>
-
-</form>
+<?php $this->startSection('styles'); ?>
+<style>
+    .event-form-page {
+        display: grid;
+        gap: 1.25rem;
+    }
+</style>
 <?php $this->endSection(); ?>

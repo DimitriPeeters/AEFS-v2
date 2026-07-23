@@ -20,17 +20,21 @@ final class DashboardService
     public function getDashboardData(): array
     {
         $isAdmin = Auth::isAdmin();
+        $visibleToMembersOnly = !$isAdmin;
 
         $data = [
             'isAdmin' => $isAdmin,
             'statistics' => [
                 'events' => $this->dashboardRepository
-                    ->countUpcomingEvents(),
+                    ->countUpcomingEvents($visibleToMembersOnly),
                 'shifts' => $this->dashboardRepository
                     ->countOpenShifts(),
             ],
             'upcomingEvents' => $this->dashboardRepository
-                ->upcomingEvents(),
+                ->upcomingEvents(
+                    5,
+                    $visibleToMembersOnly
+                ),
             'openShifts' => $this->dashboardRepository
                 ->openShifts(),
             'latestMembers' => [],

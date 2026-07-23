@@ -5,219 +5,340 @@ declare(strict_types=1);
 namespace App\Repositories;
 
 use AEFS\Core\Database;
+use App\Mappers\EventMapper;
 use App\Models\Event;
 use PDO;
 
 final class EventRepository
 {
+    private const SELECT_EVENT = <<<'SQL'
+        SELECT
+            e.*,
+            (
+                SELECT COUNT(*)
+                FROM event_inschrijvingen ei
+                WHERE ei.event_id = e.event_id
+                  AND ei.uitgeschreven_op IS NULL
+                  AND ei.status <> 'geweigerd'
+            ) AS aantal_inschrijvingen,
+            (
+                SELECT COUNT(*)
+                FROM event_inschrijvingen ei
+                WHERE ei.event_id = e.event_id
+                  AND ei.uitgeschreven_op IS NULL
+                  AND ei.status = 'bevestigd'
+            ) AS aantal_bevestigd
+        FROM evenementen e
+        SQL;
+
+    private const ORDER_EVENTS = <<<'SQL'
+        ORDER BY
+            CASE
+                WHEN COALESCE(e.einddatum, e.startdatum) >= CURDATE()
+                    THEN 0
+                ELSE 1
+            END ASC,
+            CASE
+                WHEN COALESCE(e.einddatum, e.startdatum) >= CURDATE()
+                    THEN e.startdatum
+                ELSE NULL
+            END ASC,
+            CASE
+                WHEN COALESCE(e.einddatum, e.startdatum) < CURDATE()
+                    THEN e.startdatum
+                ELSE NULL
+            END DESC,
+            e.titel ASC
+        SQL;
+
     public function __construct(
-        private Database $database
+        private readonly Database $database,
+        private readonly EventMapper $mapper
     ) {
     }
 
     /**
+     * Behoudt compatibiliteit met de bestaande shiftmodule.
+     *
      * @return Event[]
      */
     public function all(): array
     {
-        $stmt = $this->database->query("
-            SELECT *
-            FROM evenementen
-            ORDER BY start_datum DESC, titel ASC
-        ");
+        return $this->allForAdministration();
+    }
 
-        return array_map(
-            [$this, 'map'],
-            $stmt->fetchAll(PDO::FETCH_ASSOC)
+    /**
+     * @return Event[]
+     */
+    public function allForAdministration(): array
+    {
+        $statement = $this->database->query(
+            self::SELECT_EVENT
+            . PHP_EOL
+            . self::ORDER_EVENTS
+        );
+
+        return $this->mapRows(
+            $statement->fetchAll(PDO::FETCH_ASSOC)
         );
     }
 
     /**
+     * @return Event[]
+     */
+    public function visibleToMembers(): array
+    {
+        $statement = $this->database->query(
+            self::SELECT_EVENT
+            . PHP_EOL
+            . "WHERE e.status <> 'concept'"
+            . PHP_EOL
+            . self::ORDER_EVENTS
+        );
+
+        return $this->mapRows(
+            $statement->fetchAll(PDO::FETCH_ASSOC)
+        );
+    }
+
+    /**
+     * Behoudt compatibiliteit met bestaande aanroepen.
+     *
      * @return Event[]
      */
     public function search(string $zoekterm): array
     {
-        $zoek = '%' . trim($zoekterm) . '%';
+        return $this->searchForAdministration($zoekterm);
+    }
 
-        $stmt = $this->database->prepare("
-            SELECT *
-            FROM evenementen
-            WHERE
-                titel LIKE :zoek
-                OR omschrijving LIKE :zoek
-                OR locatie LIKE :zoek
-            ORDER BY start_datum DESC, titel ASC
-        ");
-
-        $stmt->execute([
-            'zoek' => $zoek,
-        ]);
-
-        return array_map(
-            [$this, 'map'],
-            $stmt->fetchAll(PDO::FETCH_ASSOC)
+    /**
+     * @return Event[]
+     */
+    public function searchForAdministration(string $zoekterm): array
+    {
+        return $this->searchByVisibility(
+            $zoekterm,
+            false
         );
     }
 
     /**
      * @return Event[]
      */
-    public function paginate(
-        int $page = 1,
-        int $perPage = 25
-    ): array {
-
-        $page = max(1, $page);
-
-        $offset = ($page - 1) * $perPage;
-
-        $stmt = $this->database->prepare("
-            SELECT *
-            FROM evenementen
-            ORDER BY start_datum DESC, titel ASC
-            LIMIT :offset, :limit
-        ");
-
-        $stmt->bindValue(
-            'offset',
-            $offset,
-            PDO::PARAM_INT
-        );
-
-        $stmt->bindValue(
-            'limit',
-            $perPage,
-            PDO::PARAM_INT
-        );
-
-        $stmt->execute();
-
-        return array_map(
-            [$this, 'map'],
-            $stmt->fetchAll(PDO::FETCH_ASSOC)
-        );
-    }
-
-    public function count(): int
+    public function searchVisibleToMembers(string $zoekterm): array
     {
-        return (int) $this->database
-            ->query("
-                SELECT COUNT(*)
-                FROM evenementen
-            ")
-            ->fetchColumn();
+        return $this->searchByVisibility(
+            $zoekterm,
+            true
+        );
     }
 
     public function find(int $id): ?Event
     {
-        $stmt = $this->database->prepare("
-            SELECT *
-            FROM evenementen
-            WHERE event_id = :id
-            LIMIT 1
-        ");
-
-        $stmt->execute([
-            'id' => $id,
-        ]);
-
-        $row = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        return $row
-            ? $this->map($row)
-            : null;
+        return $this->findByVisibility(
+            $id,
+            false
+        );
     }
 
+    public function findVisibleToMembers(int $id): ?Event
+    {
+        return $this->findByVisibility(
+            $id,
+            true
+        );
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     */
     public function create(array $data): int
     {
-        $stmt = $this->database->prepare("
+        $statement = $this->database->prepare(<<<'SQL'
             INSERT INTO evenementen
             (
                 titel,
-                omschrijving,
-                start_datum,
-                eind_datum,
+                beschrijving,
                 locatie,
-                actief,
+                max_deelnemers,
+                startdatum,
+                einddatum,
+                status,
                 aangemaakt_op,
                 bijgewerkt_op
             )
             VALUES
             (
                 :titel,
-                :omschrijving,
-                :start_datum,
-                :eind_datum,
+                :beschrijving,
                 :locatie,
-                :actief,
+                :max_deelnemers,
+                :startdatum,
+                :einddatum,
+                :status,
                 NOW(),
                 NOW()
             )
-        ");
+            SQL);
 
-        $stmt->execute($data);
+        $statement->execute(
+            $this->mapper->toDatabase($data)
+        );
 
         return $this->database->lastInsertId();
     }
 
+    /**
+     * @param array<string, mixed> $data
+     */
     public function update(
         int $id,
         array $data
     ): void {
+        $parameters = $this->mapper->toDatabase($data);
+        $parameters['event_id'] = $id;
 
-        $data['id'] = $id;
-
-        $stmt = $this->database->prepare("
+        $statement = $this->database->prepare(<<<'SQL'
             UPDATE evenementen
             SET
                 titel = :titel,
-                omschrijving = :omschrijving,
-                start_datum = :start_datum,
-                eind_datum = :eind_datum,
+                beschrijving = :beschrijving,
                 locatie = :locatie,
-                actief = :actief,
+                max_deelnemers = :max_deelnemers,
+                startdatum = :startdatum,
+                einddatum = :einddatum,
+                status = :status,
                 bijgewerkt_op = NOW()
-            WHERE event_id = :id
-        ");
+            WHERE event_id = :event_id
+            SQL);
 
-        $stmt->execute($data);
+        $statement->execute($parameters);
     }
 
     public function delete(int $id): void
     {
-        $stmt = $this->database->prepare("
-            DELETE
-            FROM evenementen
-            WHERE event_id = :id
-        ");
+        $statement = $this->database->prepare(<<<'SQL'
+            DELETE FROM evenementen
+            WHERE event_id = :event_id
+            SQL);
 
-        $stmt->execute([
-            'id' => $id,
+        $statement->execute([
+            'event_id' => $id,
         ]);
     }
 
-    private function map(array $row): Event
+    /**
+     * @return array{inschrijvingen: int, shifts: int}
+     */
+    public function relatedDataCounts(int $id): array
     {
-        return new Event(
+        $statement = $this->database->prepare(<<<'SQL'
+            SELECT
+                (
+                    SELECT COUNT(*)
+                    FROM event_inschrijvingen
+                    WHERE event_id = :registration_event_id
+                ) AS inschrijvingen,
+                (
+                    SELECT COUNT(*)
+                    FROM event_shifts
+                    WHERE event_id = :shift_event_id
+                ) AS shifts
+            SQL);
 
-            eventId: (int) $row['event_id'],
+        $statement->execute([
+            'registration_event_id' => $id,
+            'shift_event_id' => $id,
+        ]);
 
-            titel: $row['titel'],
+        $row = $statement->fetch(PDO::FETCH_ASSOC);
 
-            omschrijving: $row['omschrijving'],
+        return [
+            'inschrijvingen' => (int) ($row['inschrijvingen'] ?? 0),
+            'shifts' => (int) ($row['shifts'] ?? 0),
+        ];
+    }
 
-            startDatum: $row['start_datum'],
+    /**
+     * @return Event[]
+     */
+    private function searchByVisibility(
+        string $zoekterm,
+        bool $membersOnly
+    ): array {
+        $conditions = [
+            '('
+            . 'e.titel LIKE :zoek_titel '
+            . 'OR e.beschrijving LIKE :zoek_beschrijving '
+            . 'OR e.locatie LIKE :zoek_locatie'
+            . ')',
+        ];
 
-            eindDatum: $row['eind_datum'],
+        if ($membersOnly) {
+            $conditions[] = "e.status <> 'concept'";
+        }
 
-            locatie: $row['locatie'],
+        $sql = self::SELECT_EVENT
+            . PHP_EOL
+            . 'WHERE '
+            . implode(' AND ', $conditions)
+            . PHP_EOL
+            . self::ORDER_EVENTS;
 
-            actief: (bool) $row['actief'],
+        $zoek = '%' . trim($zoekterm) . '%';
+        $statement = $this->database->prepare($sql);
+        $statement->execute([
+            'zoek_titel' => $zoek,
+            'zoek_beschrijving' => $zoek,
+            'zoek_locatie' => $zoek,
+        ]);
 
-            aangemaaktOp: $row['aangemaakt_op'],
+        return $this->mapRows(
+            $statement->fetchAll(PDO::FETCH_ASSOC)
+        );
+    }
 
-            bijgewerktOp: $row['bijgewerkt_op']
+    private function findByVisibility(
+        int $id,
+        bool $membersOnly
+    ): ?Event {
+        $conditions = [
+            'e.event_id = :event_id',
+        ];
 
+        if ($membersOnly) {
+            $conditions[] = "e.status <> 'concept'";
+        }
+
+        $sql = self::SELECT_EVENT
+            . PHP_EOL
+            . 'WHERE '
+            . implode(' AND ', $conditions)
+            . PHP_EOL
+            . 'LIMIT 1';
+
+        $statement = $this->database->prepare($sql);
+        $statement->execute([
+            'event_id' => $id,
+        ]);
+
+        $row = $statement->fetch(PDO::FETCH_ASSOC);
+
+        return is_array($row)
+            ? $this->mapper->fromDatabase($row)
+            : null;
+    }
+
+    /**
+     * @param array<int, array<string, mixed>> $rows
+     *
+     * @return Event[]
+     */
+    private function mapRows(array $rows): array
+    {
+        return array_map(
+            fn(array $row): Event => $this->mapper->fromDatabase($row),
+            $rows
         );
     }
 }

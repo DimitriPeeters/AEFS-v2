@@ -19,11 +19,45 @@ $app = new Application($basePath);
 
 $container = $app->container();
 
-$config = new Config($basePath . '/config');
+$config = new Config(
+    $basePath . DIRECTORY_SEPARATOR . 'config'
+);
 
-$container->instance(Application::class, $app);
-$container->instance(Container::class, $container);
-$container->instance(Config::class, $config);
+$timezone = $config->get(
+    'app.timezone',
+    'Europe/Brussels'
+);
+
+if (
+    !is_string($timezone)
+    || $timezone === ''
+    || !in_array(
+        $timezone,
+        timezone_identifiers_list(),
+        true
+    )
+) {
+    throw new \RuntimeException(
+        'De geconfigureerde applicatietijdzone is ongeldig.'
+    );
+}
+
+date_default_timezone_set($timezone);
+
+$container->instance(
+    Application::class,
+    $app
+);
+
+$container->instance(
+    Container::class,
+    $container
+);
+
+$container->instance(
+    Config::class,
+    $config
+);
 
 $databaseManager = new DatabaseManager(
     $config->get('database', [])
@@ -36,7 +70,10 @@ $container->instance(
     $databaseManager
 );
 
-$container->singleton(Session::class);
+$container->singleton(
+    Session::class
+);
+
 $container->instance(
     Request::class,
     Request::capture()
@@ -46,12 +83,26 @@ require __DIR__
     . DIRECTORY_SEPARATOR
     . 'view.php';
 
-$container->singleton(View::class);
-$container->singleton(Router::class);
-$container->singleton(Kernel::class);
+$container->singleton(
+    View::class
+);
 
-$router = $container->get(Router::class);
+$container->singleton(
+    Router::class
+);
 
-require $basePath . '/routes/web.php';
+$container->singleton(
+    Kernel::class
+);
+
+$router = $container->get(
+    Router::class
+);
+
+require $basePath
+    . DIRECTORY_SEPARATOR
+    . 'routes'
+    . DIRECTORY_SEPARATOR
+    . 'web.php';
 
 return $app;

@@ -4,11 +4,15 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
+use AEFS\Core\Auth;
 use AEFS\Core\Http\Request;
 use AEFS\Core\Http\Response;
 use AEFS\Core\Session;
+use AEFS\Core\View\Helper\CsrfHelper;
 use AEFS\Core\View\ViewFactory;
+use App\Http\Requests\EventRequest;
 use App\Services\EventService;
+use RuntimeException;
 use Throwable;
 
 final class EventController extends BaseController
@@ -16,7 +20,8 @@ final class EventController extends BaseController
     public function __construct(
         ViewFactory $views,
         Request $request,
-        private readonly EventService $service
+        private readonly EventService $service,
+        private readonly CsrfHelper $csrf
     ) {
         parent::__construct(
             $views,
@@ -27,15 +32,23 @@ final class EventController extends BaseController
     public function index(): Response
     {
         $zoekterm = trim(
-            (string) $this->request()->query(
-                'q',
+            (string) $this->request()->query->get(
+                'zoek',
                 ''
             )
         );
 
-        $events = $zoekterm === ''
-            ? $this->service->all()
-            : $this->service->search($zoekterm);
+        $isAdmin = Auth::isAdmin();
+
+        if ($isAdmin) {
+            $events = $zoekterm === ''
+                ? $this->service->allForAdministration()
+                : $this->service->searchForAdministration($zoekterm);
+        } else {
+            $events = $zoekterm === ''
+                ? $this->service->visibleToMembers()
+                : $this->service->searchVisibleToMembers($zoekterm);
+        }
 
         return $this->view(
             'events.index',
@@ -43,6 +56,7 @@ final class EventController extends BaseController
                 'title' => 'Evenementen',
                 'events' => $events,
                 'zoekterm' => $zoekterm,
+                'isAdmin' => $isAdmin,
             ]
         );
     }
@@ -50,17 +64,14 @@ final class EventController extends BaseController
     public function show(): Response
     {
         $id = $this->routeId();
+        $isAdmin = Auth::isAdmin();
 
-        $event = $this->service->find($id);
+        $event = $isAdmin
+            ? $this->service->find($id)
+            : $this->service->findVisibleToMembers($id);
 
         if ($event === null) {
-            return $this->view(
-                'core::errors.404',
-                [
-                    'message' => 'Evenement niet gevonden.',
-                ],
-                404
-            );
+            return $this->notFound();
         }
 
         return $this->view(
@@ -68,6 +79,7 @@ final class EventController extends BaseController
             [
                 'title' => $event->titel,
                 'event' => $event,
+                'isAdmin' => $isAdmin,
             ]
         );
     }
@@ -84,57 +96,41 @@ final class EventController extends BaseController
 
     public function store(): Response
     {
-        $input = $this->request()->all();
-
-        Session::flash(
-            '_old_input',
-            $input
-        );
+        $input = $this->request()->request->all();
 
         try {
-            $id = $this->service->create($input);
+            $this->validateCsrf($input);
+
+            $eventRequest = new EventRequest($input);
+            $id = $this->service->create(
+                $eventRequest->all()
+            );
 
             $this->success(
-                'Evenement succesvol aangemaakt.'
+                'Het evenement werd succesvol aangemaakt.'
             );
 
             return $this->redirect(
                 '/events/' . $id
             );
         } catch (Throwable $throwable) {
-            Session::flash(
-                '_errors',
-                [
-                    'form' => [
-                        $throwable->getMessage(),
-                    ],
-                ]
-            );
-
-            $this->error(
+            $this->flashValidationFailure(
+                $input,
+                $throwable,
                 'Het evenement kon niet worden aangemaakt.'
             );
 
-            return $this->redirect(
-                '/events/create'
-            );
+            return $this->redirect('/events/create');
         }
     }
 
     public function edit(): Response
     {
         $id = $this->routeId();
-
         $event = $this->service->find($id);
 
         if ($event === null) {
-            return $this->view(
-                'core::errors.404',
-                [
-                    'message' => 'Evenement niet gevonden.',
-                ],
-                404
-            );
+            return $this->notFound();
         }
 
         return $this->view(
@@ -149,37 +145,29 @@ final class EventController extends BaseController
     public function update(): Response
     {
         $id = $this->routeId();
-        $input = $this->request()->all();
-
-        Session::flash(
-            '_old_input',
-            $input
-        );
+        $input = $this->request()->request->all();
 
         try {
+            $this->validateCsrf($input);
+
+            $eventRequest = new EventRequest($input);
+
             $this->service->update(
                 $id,
-                $input
+                $eventRequest->all()
             );
 
             $this->success(
-                'Evenement succesvol gewijzigd.'
+                'Het evenement werd succesvol gewijzigd.'
             );
 
             return $this->redirect(
                 '/events/' . $id
             );
         } catch (Throwable $throwable) {
-            Session::flash(
-                '_errors',
-                [
-                    'form' => [
-                        $throwable->getMessage(),
-                    ],
-                ]
-            );
-
-            $this->error(
+            $this->flashValidationFailure(
+                $input,
+                $throwable,
                 'Het evenement kon niet worden gewijzigd.'
             );
 
@@ -192,24 +180,14 @@ final class EventController extends BaseController
     public function destroy(): Response
     {
         $id = $this->routeId();
-
-        $event = $this->service->find($id);
-
-        if ($event === null) {
-            return $this->view(
-                'core::errors.404',
-                [
-                    'message' => 'Evenement niet gevonden.',
-                ],
-                404
-            );
-        }
+        $input = $this->request()->request->all();
 
         try {
+            $this->validateCsrf($input);
             $this->service->delete($id);
 
             $this->success(
-                'Evenement succesvol verwijderd.'
+                'Het evenement werd succesvol verwijderd.'
             );
         } catch (Throwable $throwable) {
             $this->error(
@@ -220,42 +198,48 @@ final class EventController extends BaseController
         return $this->redirect('/events');
     }
 
-    public function activate(): Response
+    /**
+     * @param array<string, mixed> $input
+     */
+    private function validateCsrf(array $input): void
     {
-        $id = $this->routeId();
+        $token = $input['_token'] ?? null;
 
-        try {
-            $this->service->activate($id);
-
-            $this->success(
-                'Evenement geactiveerd.'
-            );
-        } catch (Throwable $throwable) {
-            $this->error(
-                $throwable->getMessage()
+        if (
+            !is_string($token)
+            || !$this->csrf->validate($token)
+        ) {
+            throw new RuntimeException(
+                'De beveiligingstoken is ongeldig of verlopen. Probeer opnieuw.'
             );
         }
-
-        return $this->redirect('/events');
     }
 
-    public function deactivate(): Response
-    {
-        $id = $this->routeId();
+    /**
+     * @param array<string, mixed> $input
+     */
+    private function flashValidationFailure(
+        array $input,
+        Throwable $throwable,
+        string $flashMessage
+    ): void {
+        unset($input['_token']);
 
-        try {
-            $this->service->deactivate($id);
+        Session::flash(
+            '_old_input',
+            $input
+        );
 
-            $this->success(
-                'Evenement gedeactiveerd.'
-            );
-        } catch (Throwable $throwable) {
-            $this->error(
-                $throwable->getMessage()
-            );
-        }
+        Session::flash(
+            '_errors',
+            [
+                'form' => [
+                    $throwable->getMessage(),
+                ],
+            ]
+        );
 
-        return $this->redirect('/events');
+        $this->error($flashMessage);
     }
 
     private function routeId(): int
@@ -263,6 +247,17 @@ final class EventController extends BaseController
         return (int) $this->request()->route(
             'id',
             0
+        );
+    }
+
+    private function notFound(): Response
+    {
+        return $this->view(
+            'core::errors.404',
+            [
+                'message' => 'Evenement niet gevonden.',
+            ],
+            404
         );
     }
 }

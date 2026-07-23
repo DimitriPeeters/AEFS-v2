@@ -41,7 +41,7 @@ abstract class BaseController
         int $status = 302
     ): RedirectResponse {
         return new RedirectResponse(
-            $url,
+            $this->resolveRedirectUrl($url),
             $status
         );
     }
@@ -111,5 +111,58 @@ abstract class BaseController
             'info',
             $message
         );
+    }
+
+    private function resolveRedirectUrl(string $url): string
+    {
+        $url = trim($url);
+
+        if ($url === '') {
+            return $this->applicationBasePath() . '/';
+        }
+
+        if (
+            preg_match('#^[a-z][a-z0-9+\-.]*://#i', $url) === 1
+            || str_starts_with($url, '//')
+        ) {
+            return $url;
+        }
+
+        $basePath = $this->applicationBasePath();
+
+        if (
+            $basePath !== ''
+            && (
+                $url === $basePath
+                || str_starts_with($url, $basePath . '/')
+            )
+        ) {
+            return $url;
+        }
+
+        return rtrim($basePath, '/')
+            . '/'
+            . ltrim($url, '/');
+    }
+
+    private function applicationBasePath(): string
+    {
+        $scriptName = $_SERVER['SCRIPT_NAME'] ?? '';
+
+        if (!is_string($scriptName) || $scriptName === '') {
+            return '';
+        }
+
+        $directory = str_replace(
+            '\\',
+            '/',
+            dirname($scriptName)
+        );
+
+        if ($directory === '/' || $directory === '.') {
+            return '';
+        }
+
+        return rtrim($directory, '/');
     }
 }

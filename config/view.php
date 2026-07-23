@@ -25,15 +25,9 @@ return [
             . 'Views',
     ],
 
-    'base_url' => rtrim(
-        (string) ($_ENV['APP_URL'] ?? ''),
-        '/'
-    ),
+    'base_url' => '/aefs-v2/public',
 
     'asset_path' => 'assets',
 
-    'debug' => filter_var(
-        $_ENV['APP_DEBUG'] ?? false,
-        FILTER_VALIDATE_BOOL
-    ),
+    'debug' => true,
 ];

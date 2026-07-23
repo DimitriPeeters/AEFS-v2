@@ -1,140 +1,56 @@
 <?php
 
-
-
 use AEFS\Core\Auth;
+
+/** @var string|null $title */
 
 $user = Auth::user();
 
+$firstName = is_array($user)
+    ? (string) ($user['voornaam'] ?? '')
+    : '';
+
+$lastName = is_array($user)
+    ? (string) ($user['achternaam'] ?? '')
+    : '';
+
+$role = is_array($user)
+    ? (string) ($user['rol'] ?? '')
+    : '';
+
+$initial = $firstName !== ''
+    ? mb_strtoupper(mb_substr($firstName, 0, 1))
+    : '?';
 ?>
-<header class="header">
 
-    <div class="header-left">
+<header class="app-header">
+    <div class="app-header__content">
+        <h1 class="app-header__title">
+            <?= $this->escape(
+                $title ?? 'AEFS Eventbeheer'
+            ) ?>
+        </h1>
 
-        <h1><?= htmlspecialchars($title ?? 'AEFS', ENT_QUOTES, 'UTF-8') ?></h1>
-
-    </div>
-
-    <div class="header-right">
-
-        <div class="user-info">
-
-            <div class="avatar">
-
-                <?= strtoupper(substr($user['voornaam'] ?? '?', 0, 1)) ?>
-
+        <div class="app-header__user">
+            <div class="app-header__avatar">
+                <?= $this->escape($initial) ?>
             </div>
 
-            <div>
-
-                <strong>
-
-                    <?= htmlspecialchars(
-                        ($user['voornaam'] ?? '') . ' ' . ($user['achternaam'] ?? ''),
-                        ENT_QUOTES,
-                        'UTF-8'
+            <div class="app-header__identity">
+                <strong class="app-header__name">
+                    <?= $this->escape(
+                        trim($firstName . ' ' . $lastName)
                     ) ?>
-
                 </strong>
 
-                <br>
-
-                <small>
-
-                    <?= htmlspecialchars(
-                        ucfirst($user['rol'] ?? ''),
-                        ENT_QUOTES,
-                        'UTF-8'
-                    ) ?>
-
-                </small>
-
+                <?php if ($role !== ''): ?>
+                    <span class="app-header__role">
+                        <?= $this->escape(
+                            ucfirst($role)
+                        ) ?>
+                    </span>
+                <?php endif; ?>
             </div>
-
         </div>
-
     </div>
-
 </header>
-
-<style>
-
-.header{
-
-    height:75px;
-
-    background:#ffffff;
-
-    border-bottom:1px solid #e5e7eb;
-
-    display:flex;
-
-    justify-content:space-between;
-
-    align-items:center;
-
-    padding:0 30px;
-
-}
-
-.header h1{
-
-    margin:0;
-
-    font-size:28px;
-
-    color:#1f2937;
-
-}
-
-.header-right{
-
-    display:flex;
-
-    align-items:center;
-
-    gap:20px;
-
-}
-
-.user-info{
-
-    display:flex;
-
-    align-items:center;
-
-    gap:12px;
-
-}
-
-.avatar{
-
-    width:44px;
-
-    height:44px;
-
-    border-radius:50%;
-
-    background:#2563eb;
-
-    color:#fff;
-
-    display:flex;
-
-    justify-content:center;
-
-    align-items:center;
-
-    font-weight:bold;
-
-    font-size:18px;
-
-}
-
-.user-info small{
-
-    color:#6b7280;
-
-}
-
-</style>

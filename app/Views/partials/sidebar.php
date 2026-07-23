@@ -43,6 +43,15 @@ $items = $navigationItems ?? [
         'path' => '/settings',
     ],
 ];
+
+$currentPath = parse_url(
+    $_SERVER['REQUEST_URI'] ?? '',
+    PHP_URL_PATH
+);
+
+$currentPath = is_string($currentPath)
+    ? $currentPath
+    : '';
 ?>
 
 <aside class="sidebar">
@@ -53,7 +62,19 @@ $items = $navigationItems ?? [
                 $helpers->url->to('/dashboard')
             ) ?>"
         >
-            AEFS
+            <img
+                class="sidebar__logo"
+                src="<?= $this->escape(
+                    $helpers->asset->url(
+                        'images/aefs-logo-white.png'
+                    )
+                ) ?>"
+                alt="AEFS"
+            >
+
+            <span class="sidebar__brand-text">
+                Eventbeheer
+            </span>
         </a>
     </div>
 
@@ -63,17 +84,34 @@ $items = $navigationItems ?? [
     >
         <ul class="sidebar__menu">
             <?php foreach ($items as $item): ?>
+                <?php
+                $itemUrl = $helpers->url->to($item['path']);
+
+                $active = $currentPath === $itemUrl
+                    || (
+                        $item['path'] !== '/dashboard'
+                        && str_starts_with(
+                            $currentPath,
+                            rtrim($itemUrl, '/') . '/'
+                        )
+                    );
+                ?>
+
                 <li class="sidebar__item">
                     <a
-                        class="sidebar__link"
-                        href="<?= $this->escape(
-                            $helpers->url->to($item['path'])
-                        ) ?>"
+                        class="sidebar__link<?= $active ? ' sidebar__link--active' : '' ?>"
+                        href="<?= $this->escape($itemUrl) ?>"
                     >
-                        <?= $this->escape($item['label']) ?>
+                        <span class="sidebar__link-label">
+                            <?= $this->escape($item['label']) ?>
+                        </span>
                     </a>
                 </li>
             <?php endforeach; ?>
         </ul>
     </nav>
+
+    <div class="sidebar__footer">
+        <span>AEFS v2</span>
+    </div>
 </aside>

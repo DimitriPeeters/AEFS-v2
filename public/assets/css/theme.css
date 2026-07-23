@@ -1,62 +1,29 @@
-:root{
+:root {
+    --color-primary: #b5121b;
+    --color-primary-dark: #8f0e15;
+    --color-primary-light: #d52a33;
+    --color-primary-soft: #fff1f2;
 
-    /*
-    |--------------------------------------------------------------------------
-    | Colors
-    |--------------------------------------------------------------------------
-    */
+    --color-white: #ffffff;
+    --color-background: #f4f6f9;
+    --color-surface: #ffffff;
 
-    --primary:#1E3A8A;
-    --primary-hover:#1D4ED8;
+    --color-text: #172033;
+    --color-text-muted: #647084;
 
-    --secondary:#475569;
+    --color-border: #dfe5ee;
+    --color-border-strong: #cbd3df;
 
-    --success:#16A34A;
-    --warning:#F59E0B;
-    --danger:#DC2626;
-    --info:#0284C7;
+    --color-success: #15803d;
+    --color-warning: #b45309;
+    --color-error: #b42318;
+    --color-info: #1d4ed8;
 
-    --background:#F8FAFC;
-    --surface:#FFFFFF;
+    --shadow-card: 0 14px 38px rgba(23, 32, 51, 0.12);
 
-    --border:#E5E7EB;
+    --radius-small: 6px;
+    --radius-medium: 9px;
+    --radius-large: 14px;
 
-    --text:#111827;
-    --text-light:#374151;
-    --text-muted:#6B7280;
-
-    --sidebar:#0F172A;
-    --sidebar-hover:#1E293B;
-
-    /*
-    |--------------------------------------------------------------------------
-    | Radius
-    |--------------------------------------------------------------------------
-    */
-
-    --radius-sm:6px;
-    --radius-md:10px;
-    --radius-lg:14px;
-    --radius-xl:18px;
-
-    /*
-    |--------------------------------------------------------------------------
-    | Shadows
-    |--------------------------------------------------------------------------
-    */
-
-    --shadow-sm:0 1px 2px rgba(0,0,0,.05);
-
-    --shadow-md:0 5px 14px rgba(0,0,0,.08);
-
-    --shadow-lg:0 15px 35px rgba(0,0,0,.12);
-
-    /*
-    |--------------------------------------------------------------------------
-    | Animation
-    |--------------------------------------------------------------------------
-    */
-
-    --transition:.18s ease-in-out;
-
+    --sidebar-width: 260px;
 }

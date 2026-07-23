@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
+use AEFS\Core\Http\Request;
+use AEFS\Core\Http\Response;
+use AEFS\Core\Session;
+use AEFS\Core\View\ViewFactory;
 use AEFS\Http\Requests\UserRequest;
 use App\Services\AuditLogService;
 use App\Services\MemberService;
@@ -13,55 +17,65 @@ use Throwable;
 final class UserController extends BaseController
 {
     public function __construct(
-        private UserService $userService,
-        private MemberService $memberService,
-        private AuditLogService $auditLog
+        ViewFactory $views,
+        Request $request,
+        private readonly UserService $userService,
+        private readonly MemberService $memberService,
+        private readonly AuditLogService $auditLog
     ) {
-        parent::__construct();
+        parent::__construct(
+            $views,
+            $request
+        );
     }
 
-    public function index(): void
+    public function index(): Response
     {
         $zoekterm = trim(
-            (string) $this->request->query('zoek', '')
+            (string) $this->request()->query(
+                'zoek',
+                ''
+            )
         );
 
         $gebruikers = $zoekterm === ''
             ? $this->userService->all()
             : $this->userService->search($zoekterm);
 
-        $this->view(
+        return $this->view(
             'users.index',
             [
-                'title'       => 'Gebruikers',
-                'titel'       => 'Gebruikers',
-                'zoekterm'    => $zoekterm,
-                'gebruikers'  => $gebruikers,
+                'title' => 'Gebruikers',
+                'titel' => 'Gebruikers',
+                'zoekterm' => $zoekterm,
+                'gebruikers' => $gebruikers,
             ]
         );
     }
 
-    public function show(): void
+    public function show(): Response
     {
-        $id = (int) $this->request->route('id');
+        $id = $this->routeId();
 
         $gebruiker = $this->userService->find($id);
 
         if ($gebruiker === null) {
-
-            http_response_code(404);
-
-            exit('Gebruiker niet gevonden.');
-
+            return $this->view(
+                'core::errors.404',
+                [
+                    'message' => 'Gebruiker niet gevonden.',
+                ],
+                404
+            );
         }
 
-        $this->view(
+        return $this->view(
             'users.show',
             [
-                'title'      => $gebruiker->fullName(),
-                'titel'      => 'Gebruiker',
-                'gebruiker'  => $gebruiker,
-                'logs'       => $this->auditLog->history(
+                'title' => $gebruiker->fullName(),
+                'titel' => 'Gebruiker',
+                'gebruiker' => $gebruiker,
+                'logs' => $this->auditLog->history(
                     'user',
                     $id
                 ),
@@ -69,9 +83,9 @@ final class UserController extends BaseController
         );
     }
 
-    public function create(): void
+    public function create(): Response
     {
-        $this->view(
+        return $this->view(
             'users.create',
             [
                 'title' => 'Nieuwe gebruiker',
@@ -81,109 +95,157 @@ final class UserController extends BaseController
         );
     }
 
-    public function store(): void
+    public function store(): Response
     {
-        try {
+        $input = $this->request()->all();
 
-            $request = new UserRequest(
-                $this->request->all()
-            );
+        Session::flash(
+            '_old_input',
+            $input
+        );
+
+        try {
+            $userRequest = new UserRequest($input);
 
             $id = $this->userService->create(
-                $request->all()
+                $userRequest->all()
             );
 
-            header('Location: /users/' . $id);
+            $this->success(
+                'De gebruiker werd succesvol aangemaakt.'
+            );
 
-            exit;
-
-        } catch (Throwable $e) {
-
-            $this->view(
-                'users.create',
+            return $this->redirect(
+                '/users/' . $id
+            );
+        } catch (Throwable $throwable) {
+            Session::flash(
+                '_errors',
                 [
-                    'title'  => 'Nieuwe gebruiker',
-                    'titel'  => 'Nieuwe gebruiker',
-                    'leden'  => $this->memberService->all(),
-                    'errors' => [
-                        $e->getMessage(),
+                    'form' => [
+                        $throwable->getMessage(),
                     ],
                 ]
             );
 
+            $this->error(
+                'De gebruiker kon niet worden aangemaakt.'
+            );
+
+            return $this->redirect(
+                '/users/create'
+            );
         }
     }
 
-    public function edit(): void
+    public function edit(): Response
     {
-        $id = (int) $this->request->route('id');
+        $id = $this->routeId();
 
         $gebruiker = $this->userService->find($id);
 
         if ($gebruiker === null) {
-
-            http_response_code(404);
-
-            exit('Gebruiker niet gevonden.');
-
+            return $this->view(
+                'core::errors.404',
+                [
+                    'message' => 'Gebruiker niet gevonden.',
+                ],
+                404
+            );
         }
 
-        $this->view(
+        return $this->view(
             'users.edit',
             [
-                'title'      => 'Gebruiker wijzigen',
-                'titel'      => 'Gebruiker wijzigen',
-                'gebruiker'  => $gebruiker,
-                'leden'      => $this->memberService->all(),
+                'title' => 'Gebruiker wijzigen',
+                'titel' => 'Gebruiker wijzigen',
+                'gebruiker' => $gebruiker,
+                'leden' => $this->memberService->all(),
             ]
         );
     }
 
-    public function update(): void
+    public function update(): Response
     {
-        $id = (int) $this->request->route('id');
+        $id = $this->routeId();
+        $input = $this->request()->all();
+
+        Session::flash(
+            '_old_input',
+            $input
+        );
 
         try {
-
-            $request = new UserRequest(
-                $this->request->all()
-            );
+            $userRequest = new UserRequest($input);
 
             $this->userService->update(
                 $id,
-                $request->all()
+                $userRequest->all()
             );
 
-            header('Location: /users/' . $id);
+            $this->success(
+                'De gebruiker werd succesvol gewijzigd.'
+            );
 
-            exit;
-
-        } catch (Throwable $e) {
-
-            $this->view(
-                'users.edit',
+            return $this->redirect(
+                '/users/' . $id
+            );
+        } catch (Throwable $throwable) {
+            Session::flash(
+                '_errors',
                 [
-                    'title'      => 'Gebruiker wijzigen',
-                    'titel'      => 'Gebruiker wijzigen',
-                    'gebruiker'  => $this->userService->find($id),
-                    'leden'      => $this->memberService->all(),
-                    'errors'     => [
-                        $e->getMessage(),
+                    'form' => [
+                        $throwable->getMessage(),
                     ],
                 ]
             );
 
+            $this->error(
+                'De gebruiker kon niet worden gewijzigd.'
+            );
+
+            return $this->redirect(
+                '/users/' . $id . '/edit'
+            );
         }
     }
 
-    public function delete(): void
+    public function delete(): Response
     {
-        $id = (int) $this->request->route('id');
+        $id = $this->routeId();
 
-        $this->userService->delete($id);
+        $gebruiker = $this->userService->find($id);
 
-        header('Location: /users');
+        if ($gebruiker === null) {
+            return $this->view(
+                'core::errors.404',
+                [
+                    'message' => 'Gebruiker niet gevonden.',
+                ],
+                404
+            );
+        }
 
-        exit;
+        try {
+            $this->userService->delete($id);
+
+            $this->success(
+                'De gebruiker werd succesvol verwijderd.'
+            );
+        } catch (Throwable $throwable) {
+            $this->error(
+                $throwable->getMessage()
+            );
+        }
+
+        return $this->redirect('/users');
+    }
+
+    private function routeId(): int
+    {
+        return (int) $this->request()->route(
+            'id',
+            0
+        );
     }
 }

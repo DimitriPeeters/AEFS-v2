@@ -6,172 +6,263 @@ namespace App\Controllers;
 
 use AEFS\Core\Http\Request;
 use AEFS\Core\Http\Response;
-use AEFS\Core\View;
+use AEFS\Core\Session;
+use AEFS\Core\View\ViewFactory;
 use App\Services\EventService;
 use Throwable;
 
-final class EventController
+final class EventController extends BaseController
 {
     public function __construct(
-        private EventService $service
+        ViewFactory $views,
+        Request $request,
+        private readonly EventService $service
     ) {
+        parent::__construct(
+            $views,
+            $request
+        );
     }
 
-    public function index(Request $request): void
+    public function index(): Response
     {
-        $zoekterm = trim((string) $request->query('q', ''));
+        $zoekterm = trim(
+            (string) $this->request()->query(
+                'q',
+                ''
+            )
+        );
 
         $events = $zoekterm === ''
             ? $this->service->all()
             : $this->service->search($zoekterm);
 
-        Response::html(
-            View::render('events/index', [
-                'title'     => 'Evenementen',
-                'events'    => $events,
-                'zoekterm'  => $zoekterm,
-            ])
+        return $this->view(
+            'events.index',
+            [
+                'title' => 'Evenementen',
+                'events' => $events,
+                'zoekterm' => $zoekterm,
+            ]
         );
     }
 
-    public function show(Request $request): void
+    public function show(): Response
     {
-        $id = (int) $request->route('id');
+        $id = $this->routeId();
 
         $event = $this->service->find($id);
 
         if ($event === null) {
-            Response::notFound();
-            return;
+            return $this->view(
+                'core::errors.404',
+                [
+                    'message' => 'Evenement niet gevonden.',
+                ],
+                404
+            );
         }
 
-        Response::html(
-            View::render('events/show', [
+        return $this->view(
+            'events.show',
+            [
                 'title' => $event->titel,
                 'event' => $event,
-            ])
+            ]
         );
     }
 
-    public function create(): void
+    public function create(): Response
     {
-        Response::html(
-            View::render('events/create', [
+        return $this->view(
+            'events.create',
+            [
                 'title' => 'Nieuw evenement',
-            ])
+            ]
         );
     }
 
-    public function store(Request $request): void
+    public function store(): Response
     {
+        $input = $this->request()->all();
+
+        Session::flash(
+            '_old_input',
+            $input
+        );
+
         try {
+            $id = $this->service->create($input);
 
-            $id = $this->service->create(
-                $request->all()
+            $this->success(
+                'Evenement succesvol aangemaakt.'
             );
 
-            $_SESSION['success'] = 'Evenement succesvol aangemaakt.';
-
-            Response::redirect('/events/' . $id);
-
-        } catch (Throwable $e) {
-
-            Response::html(
-                View::render('events/create', [
-                    'title'  => 'Nieuw evenement',
-                    'errors' => [$e->getMessage()],
-                    'old'    => $request->all(),
-                ])
+            return $this->redirect(
+                '/events/' . $id
+            );
+        } catch (Throwable $throwable) {
+            Session::flash(
+                '_errors',
+                [
+                    'form' => [
+                        $throwable->getMessage(),
+                    ],
+                ]
             );
 
+            $this->error(
+                'Het evenement kon niet worden aangemaakt.'
+            );
+
+            return $this->redirect(
+                '/events/create'
+            );
         }
     }
 
-    public function edit(Request $request): void
+    public function edit(): Response
     {
-        $id = (int) $request->route('id');
+        $id = $this->routeId();
 
         $event = $this->service->find($id);
 
         if ($event === null) {
-            Response::notFound();
-            return;
+            return $this->view(
+                'core::errors.404',
+                [
+                    'message' => 'Evenement niet gevonden.',
+                ],
+                404
+            );
         }
 
-        Response::html(
-            View::render('events/edit', [
+        return $this->view(
+            'events.edit',
+            [
                 'title' => 'Evenement wijzigen',
                 'event' => $event,
-            ])
+            ]
         );
     }
 
-    public function update(Request $request): void
+    public function update(): Response
     {
-        $id = (int) $request->route('id');
+        $id = $this->routeId();
+        $input = $this->request()->all();
+
+        Session::flash(
+            '_old_input',
+            $input
+        );
 
         try {
-
             $this->service->update(
                 $id,
-                $request->all()
+                $input
             );
 
-            $_SESSION['success'] = 'Evenement succesvol gewijzigd.';
-
-            Response::redirect('/events/' . $id);
-
-        } catch (Throwable $e) {
-
-            Response::html(
-                View::render('events/edit', [
-                    'title'  => 'Evenement wijzigen',
-                    'event'  => $this->service->find($id),
-                    'errors' => [$e->getMessage()],
-                ])
+            $this->success(
+                'Evenement succesvol gewijzigd.'
             );
 
+            return $this->redirect(
+                '/events/' . $id
+            );
+        } catch (Throwable $throwable) {
+            Session::flash(
+                '_errors',
+                [
+                    'form' => [
+                        $throwable->getMessage(),
+                    ],
+                ]
+            );
+
+            $this->error(
+                'Het evenement kon niet worden gewijzigd.'
+            );
+
+            return $this->redirect(
+                '/events/' . $id . '/edit'
+            );
         }
     }
 
-    public function destroy(Request $request): void
+    public function destroy(): Response
     {
-        $id = (int) $request->route('id');
+        $id = $this->routeId();
+
+        $event = $this->service->find($id);
+
+        if ($event === null) {
+            return $this->view(
+                'core::errors.404',
+                [
+                    'message' => 'Evenement niet gevonden.',
+                ],
+                404
+            );
+        }
 
         try {
-
             $this->service->delete($id);
 
-            $_SESSION['success'] = 'Evenement verwijderd.';
-
-        } catch (Throwable $e) {
-
-            $_SESSION['error'] = $e->getMessage();
-
+            $this->success(
+                'Evenement succesvol verwijderd.'
+            );
+        } catch (Throwable $throwable) {
+            $this->error(
+                $throwable->getMessage()
+            );
         }
 
-        Response::redirect('/events');
+        return $this->redirect('/events');
     }
 
-    public function activate(Request $request): void
+    public function activate(): Response
     {
-        $this->service->activate(
-            (int) $request->route('id')
-        );
+        $id = $this->routeId();
 
-        $_SESSION['success'] = 'Evenement geactiveerd.';
+        try {
+            $this->service->activate($id);
 
-        Response::redirect('/events');
+            $this->success(
+                'Evenement geactiveerd.'
+            );
+        } catch (Throwable $throwable) {
+            $this->error(
+                $throwable->getMessage()
+            );
+        }
+
+        return $this->redirect('/events');
     }
 
-    public function deactivate(Request $request): void
+    public function deactivate(): Response
     {
-        $this->service->deactivate(
-            (int) $request->route('id')
+        $id = $this->routeId();
+
+        try {
+            $this->service->deactivate($id);
+
+            $this->success(
+                'Evenement gedeactiveerd.'
+            );
+        } catch (Throwable $throwable) {
+            $this->error(
+                $throwable->getMessage()
+            );
+        }
+
+        return $this->redirect('/events');
+    }
+
+    private function routeId(): int
+    {
+        return (int) $this->request()->route(
+            'id',
+            0
         );
-
-        $_SESSION['success'] = 'Evenement gedeactiveerd.';
-
-        Response::redirect('/events');
     }
 }

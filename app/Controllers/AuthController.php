@@ -7,48 +7,95 @@ namespace App\Controllers;
 use AEFS\Core\Http\RedirectResponse;
 use AEFS\Core\Http\Request;
 use AEFS\Core\Http\Response;
+use AEFS\Core\Session;
+use AEFS\Core\View\ViewFactory;
 use App\Services\AuthenticationService;
 
-final class AuthController
+final class AuthController extends BaseController
 {
     public function __construct(
-        private AuthenticationService $auth
+        ViewFactory $views,
+        Request $request,
+        private readonly AuthenticationService $auth
     ) {
+        parent::__construct(
+            $views,
+            $request
+        );
     }
 
-    public function login(Request $request): Response
+    public function login(): Response
     {
         if ($this->auth->check()) {
-            return new RedirectResponse('/dashboard');
+            return $this->redirect('/dashboard');
         }
 
-        ob_start();
-
-        require dirname(__DIR__, 2) . '/resources/views/auth/login.php';
-
-        return new Response((string) ob_get_clean());
+        return $this->view('auth.login');
     }
 
-    public function authenticate(Request $request): Response
+    public function authenticate(): Response
     {
-        $email = trim((string) $request->post('email'));
-        $password = (string) $request->post('password');
+        $email = trim(
+            (string) $this->post('email', '')
+        );
+
+        $password = (string) $this->post(
+            'password',
+            ''
+        );
+
+        $remember = (string) $this->post(
+            'remember',
+            ''
+        );
+
+        Session::flash('_old_input', [
+            'email' => $email,
+            'remember' => $remember,
+        ]);
 
         if ($email === '' || $password === '') {
-           return new RedirectResponse('/aefs-v2/public/login?error=missing');
+            Session::flash('_errors', [
+                'email' => $email === ''
+                    ? ['E-mailadres is verplicht.']
+                    : [],
+                'password' => $password === ''
+                    ? ['Wachtwoord is verplicht.']
+                    : [],
+            ]);
+
+            $this->error(
+                'Vul alle verplichte velden in.'
+            );
+
+            return $this->redirect('/login');
         }
 
         if (!$this->auth->attempt($email, $password)) {
-           return new RedirectResponse('/aefs-v2/public/login?error=invalid');
+            Session::flash('_errors', [
+                'email' => [
+                    'De combinatie van e-mailadres en wachtwoord is ongeldig.',
+                ],
+            ]);
+
+            $this->error(
+                'Aanmelden is mislukt.'
+            );
+
+            return $this->redirect('/login');
         }
 
-        return new RedirectResponse('/aefs-v2/public/dashboard');
+        return $this->redirect('/dashboard');
     }
 
-    public function logout(Request $request): Response
+    public function logout(): RedirectResponse
     {
         $this->auth->logout();
 
-        return new RedirectResponse('/aefs-v2/public/login?logout=1');
+        $this->success(
+            'Je bent succesvol afgemeld.'
+        );
+
+        return $this->redirect('/login');
     }
 }

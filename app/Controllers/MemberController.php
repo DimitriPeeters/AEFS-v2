@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
+use AEFS\Core\Http\Request;
+use AEFS\Core\Http\Response;
+use AEFS\Core\Session;
+use AEFS\Core\View\ViewFactory;
 use AEFS\Http\Requests\MemberRequest;
 use App\Services\AuditLogService;
 use App\Services\MemberService;
@@ -12,54 +16,64 @@ use Throwable;
 final class MemberController extends BaseController
 {
     public function __construct(
-        private MemberService $service,
-        private AuditLogService $auditLog
+        ViewFactory $views,
+        Request $request,
+        private readonly MemberService $service,
+        private readonly AuditLogService $auditLog
     ) {
-        parent::__construct();
+        parent::__construct(
+            $views,
+            $request
+        );
     }
 
-    public function index(): void
+    public function index(): Response
     {
         $zoekterm = trim(
-            (string) $this->request->query('zoek', '')
+            (string) $this->request()->query(
+                'zoek',
+                ''
+            )
         );
 
         $leden = $zoekterm === ''
             ? $this->service->all()
             : $this->service->search($zoekterm);
 
-        $this->view(
+        return $this->view(
             'members.index',
             [
-                'title'     => 'Leden',
-                'titel'     => 'Leden',
-                'zoekterm'  => $zoekterm,
-                'leden'     => $leden,
+                'title' => 'Leden',
+                'titel' => 'Leden',
+                'zoekterm' => $zoekterm,
+                'leden' => $leden,
             ]
         );
     }
 
-    public function show(): void
+    public function show(): Response
     {
-        $id = (int) $this->request->route('id');
+        $id = $this->routeId();
 
         $lid = $this->service->find($id);
 
         if ($lid === null) {
-
-            http_response_code(404);
-
-            exit('Lid niet gevonden.');
-
+            return $this->view(
+                'core::errors.404',
+                [
+                    'message' => 'Lid niet gevonden.',
+                ],
+                404
+            );
         }
 
-        $this->view(
+        return $this->view(
             'members.show',
             [
                 'title' => $lid->fullName(),
                 'titel' => 'Ledenfiche',
-                'lid'   => $lid,
-                'logs'  => $this->auditLog->history(
+                'lid' => $lid,
+                'logs' => $this->auditLog->history(
                     'member',
                     $id
                 ),
@@ -67,9 +81,9 @@ final class MemberController extends BaseController
         );
     }
 
-    public function create(): void
+    public function create(): Response
     {
-        $this->view(
+        return $this->view(
             'members.create',
             [
                 'title' => 'Nieuw lid',
@@ -78,110 +92,156 @@ final class MemberController extends BaseController
         );
     }
 
-    public function store(): void
+    public function store(): Response
     {
-        try {
+        $input = $this->request()->all();
 
-            $request = new MemberRequest(
-                $this->request->all()
-            );
+        Session::flash(
+            '_old_input',
+            $input
+        );
+
+        try {
+            $memberRequest = new MemberRequest($input);
 
             $id = $this->service->create(
-                $request->all()
+                $memberRequest->all()
             );
 
-            header(
-                'Location: /members/' . $id
+            $this->success(
+                'Het lid werd succesvol aangemaakt.'
             );
 
-            exit;
-
-        } catch (Throwable $e) {
-
-            $this->view(
-                'members.create',
+            return $this->redirect(
+                '/members/' . $id
+            );
+        } catch (Throwable $throwable) {
+            Session::flash(
+                '_errors',
                 [
-                    'title'  => 'Nieuw lid',
-                    'titel'  => 'Nieuw lid',
-                    'errors' => [
-                        $e->getMessage(),
+                    'form' => [
+                        $throwable->getMessage(),
                     ],
                 ]
             );
 
+            $this->error(
+                'Het lid kon niet worden aangemaakt.'
+            );
+
+            return $this->redirect(
+                '/members/create'
+            );
         }
     }
 
-    public function edit(): void
+    public function edit(): Response
     {
-        $id = (int) $this->request->route('id');
+        $id = $this->routeId();
 
         $lid = $this->service->find($id);
 
         if ($lid === null) {
-
-            http_response_code(404);
-
-            exit('Lid niet gevonden.');
-
+            return $this->view(
+                'core::errors.404',
+                [
+                    'message' => 'Lid niet gevonden.',
+                ],
+                404
+            );
         }
 
-        $this->view(
+        return $this->view(
             'members.edit',
             [
                 'title' => $lid->fullName(),
                 'titel' => 'Lid wijzigen',
-                'lid'   => $lid,
+                'lid' => $lid,
             ]
         );
     }
 
-    public function update(): void
+    public function update(): Response
     {
-        $id = (int) $this->request->route('id');
+        $id = $this->routeId();
+        $input = $this->request()->all();
+
+        Session::flash(
+            '_old_input',
+            $input
+        );
 
         try {
-
-            $request = new MemberRequest(
-                $this->request->all()
-            );
+            $memberRequest = new MemberRequest($input);
 
             $this->service->update(
                 $id,
-                $request->all()
+                $memberRequest->all()
             );
 
-            header(
-                'Location: /members/' . $id
+            $this->success(
+                'Het lid werd succesvol gewijzigd.'
             );
 
-            exit;
-
-        } catch (Throwable $e) {
-
-            $this->view(
-                'members.edit',
+            return $this->redirect(
+                '/members/' . $id
+            );
+        } catch (Throwable $throwable) {
+            Session::flash(
+                '_errors',
                 [
-                    'title'  => 'Lid wijzigen',
-                    'titel'  => 'Lid wijzigen',
-                    'lid'    => $this->service->find($id),
-                    'errors' => [
-                        $e->getMessage(),
+                    'form' => [
+                        $throwable->getMessage(),
                     ],
                 ]
             );
 
+            $this->error(
+                'Het lid kon niet worden gewijzigd.'
+            );
+
+            return $this->redirect(
+                '/members/' . $id . '/edit'
+            );
         }
     }
 
-    public function delete(): void
+    public function delete(): Response
     {
-        $id = (int) $this->request->route('id');
+        $id = $this->routeId();
 
-        $this->service->delete($id);
+        $lid = $this->service->find($id);
 
-        header('Location: /members');
+        if ($lid === null) {
+            return $this->view(
+                'core::errors.404',
+                [
+                    'message' => 'Lid niet gevonden.',
+                ],
+                404
+            );
+        }
 
-        exit;
+        try {
+            $this->service->delete($id);
+
+            $this->success(
+                'Het lid werd succesvol verwijderd.'
+            );
+        } catch (Throwable $throwable) {
+            $this->error(
+                $throwable->getMessage()
+            );
+        }
+
+        return $this->redirect('/members');
+    }
+
+    private function routeId(): int
+    {
+        return (int) $this->request()->route(
+            'id',
+            0
+        );
     }
 }

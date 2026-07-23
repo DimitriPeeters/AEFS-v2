@@ -7,55 +7,109 @@ namespace App\Controllers;
 use AEFS\Core\Http\RedirectResponse;
 use AEFS\Core\Http\Request;
 use AEFS\Core\Http\Response;
+use AEFS\Core\Session;
+use AEFS\Core\View\ViewFactory;
 
 abstract class BaseController
 {
-    protected function view(string $view, array $data = []): Response
-    {
-        extract($data, EXTR_SKIP);
-
-        ob_start();
-
-        require dirname(__DIR__, 2) . '/resources/views/' . str_replace('.', '/', $view) . '.php';
-
-        return new Response((string) ob_get_clean());
+    public function __construct(
+        protected readonly ViewFactory $views,
+        protected readonly Request $request
+    ) {
     }
 
-    protected function redirect(string $url): RedirectResponse
-    {
-        return new RedirectResponse($url);
+    /**
+     * @param array<string, mixed> $data
+     * @param array<string, string> $headers
+     */
+    protected function view(
+        string $view,
+        array $data = [],
+        int $status = 200,
+        array $headers = []
+    ): Response {
+        return $this->views->response(
+            $view,
+            $data,
+            $status,
+            $headers
+        );
+    }
+
+    protected function redirect(
+        string $url,
+        int $status = 302
+    ): RedirectResponse {
+        return new RedirectResponse(
+            $url,
+            $status
+        );
     }
 
     protected function request(): Request
     {
-        return Request::capture();
+        return $this->request;
     }
 
-    protected function input(Request $request, string $key, mixed $default = null): mixed
-    {
-        return $request->input($key, $default);
+    protected function input(
+        string $key,
+        mixed $default = null
+    ): mixed {
+        return $this->request->input(
+            $key,
+            $default
+        );
     }
 
-    protected function post(Request $request, string $key, mixed $default = null): mixed
-    {
-        return $request->post($key, $default);
+    protected function post(
+        string $key,
+        mixed $default = null
+    ): mixed {
+        return $this->request->post(
+            $key,
+            $default
+        );
     }
 
-    protected function flash(string $type, string $message): void
-    {
-        $_SESSION['flash'] = [
-            'type' => $type,
-            'message' => $message,
-        ];
+    protected function flash(
+        string $type,
+        string $message
+    ): void {
+        Session::flash(
+            $type,
+            $message
+        );
     }
 
     protected function success(string $message): void
     {
-        $this->flash('success', $message);
+        $this->flash(
+            'success',
+            $message
+        );
     }
 
     protected function error(string $message): void
     {
-        $this->flash('danger', $message);
+        $this->flash(
+            'error',
+            $message
+        );
+    }
+
+    protected function warning(string $message): void
+    {
+        $this->flash(
+            'warning',
+            $message
+        );
+    }
+
+    protected function info(string $message): void
+    {
+        $this->flash(
+            'info',
+            $message
+        );
     }
 }

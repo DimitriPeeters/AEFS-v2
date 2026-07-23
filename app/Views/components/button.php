@@ -1,28 +1,63 @@
 <?php
 
 
-use AEFS\Core\View\Component\Slot;
 
-/** @var Slot $slot */
-/** @var string|null $type */
-/** @var string|null $variant */
-/** @var string|null $class */
-/** @var bool|null $disabled */
+$type ??= 'primary';
 
-$buttonType = $type ?? 'button';
-$buttonVariant = $variant ?? 'primary';
-$buttonClass = trim(
-    sprintf(
-        'button button--%s %s',
-        $buttonVariant,
-        $class ?? ''
-    )
-);
+$text ??= '';
+
+$href ??= null;
+
+$icon ??= null;
+
+$class = 'btn btn-'.$type;
+
 ?>
-<button
-    type="<?= $this->escape($buttonType) ?>"
-    class="<?= $this->escape($buttonClass) ?>"
-    <?= ($disabled ?? false) ? 'disabled' : '' ?>
+
+<?php if($href): ?>
+
+<a
+
+    href="<?= $href ?>"
+
+    class="<?= $class ?>"
+
 >
-    <?= $slot ?>
+
+    <?php
+
+    if($icon){
+
+        echo icon($icon);
+
+    }
+
+    ?>
+
+    <?= htmlspecialchars($text) ?>
+
+</a>
+
+<?php else: ?>
+
+<button
+
+    class="<?= $class ?>"
+
+>
+
+    <?php
+
+    if($icon){
+
+        echo icon($icon);
+
+    }
+
+    ?>
+
+    <?= htmlspecialchars($text) ?>
+
 </button>
+
+<?php endif; ?>

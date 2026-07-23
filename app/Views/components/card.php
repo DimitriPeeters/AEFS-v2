@@ -1,29 +1,49 @@
 <?php
 
 
-use AEFS\Core\View\Component\Slot;
-use AEFS\Core\View\Component\SlotBag;
 
-/** @var Slot $slot */
-/** @var SlotBag $slots */
-/** @var string|null $class */
+/**
 
-$classes = trim('card ' . ($class ?? ''));
+$title
+
+$content
+
+$footer
+
+*/
+
 ?>
-<section class="<?= $this->escape($classes) ?>">
-    <?php if ($slots->has('header')): ?>
-        <header class="card__header">
-            <?= $slots->get('header') ?>
-        </header>
+
+<div class="card">
+
+    <?php if(!empty($title)): ?>
+
+        <div class="card-header">
+
+            <div class="card-title">
+
+                <?= htmlspecialchars($title) ?>
+
+            </div>
+
+        </div>
+
     <?php endif; ?>
 
-    <div class="card__body">
-        <?= $slot ?>
+    <div class="card-body">
+
+        <?= $content ?? '' ?>
+
     </div>
 
-    <?php if ($slots->has('footer')): ?>
-        <footer class="card__footer">
-            <?= $slots->get('footer') ?>
-        </footer>
+    <?php if(!empty($footer)): ?>
+
+        <div class="card-footer">
+
+            <?= $footer ?>
+
+        </div>
+
     <?php endif; ?>
-</section>
+
+</div>

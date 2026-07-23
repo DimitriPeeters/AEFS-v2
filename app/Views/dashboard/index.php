@@ -1,123 +1,110 @@
 <?php
 
 
-use AEFS\Core\View\Helper\ViewHelpers;
 
-/** @var ViewHelpers $helpers */
-/** @var int|null $memberCount */
-/** @var int|null $eventCount */
-/** @var int|null $shiftCount */
 
-$this->extend('layouts.app', [
-    'title' => 'Dashboard',
-]);
+
+$this->extend('layouts.app', ['title' => $title ?? null]);
 ?>
-
 <?php $this->startSection('content'); ?>
 
-<div class="dashboard">
-    <div class="dashboard__header">
-        <div>
-            <h2 class="dashboard__title">Dashboard</h2>
+<h1>Dashboard</h1>
 
-            <p class="dashboard__description">
-                Overzicht van AEFS Eventbeheer.
-            </p>
-        </div>
+<p>Welkom in AEFS v2.</p>
 
-        <?= $this->component(
-            'link-button',
-            [
-                'href' => $helpers->url->to('/evenementen/nieuw'),
-                'variant' => 'primary',
-            ],
-            static function (): void {
-                echo 'Nieuw evenement';
-            }
-        ) ?>
+<section>
+    <h2>Statistieken</h2>
+
+    <div>
+        <p><strong>Leden:</strong> <?= (int) $statistics['members'] ?></p>
+        <p><strong>Gebruikers:</strong> <?= (int) $statistics['users'] ?></p>
+        <p><strong>Evenementen:</strong> <?= (int) $statistics['events'] ?></p>
+        <p><strong>Open shifts:</strong> <?= (int) $statistics['shifts'] ?></p>
     </div>
+</section>
 
-    <div class="dashboard__grid">
-        <?= $this->component(
-            'card',
-            ['class' => 'dashboard-card'],
-            function () use ($memberCount): void {
-                $this->startSlot('header');
-                ?>
-                <h3 class="dashboard-card__title">Leden</h3>
-                <?php
-                $this->endSlot();
+<section>
+    <h2>Laatste leden</h2>
 
-                ?>
-                <div class="dashboard-card__value">
-                    <?= $this->escape($memberCount ?? 0) ?>
-                </div>
-                <?php
+    <table>
+        <thead>
+            <tr>
+                <th>Naam</th>
+                <th>Gemeente</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php if ($latestMembers === []): ?>
+                <tr>
+                    <td colspan="2">Geen leden gevonden.</td>
+                </tr>
+            <?php else: ?>
+                <?php foreach ($latestMembers as $member): ?>
+                    <tr>
+                        <td>
+                            <?= htmlspecialchars(($member['voornaam'] ?? '') . ' ' . ($member['achternaam'] ?? '')) ?>
+                        </td>
+                        <td>
+                            <?= htmlspecialchars($member['gemeente'] ?? '-') ?>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+            <?php endif; ?>
+        </tbody>
+    </table>
+</section>
 
-                $this->startSlot('footer');
-                ?>
-                <a href="/leden">Bekijk alle leden</a>
-                <?php
-                $this->endSlot();
-            }
-        ) ?>
+<section>
+    <h2>Komende evenementen</h2>
 
-        <?= $this->component(
-            'card',
-            ['class' => 'dashboard-card'],
-            function () use ($eventCount): void {
-                $this->startSlot('header');
-                ?>
-                <h3 class="dashboard-card__title">Evenementen</h3>
-                <?php
-                $this->endSlot();
+    <table>
+        <thead>
+            <tr>
+                <th>Evenement</th>
+                <th>Datum</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php if ($upcomingEvents === []): ?>
+                <tr>
+                    <td colspan="2">Geen evenementen gepland.</td>
+                </tr>
+            <?php else: ?>
+                <?php foreach ($upcomingEvents as $event): ?>
+                    <tr>
+                        <td><?= htmlspecialchars($event['titel'] ?? '-') ?></td>
+                        <td><?= htmlspecialchars($event['startdatum'] ?? '-') ?></td>
+                    </tr>
+                <?php endforeach; ?>
+            <?php endif; ?>
+        </tbody>
+    </table>
+</section>
 
-                ?>
-                <div class="dashboard-card__value">
-                    <?= $this->escape($eventCount ?? 0) ?>
-                </div>
-                <?php
+<section>
+    <h2>Openstaande shifts</h2>
 
-                $this->startSlot('footer');
-                ?>
-                <a href="/evenementen">Bekijk alle evenementen</a>
-                <?php
-                $this->endSlot();
-            }
-        ) ?>
-
-        <?= $this->component(
-            'card',
-            ['class' => 'dashboard-card'],
-            function () use ($shiftCount): void {
-                $this->startSlot('header');
-                ?>
-                <h3 class="dashboard-card__title">Shiften</h3>
-                <?php
-                $this->endSlot();
-
-                ?>
-                <div class="dashboard-card__value">
-                    <?= $this->escape($shiftCount ?? 0) ?>
-                </div>
-                <?php
-
-                $this->startSlot('footer');
-                ?>
-                <a href="/shiften">Bekijk alle shiften</a>
-                <?php
-                $this->endSlot();
-            }
-        ) ?>
-    </div>
-</div>
-
-<?php $this->endSection(); ?>
-
-<?php $this->startSection('scripts'); ?>
-
-<script>
-    document.documentElement.classList.add('view-engine-active');
-</script>
-
+    <table>
+        <thead>
+            <tr>
+                <th>Shift</th>
+                <th>Datum</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php if ($openShifts === []): ?>
+                <tr>
+                    <td colspan="2">Geen openstaande shifts.</td>
+                </tr>
+            <?php else: ?>
+                <?php foreach ($openShifts as $shift): ?>
+                    <tr>
+                        <td><?= htmlspecialchars($shift['naam'] ?? '-') ?></td>
+                        <td><?= htmlspecialchars($shift['shift_datum'] ?? '-') ?></td>
+                    </tr>
+                <?php endforeach; ?>
+            <?php endif; ?>
+        </tbody>
+    </table>
+</section>
 <?php $this->endSection(); ?>

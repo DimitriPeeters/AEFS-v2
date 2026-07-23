@@ -10,15 +10,15 @@ use Throwable;
 final class ViewRenderingException extends RuntimeException
 {
     public function __construct(
-        private readonly string $view,
-        private readonly string $file,
+        private readonly string $viewName,
+        private readonly string $viewFile,
         Throwable $previous
     ) {
         parent::__construct(
             sprintf(
                 'Fout tijdens het renderen van view [%s] uit bestand [%s]: %s',
-                $view,
-                $file,
+                $viewName,
+                $viewFile,
                 $previous->getMessage()
             ),
             0,
@@ -28,11 +28,11 @@ final class ViewRenderingException extends RuntimeException
 
     public function view(): string
     {
-        return $this->view;
+        return $this->viewName;
     }
 
-    public function file(): string
+    public function viewFile(): string
     {
-        return $this->file;
+        return $this->viewFile;
     }
 }

@@ -1,6 +1,4 @@
-
 <?php
-
 
 use AEFS\Core\View\Helper\ViewHelpers;
 
@@ -9,34 +7,25 @@ use AEFS\Core\View\Helper\ViewHelpers;
 /** @var string|null $applicationName */
 
 $pageTitle = trim((string) ($title ?? ''));
-
-if ($pageTitle === '') {
-    $pageTitle = $applicationName ?? 'AEFS Eventbeheer';
-} else {
-    $pageTitle .= ' | ' . ($applicationName ?? 'AEFS Eventbeheer');
-}
+$applicationName = $applicationName ?? 'AEFS Eventbeheer';
+$pageTitle = $pageTitle === '' ? $applicationName : $pageTitle . ' | ' . $applicationName;
 ?>
 <!DOCTYPE html>
 <html lang="nl">
 <head>
     <meta charset="UTF-8">
-
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= $this->escape($pageTitle) ?></title>
-
-    <?= $helpers->asset->css('css/app.css') ?>
-
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <?php foreach (['theme','layout','sidebar','buttons','forms','cards','tables','badges','alerts','utilities','icons','dashboard'] as $stylesheet): ?>
+        <?= $helpers->asset->css('css/' . $stylesheet . '.css') ?>
+    <?php endforeach; ?>
     <?= $this->section('styles') ?>
 </head>
-<body class="<?= $this->escape($bodyClass ?? '') ?>">
+<body class="<?= $this->escape((string) ($bodyClass ?? '')) ?>">
     <?= $this->section('body') ?>
-
-    <?= $helpers->asset->js('js/app.js') ?>
-
     <?= $this->section('scripts') ?>
 </body>
 </html>

@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace AEFS\Repositories;
+namespace App\Repositories;
 
 use AEFS\Core\Database;
-use AEFS\Models\Event;
+use App\Models\Event;
 use PDO;
 
 final class EventRepository

@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace AEFS\Services;
+namespace App\Services;
 
-use AEFS\Models\Member;
-use AEFS\Repositories\MemberRepository;
-use AEFS\Validators\MemberValidator;
+use App\Models\Member;
+use App\Repositories\MemberRepository;
+use App\Validators\MemberValidator;
 use InvalidArgumentException;
 
 final class MemberService
@@ -168,10 +168,15 @@ final class MemberService
 
         }
 
-        $data['actief'] = isset($data['actief']);
+$data['actief'] = filter_var(
+    $data['actief'] ?? false,
+    FILTER_VALIDATE_BOOL
+);
 
-        $data['gdpr_consent'] = isset($data['gdpr_consent']);
-
+$data['gdpr_consent'] = filter_var(
+    $data['gdpr_consent'] ?? false,
+    FILTER_VALIDATE_BOOL
+);
         if (empty($data['land'])) {
 
             $data['land'] = 'België';

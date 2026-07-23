@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace AEFS\Services;
+namespace App\Services;
 
-use AEFS\Models\Shift;
-use AEFS\Models\ShiftRegistration;
-use AEFS\Repositories\EventRepository;
-use AEFS\Repositories\ShiftRegistrationRepository;
-use AEFS\Repositories\ShiftRepository;
+use App\Models\Shift;
+use App\Models\ShiftRegistration;
+use App\Repositories\EventRepository;
+use App\Repositories\ShiftRegistrationRepository;
+use App\Repositories\ShiftRepository;
 use DateInterval;
 use DateTime;
 use RuntimeException;

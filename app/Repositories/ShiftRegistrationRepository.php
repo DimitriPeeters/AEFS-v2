@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace AEFS\Repositories;
+namespace App\Repositories;
 
 use AEFS\Core\BaseRepository;
 use AEFS\Core\Database;
-use AEFS\Mappers\ShiftRegistrationMapper;
-use AEFS\Models\ShiftRegistration;
+use App\Mappers\ShiftRegistrationMapper;
+use App\Models\ShiftRegistration;
 
 final class ShiftRegistrationRepository extends BaseRepository
 {

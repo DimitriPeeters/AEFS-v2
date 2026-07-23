@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace AEFS\Repositories;
+namespace App\Repositories;
 
 use AEFS\Core\BaseRepository;
 use AEFS\Core\Database;
-use AEFS\Models\Lid;
+use App\Models\Lid;
 use PDO;
 
 final class LedenRepository extends BaseRepository

@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace AEFS\Services;
+namespace App\Services;
 
-use AEFS\Repositories\AuditLogRepository;
+use App\Repositories\AuditLogRepository;
 
 final class AuditLogService
 {

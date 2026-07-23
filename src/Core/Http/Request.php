@@ -16,7 +16,15 @@ class Request
     public readonly CookieBag $cookies;
     public readonly FileBag $files;
 
+    /**
+     * @var array<string, mixed>|null
+     */
     private ?array $json = null;
+
+    /**
+     * @var array<string, string>
+     */
+    private array $routeParameters = [];
 
     public function __construct(
         ?array $query = null,
@@ -25,16 +33,31 @@ class Request
         ?array $cookies = null,
         ?array $files = null
     ) {
-        $this->query = new ParameterBag($query ?? $_GET);
-        $this->request = new ParameterBag($request ?? $_POST);
+        $this->query = new ParameterBag(
+            $query ?? $_GET
+        );
+
+        $this->request = new ParameterBag(
+            $request ?? $_POST
+        );
+
         $this->attributes = new ParameterBag();
 
         $server ??= $_SERVER;
 
         $this->server = new ServerBag($server);
-        $this->headers = new HeaderBag($this->extractHeaders($server));
-        $this->cookies = new CookieBag($cookies ?? $_COOKIE);
-        $this->files = new FileBag($files ?? $_FILES);
+
+        $this->headers = new HeaderBag(
+            $this->extractHeaders($server)
+        );
+
+        $this->cookies = new CookieBag(
+            $cookies ?? $_COOKIE
+        );
+
+        $this->files = new FileBag(
+            $files ?? $_FILES
+        );
     }
 
     public static function capture(): self
@@ -52,21 +75,49 @@ class Request
         return $this->server->uri();
     }
 
-public function path(): string
-{
-    $path = $this->server->path();
+    public function path(): string
+    {
+        $path = $this->server->path();
 
-    $scriptName = (string) ($_SERVER['SCRIPT_NAME'] ?? '');
-    $basePath = str_replace('\\', '/', dirname($scriptName));
+        $scriptName = str_replace(
+            '\\',
+            '/',
+            (string) (
+                $this->server->get(
+                    'SCRIPT_NAME',
+                    $_SERVER['SCRIPT_NAME'] ?? ''
+                )
+            )
+        );
 
-    if ($basePath !== '/' && str_starts_with($path, $basePath)) {
-        $path = substr($path, strlen($basePath));
+        $basePath = str_replace(
+            '\\',
+            '/',
+            dirname($scriptName)
+        );
+
+        if (
+            $basePath !== '/'
+            && $basePath !== '.'
+            && str_starts_with($path, $basePath)
+        ) {
+            $path = substr(
+                $path,
+                strlen($basePath)
+            );
+        }
+
+        $path = '/' . ltrim(
+            $path,
+            '/'
+        );
+
+        if ($path === '/') {
+            return '/';
+        }
+
+        return rtrim($path, '/');
     }
-
-    $path = '/' . ltrim($path, '/');
-
-    return $path === '' ? '/' : $path;
-}
 
     public function host(): string
     {
@@ -97,8 +148,10 @@ public function path(): string
             : $this->url() . '?' . $query;
     }
 
-    public function input(string $key, mixed $default = null): mixed
-    {
+    public function input(
+        string $key,
+        mixed $default = null
+    ): mixed {
         if ($this->request->has($key)) {
             return $this->request->get($key);
         }
@@ -112,24 +165,66 @@ public function path(): string
         return $json[$key] ?? $default;
     }
 
-    public function post(?string $key = null, mixed $default = null): mixed
-{
-    if ($key === null) {
-        return $this->request->all();
+    public function post(
+        ?string $key = null,
+        mixed $default = null
+    ): mixed {
+        if ($key === null) {
+            return $this->request->all();
+        }
+
+        return $this->request->get(
+            $key,
+            $default
+        );
     }
 
-    return $this->request->get($key, $default);
-}
+    public function get(
+        ?string $key = null,
+        mixed $default = null
+    ): mixed {
+        if ($key === null) {
+            return $this->query->all();
+        }
 
-public function get(?string $key = null, mixed $default = null): mixed
-{
-    if ($key === null) {
-        return $this->query->all();
+        return $this->query->get(
+            $key,
+            $default
+        );
     }
 
-    return $this->query->get($key, $default);
-}
+    /**
+     * @param array<string, string> $parameters
+     */
+    public function setRouteParameters(
+        array $parameters
+    ): void {
+        $this->routeParameters = $parameters;
+    }
 
+    public function route(
+        ?string $key = null,
+        mixed $default = null
+    ): mixed {
+        if ($key === null) {
+            return $this->routeParameters;
+        }
+
+        return $this->routeParameters[$key]
+            ?? $default;
+    }
+
+    public function hasRouteParameter(string $key): bool
+    {
+        return array_key_exists(
+            $key,
+            $this->routeParameters
+        );
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
     public function all(): array
     {
         return array_merge(
@@ -139,12 +234,19 @@ public function get(?string $key = null, mixed $default = null): mixed
         );
     }
 
+    /**
+     * @param list<string> $keys
+     *
+     * @return array<string, mixed>
+     */
     public function only(array $keys): array
     {
         $data = [];
 
         foreach ($keys as $key) {
-            if (($value = $this->input($key)) !== null) {
+            $value = $this->input($key);
+
+            if ($value !== null) {
                 $data[$key] = $value;
             }
         }
@@ -152,6 +254,11 @@ public function get(?string $key = null, mixed $default = null): mixed
         return $data;
     }
 
+    /**
+     * @param list<string> $keys
+     *
+     * @return array<string, mixed>
+     */
     public function except(array $keys): array
     {
         $data = $this->all();
@@ -163,24 +270,36 @@ public function get(?string $key = null, mixed $default = null): mixed
         return $data;
     }
 
-    public function file(string $key): UploadedFile|array|null
-    {
+    public function file(
+        string $key
+    ): UploadedFile|array|null {
         return $this->files->get($key);
     }
 
-    public function header(string $key, ?string $default = null): ?string
-    {
-        return $this->headers->get($key, $default);
+    public function header(
+        string $key,
+        ?string $default = null
+    ): ?string {
+        return $this->headers->get(
+            $key,
+            $default
+        );
     }
 
-    public function cookie(string $key, mixed $default = null): mixed
-    {
-        return $this->cookies->get($key, $default);
+    public function cookie(
+        string $key,
+        mixed $default = null
+    ): mixed {
+        return $this->cookies->get(
+            $key,
+            $default
+        );
     }
 
     public function isMethod(string $method): bool
     {
-        return strtoupper($method) === $this->method();
+        return strtoupper($method)
+            === strtoupper($this->method());
     }
 
     public function isAjax(): bool
@@ -204,7 +323,7 @@ public function get(?string $key = null, mixed $default = null): mixed
     }
 
     /**
-     * @return array<string,mixed>
+     * @return array<string, mixed>
      */
     public function json(): array
     {
@@ -212,7 +331,9 @@ public function get(?string $key = null, mixed $default = null): mixed
             return $this->json;
         }
 
-        $body = file_get_contents('php://input');
+        $body = file_get_contents(
+            'php://input'
+        );
 
         if ($body === false || $body === '') {
             return $this->json = [];
@@ -235,18 +356,26 @@ public function get(?string $key = null, mixed $default = null): mixed
     }
 
     /**
-     * @param array<string,mixed> $server
-     * @return array<string,string>
+     * @param array<string, mixed> $server
+     *
+     * @return array<string, string>
      */
     private function extractHeaders(array $server): array
     {
         $headers = [];
 
         foreach ($server as $key => $value) {
-            if (str_starts_with($key, 'HTTP_')) {
-                $name = str_replace('_', '-', substr($key, 5));
-                $headers[$name] = (string) $value;
+            if (!str_starts_with((string) $key, 'HTTP_')) {
+                continue;
             }
+
+            $name = str_replace(
+                '_',
+                '-',
+                substr((string) $key, 5)
+            );
+
+            $headers[$name] = (string) $value;
         }
 
         if (isset($server['CONTENT_TYPE'])) {

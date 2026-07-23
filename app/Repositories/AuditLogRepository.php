@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace AEFS\Repositories;
+namespace App\Repositories;
 
 use AEFS\Core\Database;
 use PDO;

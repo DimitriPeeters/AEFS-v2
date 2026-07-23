@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace AEFS\Mappers;
+namespace App\Mappers;
 
-use AEFS\Models\User;
+use App\Models\User;
 
 final class UserMapper
 {

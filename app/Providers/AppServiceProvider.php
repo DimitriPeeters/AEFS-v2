@@ -2,23 +2,23 @@
 
 declare(strict_types=1);
 
-namespace AEFS\Providers;
+namespace App\Providers;
 
 use AEFS\Core\Config;
 use AEFS\Core\Container;
 use AEFS\Core\Database;
 use AEFS\Core\Logger;
 
-use AEFS\Mappers\MemberMapper;
+use App\Mappers\MemberMapper;
 
-use AEFS\Repositories\MemberRepository;
-use AEFS\Repositories\UserRepository;
+use App\Repositories\MemberRepository;
+use App\Repositories\UserRepository;
 
-use AEFS\Services\AuthenticationService;
-use AEFS\Services\EncryptionService;
-use AEFS\Services\MemberService;
+use App\Services\AuthenticationService;
+use App\Services\EncryptionService;
+use App\Services\MemberService;
 
-use AEFS\Validators\MemberValidator;
+use App\Validators\MemberValidator;
 
 final class AppServiceProvider
 {

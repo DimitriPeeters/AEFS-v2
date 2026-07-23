@@ -5,7 +5,7 @@ use AEFS\Core\View\Helper\ViewHelpers;
 /** @var ViewHelpers $helpers */
 /** @var list<array{label: string, path: string}>|null $navigationItems */
 
-$items = $navigationItems ?? [
+$defaultItems = [
     [
         'label' => 'Dashboard',
         'path' => '/dashboard',
@@ -44,6 +44,44 @@ $items = $navigationItems ?? [
     ],
 ];
 
+$items = $navigationItems ?? $defaultItems;
+
+$legacyPathMap = [
+    '/leden' => '/members',
+    '/gebruikers' => '/users',
+    '/evenementen' => '/events',
+    '/shiften' => '/shifts',
+    '/inschrijvingen' => '/registrations',
+    '/rapporten' => '/reports',
+    '/instellingen' => '/settings',
+];
+
+$normalizedItems = [];
+
+foreach ($items as $item) {
+    $label = trim((string) ($item['label'] ?? ''));
+    $path = trim((string) ($item['path'] ?? ''));
+
+    if ($label === '' || $path === '') {
+        continue;
+    }
+
+    $path = '/' . ltrim($path, '/');
+
+    if ($path !== '/') {
+        $path = rtrim($path, '/');
+    }
+
+    if (isset($legacyPathMap[$path])) {
+        $path = $legacyPathMap[$path];
+    }
+
+    $normalizedItems[] = [
+        'label' => $label,
+        'path' => $path,
+    ];
+}
+
 $currentPath = parse_url(
     $_SERVER['REQUEST_URI'] ?? '',
     PHP_URL_PATH
@@ -51,7 +89,45 @@ $currentPath = parse_url(
 
 $currentPath = is_string($currentPath)
     ? $currentPath
-    : '';
+    : '/';
+
+$currentPath = '/' . ltrim($currentPath, '/');
+
+if ($currentPath !== '/') {
+    $currentPath = rtrim($currentPath, '/');
+}
+
+$scriptName = str_replace(
+    '\\',
+    '/',
+    (string) ($_SERVER['SCRIPT_NAME'] ?? '')
+);
+
+$basePath = str_replace(
+    '\\',
+    '/',
+    dirname($scriptName)
+);
+
+if (
+    $basePath !== '/'
+    && $basePath !== '.'
+    && str_starts_with($currentPath, $basePath)
+) {
+    $currentPath = substr(
+        $currentPath,
+        strlen($basePath)
+    );
+
+    $currentPath = '/' . ltrim(
+        $currentPath,
+        '/'
+    );
+}
+
+if ($currentPath !== '/') {
+    $currentPath = rtrim($currentPath, '/');
+}
 ?>
 
 <aside class="sidebar">
@@ -83,27 +159,36 @@ $currentPath = is_string($currentPath)
         aria-label="Hoofdnavigatie"
     >
         <ul class="sidebar__menu">
-            <?php foreach ($items as $item): ?>
+            <?php foreach ($normalizedItems as $item): ?>
                 <?php
-                $itemUrl = $helpers->url->to($item['path']);
+                $itemPath = $item['path'];
 
-                $active = $currentPath === $itemUrl
+                $itemUrl = $helpers->url->to(
+                    $itemPath
+                );
+
+                $active = $currentPath === $itemPath
                     || (
-                        $item['path'] !== '/dashboard'
+                        $itemPath !== '/dashboard'
+                        && $itemPath !== '/'
                         && str_starts_with(
                             $currentPath,
-                            rtrim($itemUrl, '/') . '/'
+                            $itemPath . '/'
                         )
                     );
                 ?>
 
                 <li class="sidebar__item">
                     <a
-                        class="sidebar__link<?= $active ? ' sidebar__link--active' : '' ?>"
+                        class="sidebar__link<?= $active
+                            ? ' sidebar__link--active'
+                            : '' ?>"
                         href="<?= $this->escape($itemUrl) ?>"
                     >
                         <span class="sidebar__link-label">
-                            <?= $this->escape($item['label']) ?>
+                            <?= $this->escape(
+                                $item['label']
+                            ) ?>
                         </span>
                     </a>
                 </li>

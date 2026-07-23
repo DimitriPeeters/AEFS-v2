@@ -4,35 +4,37 @@ declare(strict_types=1);
 
 namespace AEFS\Core;
 
+use InvalidArgumentException;
+
 final class Route
 {
     /**
-     * @var callable|array{0:class-string,1:string}
+     * @var callable|array{0: class-string, 1: string}
      */
-    public readonly mixed $action;
+    private readonly mixed $action;
 
     /**
-     * @var array<class-string>
+     * @var list<class-string>
      */
     private array $middleware = [];
 
     /**
-     * @var array<string,mixed>
+     * @var array<string, string>
      */
     private array $parameters = [];
 
     private ?string $name = null;
 
     /**
-     * @param callable|array{0:class-string,1:string} $action
-     * @param array<class-string> $middleware
+     * @param callable|array{0: class-string, 1: string} $action
+     * @param list<class-string> $middleware
      */
     public function __construct(
-        public readonly string $method,
-        public readonly string $uri,
+        private readonly string $method,
+        private readonly string $uri,
         mixed $action,
         array $middleware = [],
-        ?string $name = null,
+        ?string $name = null
     ) {
         $this->action = $action;
         $this->middleware = $middleware;
@@ -41,16 +43,18 @@ final class Route
 
     public function middleware(string ...$middleware): self
     {
-        $this->middleware = array_merge(
-            $this->middleware,
-            $middleware
+        $this->middleware = array_values(
+            array_unique([
+                ...$this->middleware,
+                ...$middleware,
+            ])
         );
 
         return $this;
     }
 
     /**
-     * @return array<class-string>
+     * @return list<class-string>
      */
     public function getMiddleware(): array
     {
@@ -59,6 +63,14 @@ final class Route
 
     public function name(string $name): self
     {
+        $name = trim($name);
+
+        if ($name === '') {
+            throw new InvalidArgumentException(
+                'Routenaam mag niet leeg zijn.'
+            );
+        }
+
         $this->name = $name;
 
         return $this;
@@ -70,7 +82,7 @@ final class Route
     }
 
     /**
-     * @param array<string,mixed> $parameters
+     * @param array<string, string> $parameters
      */
     public function setParameters(array $parameters): void
     {
@@ -78,21 +90,26 @@ final class Route
     }
 
     /**
-     * @return array<string,mixed>
+     * @return array<string, string>
      */
     public function parameters(): array
     {
         return $this->parameters;
     }
 
-    public function parameter(string $key, mixed $default = null): mixed
-    {
+    public function parameter(
+        string $key,
+        mixed $default = null
+    ): mixed {
         return $this->parameters[$key] ?? $default;
     }
 
     public function hasParameter(string $key): bool
     {
-        return array_key_exists($key, $this->parameters);
+        return array_key_exists(
+            $key,
+            $this->parameters
+        );
     }
 
     public function matches(string $uri): bool
@@ -101,25 +118,47 @@ final class Route
     }
 
     /**
-     * @return array<string,mixed>|null
+     * @return array<string, string>|null
      */
     public function compile(string $uri): ?array
     {
+        $routeUri = $this->normalizeUri($this->uri);
+        $requestUri = $this->normalizeUri($uri);
+
         $parameterNames = [];
 
         $pattern = preg_replace_callback(
-            '#\{([^}]+)\}#',
+            '/\{([A-Za-z_][A-Za-z0-9_]*)\}/',
             static function (array $matches) use (&$parameterNames): string {
                 $parameterNames[] = $matches[1];
 
-                return '([^/]+)';
+                return '___ROUTE_PARAMETER___';
             },
-            $this->uri
+            $routeUri
         );
 
-        $pattern = '#^' . $pattern . '$#';
+        if ($pattern === null) {
+            return null;
+        }
 
-        if (!preg_match($pattern, $uri, $matches)) {
+        $pattern = preg_quote(
+            $pattern,
+            '#'
+        );
+
+        $pattern = str_replace(
+            preg_quote('___ROUTE_PARAMETER___', '#'),
+            '([^/]+)',
+            $pattern
+        );
+
+        if (
+            preg_match(
+                '#^' . $pattern . '$#',
+                $requestUri,
+                $matches
+            ) !== 1
+        ) {
             return null;
         }
 
@@ -128,31 +167,58 @@ final class Route
         $parameters = [];
 
         foreach ($parameterNames as $index => $name) {
-            $parameters[$name] = urldecode($matches[$index]);
+            if (!isset($matches[$index])) {
+                continue;
+            }
+
+            $parameters[$name] = rawurldecode(
+                (string) $matches[$index]
+            );
         }
 
         return $parameters;
     }
 
     public function allows(string $method): bool
-{
-    return strtoupper($this->method) === strtoupper($method);
-}
+    {
+        $allowedMethods = array_map(
+            'strtoupper',
+            explode('|', $this->method)
+        );
 
-public function uri(): string
-{
-    return $this->uri;
-}
+        return in_array(
+            strtoupper($method),
+            $allowedMethods,
+            true
+        );
+    }
 
-public function action(): mixed
-{
-    return $this->action;
-}
+    public function uri(): string
+    {
+        return $this->uri;
+    }
 
-public function method(): string
-{
-    return $this->method;
-}
+    public function action(): mixed
+    {
+        return $this->action;
+    }
 
+    public function method(): string
+    {
+        return $this->method;
+    }
 
+    private function normalizeUri(string $uri): string
+    {
+        $uri = '/' . ltrim(
+            trim($uri),
+            '/'
+        );
+
+        if ($uri === '/') {
+            return '/';
+        }
+
+        return rtrim($uri, '/');
+    }
 }

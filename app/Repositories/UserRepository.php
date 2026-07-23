@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace AEFS\Repositories;
+namespace App\Repositories;
 
 use AEFS\Core\Database;
-use AEFS\Models\User;
+use App\Models\User;
 use PDO;
 
 final class UserRepository extends BaseRepository

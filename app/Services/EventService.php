@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace AEFS\Services;
+namespace App\Services;
 
-use AEFS\Models\Event;
-use AEFS\Repositories\EventRepository;
+use App\Models\Event;
+use App\Repositories\EventRepository;
 use InvalidArgumentException;
 
 final class EventService

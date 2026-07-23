@@ -2,113 +2,240 @@
 
 declare(strict_types=1);
 
-namespace AEFS\Mappers;
+namespace App\Mappers;
 
-use AEFS\Models\Member;
-use AEFS\Services\EncryptionService;
+use App\Models\Member;
+use App\Services\EncryptionService;
 
 final class MemberMapper
 {
     public function __construct(
-        private EncryptionService $encryption
+        private readonly EncryptionService $encryption
     ) {
     }
 
+    /**
+     * @param array<string, mixed> $row
+     */
     public function fromDatabase(array $row): Member
     {
         return new Member(
+            lidId: (int) ($row['lid_id'] ?? 0),
 
-            lidId: (int) $row['lid_id'],
+            voornaam: $this->stringValue(
+                $row['voornaam'] ?? ''
+            ),
 
-            voornaam: (string) $row['voornaam'],
+            achternaam: $this->stringValue(
+                $row['achternaam'] ?? ''
+            ),
 
-            achternaam: (string) $row['achternaam'],
+            email: $this->nullableString(
+                $row['email'] ?? null
+            ),
 
-            email: $row['email'],
+            telefoon: $this->nullableString(
+                $row['telefoon'] ?? null
+            ),
 
-            telefoon: $row['telefoon'],
+            straat: $this->nullableString(
+                $row['straat'] ?? null
+            ),
 
-            straat: $row['straat'],
+            postcode: $this->nullableString(
+                $row['postcode'] ?? null
+            ),
 
-            postcode: $row['postcode'],
+            gemeente: $this->nullableString(
+                $row['gemeente'] ?? null
+            ),
 
-            gemeente: $row['gemeente'],
+            land: $this->nullableString(
+                $row['land'] ?? null
+            ),
 
-            land: $row['land'],
+            geslacht: $this->nullableString(
+                $row['geslacht'] ?? null
+            ),
 
-            geslacht: $row['geslacht'],
-
-            geboortedatum: $row['geboortedatum'],
+            geboortedatum: $this->nullableString(
+                $row['geboortedatum'] ?? null
+            ),
 
             rekeningnummer: $this->encryption->decrypt(
-                $row['rekeningnummer']
+                $this->nullableString(
+                    $row['rekeningnummer'] ?? null
+                )
             ),
 
             rijksregisternummer: $this->encryption->decrypt(
-                $row['rijksregisternummer']
+                $this->nullableString(
+                    $row['rijksregisternummer'] ?? null
+                )
             ),
 
-            tshirtmaat: $row['tshirtmaat'],
+            tshirtmaat: $this->nullableString(
+                $row['tshirtmaat'] ?? null
+            ),
 
-            actief: (bool) $row['actief'],
+            actief: (bool) ($row['actief'] ?? false),
 
-            gdprConsent: (bool) $row['gdpr_consent'],
+            gdprConsent: (bool) ($row['gdpr_consent'] ?? false),
 
-            gdprTimestamp: $row['gdpr_timestamp'],
+            gdprTimestamp: $this->nullableString(
+                $row['gdpr_timestamp'] ?? null
+            ),
 
-            opmerkingen: $row['opmerkingen'],
+            opmerkingen: $this->nullableString(
+                $row['opmerkingen'] ?? null
+            ),
 
-            aangemaaktOp: $row['aangemaakt_op'],
+            aangemaaktOp: $this->nullableString(
+                $row['aangemaakt_op'] ?? null
+            ),
 
-            bijgewerktOp: $row['bijgewerkt_op']
-
+            bijgewerktOp: $this->nullableString(
+                $row['bijgewerkt_op'] ?? null
+            )
         );
     }
 
+    /**
+     * @param array<string, mixed> $data
+     *
+     * @return array<string, mixed>
+     */
     public function toDatabase(array $data): array
     {
+        $gdprConsent = $this->booleanValue(
+            $data['gdpr_consent'] ?? false
+        );
+
         return [
+            'voornaam' => $this->stringValue(
+                $data['voornaam'] ?? ''
+            ),
 
-            'voornaam' => trim((string)($data['voornaam'] ?? '')),
+            'achternaam' => $this->stringValue(
+                $data['achternaam'] ?? ''
+            ),
 
-            'achternaam' => trim((string)($data['achternaam'] ?? '')),
+            'email' => $this->nullableString(
+                $data['email'] ?? null
+            ),
 
-            'email' => trim((string)($data['email'] ?? '')),
+            'telefoon' => $this->nullableString(
+                $data['telefoon'] ?? null
+            ),
 
-            'telefoon' => trim((string)($data['telefoon'] ?? '')),
+            'straat' => $this->nullableString(
+                $data['straat'] ?? null
+            ),
 
-            'straat' => trim((string)($data['straat'] ?? '')),
+            'postcode' => $this->nullableString(
+                $data['postcode'] ?? null
+            ),
 
-            'postcode' => trim((string)($data['postcode'] ?? '')),
+            'gemeente' => $this->nullableString(
+                $data['gemeente'] ?? null
+            ),
 
-            'gemeente' => trim((string)($data['gemeente'] ?? '')),
+            'land' => $this->nullableString(
+                $data['land'] ?? null
+            ),
 
-            'land' => trim((string)($data['land'] ?? '')),
+            'geslacht' => $this->nullableString(
+                $data['geslacht'] ?? null
+            ),
 
-            'geslacht' => trim((string)($data['geslacht'] ?? '')),
-
-            'geboortedatum' => $data['geboortedatum'] ?: null,
+            'geboortedatum' => $this->nullableString(
+                $data['geboortedatum'] ?? null
+            ),
 
             'rekeningnummer' => $this->encryption->encrypt(
-                $data['rekeningnummer'] ?? null
+                $this->nullableString(
+                    $data['rekeningnummer'] ?? null
+                )
             ),
 
             'rijksregisternummer' => $this->encryption->encrypt(
-                $data['rijksregisternummer'] ?? null
+                $this->nullableString(
+                    $data['rijksregisternummer'] ?? null
+                )
             ),
 
-            'tshirtmaat' => trim((string)($data['tshirtmaat'] ?? '')),
+            'tshirtmaat' => $this->nullableString(
+                $data['tshirtmaat'] ?? null
+            ),
 
-            'opmerkingen' => trim((string)($data['opmerkingen'] ?? '')),
+            'opmerkingen' => $this->nullableString(
+                $data['opmerkingen'] ?? null
+            ),
 
-            'actief' => isset($data['actief']) ? 1 : 0,
+            'actief' => $this->booleanValue(
+                $data['actief'] ?? false
+            ) ? 1 : 0,
 
-            'gdpr_consent' => isset($data['gdpr_consent']) ? 1 : 0,
+            'gdpr_consent' => $gdprConsent ? 1 : 0,
 
-            'gdpr_timestamp' => isset($data['gdpr_consent'])
-                ? date('Y-m-d H:i:s')
+            'gdpr_timestamp' => $gdprConsent
+                ? $this->gdprTimestamp($data)
                 : null,
-
         ];
+    }
+
+    private function stringValue(mixed $value): string
+    {
+        return trim((string) $value);
+    }
+
+    private function nullableString(mixed $value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        $value = trim((string) $value);
+
+        return $value === '' ? null : $value;
+    }
+
+    private function booleanValue(mixed $value): bool
+    {
+        if (is_bool($value)) {
+            return $value;
+        }
+
+        if (is_int($value)) {
+            return $value === 1;
+        }
+
+        $value = strtolower(
+            trim((string) $value)
+        );
+
+        return in_array(
+            $value,
+            [
+                '1',
+                'true',
+                'on',
+                'yes',
+                'ja',
+            ],
+            true
+        );
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     */
+    private function gdprTimestamp(array $data): string
+    {
+        $existingTimestamp = $this->nullableString(
+            $data['gdpr_timestamp'] ?? null
+        );
+
+        return $existingTimestamp ?? date('Y-m-d H:i:s');
     }
 }

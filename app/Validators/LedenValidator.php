@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace AEFS\Validators;
+namespace App\Validators;
 
 use InvalidArgumentException;
 

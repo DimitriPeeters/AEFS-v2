@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace AEFS\Mappers;
+namespace App\Mappers;
 
-use AEFS\Models\Event;
+use App\Models\Event;
 
 final class EventMapper
 {

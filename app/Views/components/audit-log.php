@@ -1,221 +1,189 @@
 <?php
 
-
-
-/** @var array $logs */
+/** @var array<int, array<string, mixed>> $logs */
 
 $logs ??= [];
-
 ?>
 
 <div class="card">
-
     <div class="card-header">
-
         <div class="card-title">
-
             Auditlog
-
         </div>
-
     </div>
 
     <div class="card-body">
-
-        <?php if (empty($logs)): ?>
-
-            <?= $this->component('empty-state', [
-
-                'title' => 'Nog geen historiek',
-
-                'text' => 'Voor dit record zijn nog geen wijzigingen geregistreerd.'
-
-            ]) ?>
-
+        <?php if ($logs === []): ?>
+            <?= $this->component(
+                'empty-state',
+                [
+                    'title' => 'Nog geen historiek',
+                    'text' => 'Voor dit record zijn nog geen wijzigingen geregistreerd.',
+                    'icon' => 'history',
+                ]
+            ) ?>
         <?php else: ?>
-
-            <table class="table">
-
-                <thead>
-
-                <tr>
-
-                    <th width="170">
-
-                        Datum
-
-                    </th>
-
-                    <th width="120">
-
-                        Actie
-
-                    </th>
-
-                    <th width="120">
-
-                        Gebruiker
-
-                    </th>
-
-                    <th>
-
-                        Wijzigingen
-
-                    </th>
-
-                </tr>
-
-                </thead>
-
-                <tbody>
-
-                <?php foreach ($logs as $log): ?>
-
-                    <?php
-
-                    $old = json_decode(
-                        $log['old_values'] ?? '[]',
-                        true
-                    ) ?? [];
-
-                    $new = json_decode(
-                        $log['new_values'] ?? '[]',
-                        true
-                    ) ?? [];
-
-                    ?>
-
+            <div class="table-wrapper">
+                <table class="table">
+                    <thead>
                     <tr>
+                        <th scope="col">Datum</th>
+                        <th scope="col">Actie</th>
+                        <th scope="col">Gebruiker</th>
+                        <th scope="col">Wijzigingen</th>
+                    </tr>
+                    </thead>
 
-                        <td>
+                    <tbody>
+                    <?php foreach ($logs as $log): ?>
+                        <?php
+                        $oldValues = json_decode(
+                            (string) ($log['old_values'] ?? '[]'),
+                            true
+                        );
 
-                            <?= date(
-                                'd/m/Y H:i',
-                                strtotime($log['created_at'])
-                            ) ?>
+                        $newValues = json_decode(
+                            (string) ($log['new_values'] ?? '[]'),
+                            true
+                        );
 
-                        </td>
+                        $oldValues = is_array($oldValues)
+                            ? $oldValues
+                            : [];
 
-                        <td>
+                        $newValues = is_array($newValues)
+                            ? $newValues
+                            : [];
 
-                            <?php
+                        $action = (string) ($log['action'] ?? '');
+                        $createdAt = (string) ($log['created_at'] ?? '');
+                        $timestamp = strtotime($createdAt);
+                        ?>
 
-                            switch ($log['action']) {
+                        <tr>
+                            <td>
+                                <?= $timestamp !== false
+                                    ? $this->escape(
+                                        date('d/m/Y H:i', $timestamp)
+                                    )
+                                    : '—' ?>
+                            </td>
 
-                                case 'create':
+                            <td>
+                                <?php if ($action === 'create'): ?>
+                                    <span class="badge badge-success">
+                                        Aangemaakt
+                                    </span>
+                                <?php elseif ($action === 'update'): ?>
+                                    <span class="badge badge-warning">
+                                        Gewijzigd
+                                    </span>
+                                <?php elseif ($action === 'delete'): ?>
+                                    <span class="badge badge-danger">
+                                        Verwijderd
+                                    </span>
+                                <?php else: ?>
+                                    <span class="badge">
+                                        <?= $this->escape(
+                                            $action !== ''
+                                                ? $action
+                                                : 'Onbekend'
+                                        ) ?>
+                                    </span>
+                                <?php endif; ?>
+                            </td>
 
-                                    echo '<span class="badge badge-success">Aangemaakt</span>';
+                            <td>
+                                <?= $this->escape(
+                                    (string) ($log['user_id'] ?? '—')
+                                ) ?>
+                            </td>
 
-                                    break;
+                            <td>
+                                <?php if ($action === 'update'): ?>
+                                    <?php
+                                    $changes = [];
 
-                                case 'update':
+                                    foreach ($newValues as $field => $newValue) {
+                                        $oldValue = $oldValues[$field] ?? null;
 
-                                    echo '<span class="badge badge-warning">Gewijzigd</span>';
-
-                                    break;
-
-                                case 'delete':
-
-                                    echo '<span class="badge badge-danger">Verwijderd</span>';
-
-                                    break;
-
-                            }
-
-                            ?>
-
-                        </td>
-
-                        <td>
-
-                            <?= $log['user_id'] ?? '-' ?>
-
-                        </td>
-
-                        <td>
-
-                            <?php if ($log['action'] === 'update'): ?>
-
-                                <table
-                                    class="table table-sm"
-                                    style="margin:0;"
-                                >
-
-                                    <?php foreach ($new as $veld => $waarde): ?>
-
-                                        <?php
-
-                                        $oudeWaarde = $old[$veld] ?? null;
-
-                                        if ($oudeWaarde == $waarde) {
+                                        if ($oldValue == $newValue) {
                                             continue;
                                         }
 
-                                        ?>
+                                        $changes[$field] = [
+                                            'old' => $oldValue,
+                                            'new' => $newValue,
+                                        ];
+                                    }
+                                    ?>
 
-                                        <tr>
+                                    <?php if ($changes === []): ?>
+                                        Geen inhoudelijke wijzigingen geregistreerd.
+                                    <?php else: ?>
+                                        <table class="table table-sm">
+                                            <tbody>
+                                            <?php foreach ($changes as $field => $change): ?>
+                                                <?php
+                                                $oldDisplay = is_scalar($change['old'])
+                                                    || $change['old'] === null
+                                                    ? (string) ($change['old'] ?? '—')
+                                                    : (string) json_encode(
+                                                        $change['old'],
+                                                        JSON_UNESCAPED_UNICODE
+                                                        | JSON_UNESCAPED_SLASHES
+                                                    );
 
-                                            <td
-                                                style="width:180px;font-weight:bold;"
-                                            >
+                                                $newDisplay = is_scalar($change['new'])
+                                                    || $change['new'] === null
+                                                    ? (string) ($change['new'] ?? '—')
+                                                    : (string) json_encode(
+                                                        $change['new'],
+                                                        JSON_UNESCAPED_UNICODE
+                                                        | JSON_UNESCAPED_SLASHES
+                                                    );
+                                                ?>
 
-                                                <?= htmlspecialchars($veld) ?>
+                                                <tr>
+                                                    <th scope="row">
+                                                        <?= $this->escape(
+                                                            (string) $field
+                                                        ) ?>
+                                                    </th>
 
-                                            </td>
+                                                    <td>
+                                                        <?= $this->escape(
+                                                            $oldDisplay
+                                                        ) ?>
+                                                    </td>
 
-                                            <td>
+                                                    <td aria-hidden="true">
+                                                        →
+                                                    </td>
 
-                                                <?= htmlspecialchars(
-                                                    (string)$oudeWaarde
-                                                ) ?>
-
-                                            </td>
-
-                                            <td
-                                                style="width:40px;text-align:center;"
-                                            >
-
-                                                →
-
-                                            </td>
-
-                                            <td>
-
-                                                <?= htmlspecialchars(
-                                                    (string)$waarde
-                                                ) ?>
-
-                                            </td>
-
-                                        </tr>
-
-                                    <?php endforeach; ?>
-
-                                </table>
-
-                            <?php elseif ($log['action'] === 'create'): ?>
-
-                                Lid aangemaakt.
-
-                            <?php else: ?>
-
-                                Lid verwijderd.
-
-                            <?php endif; ?>
-
-                        </td>
-
-                    </tr>
-
-                <?php endforeach; ?>
-
-                </tbody>
-
-            </table>
-
+                                                    <td>
+                                                        <?= $this->escape(
+                                                            $newDisplay
+                                                        ) ?>
+                                                    </td>
+                                                </tr>
+                                            <?php endforeach; ?>
+                                            </tbody>
+                                        </table>
+                                    <?php endif; ?>
+                                <?php elseif ($action === 'create'): ?>
+                                    Lid aangemaakt.
+                                <?php elseif ($action === 'delete'): ?>
+                                    Lid verwijderd.
+                                <?php else: ?>
+                                    Geen details beschikbaar.
+                                <?php endif; ?>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
         <?php endif; ?>
-
     </div>
-
 </div>

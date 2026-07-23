@@ -8,7 +8,7 @@ use AEFS\Core\Http\Request;
 use AEFS\Core\Http\Response;
 use AEFS\Core\Session;
 use AEFS\Core\View\ViewFactory;
-use AEFS\Http\Requests\MemberRequest;
+use App\Http\Requests\MemberRequest;
 use App\Services\AuditLogService;
 use App\Services\MemberService;
 use Throwable;
@@ -30,7 +30,7 @@ final class MemberController extends BaseController
     public function index(): Response
     {
         $zoekterm = trim(
-            (string) $this->request()->query(
+            (string) $this->request()->query->get(
                 'zoek',
                 ''
             )
@@ -94,7 +94,7 @@ final class MemberController extends BaseController
 
     public function store(): Response
     {
-        $input = $this->request()->all();
+        $input = $this->request()->request->all();
 
         Session::flash(
             '_old_input',
@@ -164,7 +164,8 @@ final class MemberController extends BaseController
     public function update(): Response
     {
         $id = $this->routeId();
-        $input = $this->request()->all();
+        $input = $this->request()->request->all();
+
 
         Session::flash(
             '_old_input',
@@ -186,25 +187,24 @@ final class MemberController extends BaseController
             return $this->redirect(
                 '/members/' . $id
             );
-        } catch (Throwable $throwable) {
-            Session::flash(
-                '_errors',
-                [
-                    'form' => [
-                        $throwable->getMessage(),
-                    ],
-                ]
-            );
+} catch (Throwable $throwable) {
+    Session::flash(
+        '_errors',
+        [
+            'form' => [
+                $throwable->getMessage(),
+            ],
+        ]
+    );
 
-            $this->error(
-                'Het lid kon niet worden gewijzigd.'
-            );
+    $this->error(
+        'Het lid kon niet worden gewijzigd.'
+    );
 
-            return $this->redirect(
-                '/members/' . $id . '/edit'
-            );
-        }
-    }
+    return $this->redirect(
+        '/members/' . $id . '/edit'
+    );
+}    }
 
     public function delete(): Response
     {

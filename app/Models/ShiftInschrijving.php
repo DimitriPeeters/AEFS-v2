@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace AEFS\Models;
+namespace App\Models;
 
 final class ShiftInschrijving
 {

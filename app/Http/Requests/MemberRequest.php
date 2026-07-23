@@ -2,79 +2,114 @@
 
 declare(strict_types=1);
 
-namespace AEFS\Http\Requests;
+namespace App\Http\Requests;
 
 final class MemberRequest
 {
+    /**
+     * @param array<string, mixed> $input
+     */
     public function __construct(
-        private array $input
+        private readonly array $input
     ) {
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function all(): array
     {
         return $this->sanitize($this->input);
     }
 
+    /**
+     * @param array<string, mixed> $data
+     *
+     * @return array<string, mixed>
+     */
     private function sanitize(array $data): array
     {
         foreach ($data as $key => $value) {
-
             if (is_string($value)) {
-
                 $data[$key] = trim($value);
-
             }
-
         }
 
-        $data['voornaam'] = $data['voornaam'] ?? '';
+        $data['voornaam'] = trim(
+            (string) ($data['voornaam'] ?? '')
+        );
 
-        $data['achternaam'] = $data['achternaam'] ?? '';
+        $data['achternaam'] = trim(
+            (string) ($data['achternaam'] ?? '')
+        );
 
         $data['email'] = strtolower(
-            trim($data['email'] ?? '')
+            trim((string) ($data['email'] ?? ''))
         );
 
-        $data['telefoon'] = $data['telefoon'] ?? '';
+        $data['telefoon'] = trim(
+            (string) ($data['telefoon'] ?? '')
+        );
 
-        $data['straat'] = $data['straat'] ?? '';
+        $data['straat'] = trim(
+            (string) ($data['straat'] ?? '')
+        );
 
-        $data['postcode'] = $data['postcode'] ?? '';
+        $data['postcode'] = trim(
+            (string) ($data['postcode'] ?? '')
+        );
 
-        $data['gemeente'] = $data['gemeente'] ?? '';
+        $data['gemeente'] = trim(
+            (string) ($data['gemeente'] ?? '')
+        );
 
         $data['land'] = trim(
-            $data['land'] ?? 'België'
+            (string) ($data['land'] ?? 'België')
         );
 
-        $data['geslacht'] = $data['geslacht'] ?? '';
+        $data['geslacht'] = trim(
+            (string) ($data['geslacht'] ?? '')
+        );
 
-        $data['geboortedatum'] = $data['geboortedatum'] ?: null;
+        $geboortedatum = trim(
+            (string) ($data['geboortedatum'] ?? '')
+        );
+
+        $data['geboortedatum'] = $geboortedatum !== ''
+            ? $geboortedatum
+            : null;
 
         $data['rekeningnummer'] = strtoupper(
             str_replace(
                 ' ',
                 '',
-                $data['rekeningnummer'] ?? ''
+                (string) ($data['rekeningnummer'] ?? '')
             )
         );
 
         $data['rijksregisternummer'] = str_replace(
-            [' ', '.', '-'],
+            [
+                ' ',
+                '.',
+                '-',
+            ],
             '',
-            $data['rijksregisternummer'] ?? ''
+            (string) ($data['rijksregisternummer'] ?? '')
         );
 
-        $data['tshirtmaat'] = $data['tshirtmaat'] ?? '';
+        $data['tshirtmaat'] = trim(
+            (string) ($data['tshirtmaat'] ?? '')
+        );
 
         $data['opmerkingen'] = trim(
-            $data['opmerkingen'] ?? ''
+            (string) ($data['opmerkingen'] ?? '')
         );
 
-        $data['actief'] = isset($data['actief']);
+        $data['actief'] = isset($data['actief'])
+            && (string) $data['actief'] === '1';
 
-        $data['gdpr_consent'] = isset($data['gdpr_consent']);
+        $data['gdpr_consent'] = isset($data['gdpr_consent'])
+            && (string) $data['gdpr_consent'] === '1';
 
         return $data;
     }

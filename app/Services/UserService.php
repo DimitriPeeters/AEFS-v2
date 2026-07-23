@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace AEFS\Services;
+namespace App\Services;
 
-use AEFS\Models\User;
-use AEFS\Repositories\UserRepository;
-use AEFS\Repositories\MemberRepository;
+use App\Models\User;
+use App\Repositories\UserRepository;
+use App\Repositories\MemberRepository;
 use InvalidArgumentException;
 
 final class UserService

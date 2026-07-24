@@ -4,15 +4,17 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
+use AEFS\Core\Auth;
 use AEFS\Core\Http\Request;
 use AEFS\Core\Http\Response;
 use AEFS\Core\Session;
+use AEFS\Core\View\Helper\CsrfHelper;
 use AEFS\Core\View\ViewFactory;
+use App\Http\Requests\ShiftRegistrationRequest;
+use App\Http\Requests\ShiftRequest;
 use App\Repositories\EventRepository;
-use App\Repositories\ShiftRegistrationRepository;
-use App\Repositories\ShiftRepository;
-use App\Repositories\ShiftTypeRepository;
 use App\Services\ShiftService;
+use RuntimeException;
 use Throwable;
 
 final class ShiftController extends BaseController
@@ -21,10 +23,8 @@ final class ShiftController extends BaseController
         ViewFactory $views,
         Request $request,
         private readonly ShiftService $service,
-        private readonly ShiftRepository $shiftRepository,
-        private readonly ShiftTypeRepository $shiftTypeRepository,
-        private readonly ShiftRegistrationRepository $registrationRepository,
-        private readonly EventRepository $eventRepository
+        private readonly EventRepository $eventRepository,
+        private readonly CsrfHelper $csrf
     ) {
         parent::__construct(
             $views,
@@ -34,17 +34,35 @@ final class ShiftController extends BaseController
 
     public function index(): Response
     {
+        $isAdmin = Auth::isAdmin();
+        $memberId = Auth::memberId();
+
         return $this->view(
             'shifts.index',
             [
                 'title' => 'Shiftplanning',
-                'events' => $this->eventRepository->all(),
+                'isAdmin' => $isAdmin,
+                'events' => $isAdmin
+                    ? $this->eventRepository->allForAdministration()
+                    : [],
+                'shifts' => $isAdmin
+                    ? $this->service->allForAdministration()
+                    : $this->service->visibleToMembers(),
+                'memberRegistrations' => $memberId !== null
+                    ? $this->service->registrationsForMember(
+                        $memberId
+                    )
+                    : [],
+                'pendingRegistrations' => $isAdmin
+                    ? $this->service->pendingRegistrations()
+                    : [],
             ]
         );
     }
 
-    public function planner(int $eventId): Response
+    public function planner(): Response
     {
+        $eventId = $this->routeId('eventId');
         $event = $this->eventRepository->find($eventId);
 
         if ($event === null) {
@@ -56,17 +74,26 @@ final class ShiftController extends BaseController
         return $this->view(
             'shifts.planner',
             [
-                'title' => $event->titel,
+                'title' => 'Shiftplanning · ' . $event->titel,
                 'event' => $event,
-                'shifts' => $this->shiftRepository->byEvent($eventId),
-                'shiftTypes' => $this->shiftTypeRepository->all(),
+                'shifts' => $this->service->findByEvent(
+                    $eventId
+                ),
+                'shiftTypes' => $this->service->allTypes(),
             ]
         );
     }
 
-    public function show(int $shiftId): Response
+    public function show(): Response
     {
-        $shift = $this->shiftRepository->find($shiftId);
+        $shiftId = $this->routeId();
+        $isAdmin = Auth::isAdmin();
+
+        $shift = $isAdmin
+            ? $this->service->find($shiftId)
+            : $this->service->findVisibleToMembers(
+                $shiftId
+            );
 
         if ($shift === null) {
             return $this->notFound(
@@ -74,40 +101,63 @@ final class ShiftController extends BaseController
             );
         }
 
+        $memberId = Auth::memberId();
+
         return $this->view(
             'shifts.show',
             [
-                'title' => 'Shift',
+                'title' => $shift->displayNaam(),
                 'shift' => $shift,
-                'registrations' => $this->registrationRepository->byShift(
-                    $shiftId
-                ),
+                'isAdmin' => $isAdmin,
+                'registrations' => $isAdmin
+                    ? $this->service->registrationsForShift(
+                        $shiftId
+                    )
+                    : [],
+                'memberRegistration' => $memberId !== null
+                    ? $this->service->findMemberRegistration(
+                        $shiftId,
+                        $memberId
+                    )
+                    : null,
             ]
         );
     }
 
     public function create(): Response
     {
+        $selectedEventId = (int) $this->request()
+            ->query
+            ->get(
+                'event_id',
+                0
+            );
+
         return $this->view(
-            'shifts.form',
+            'shifts.create',
             [
                 'title' => 'Nieuwe shift',
-                'shiftTypes' => $this->shiftTypeRepository->all(),
+                'events' => $this->eventRepository
+                    ->allForAdministration(),
+                'shiftTypes' => $this->service
+                    ->activeTypes(),
+                'selectedEventId' => $selectedEventId,
             ]
         );
     }
 
     public function store(): Response
     {
-        $input = $this->request()->all();
-
-        Session::flash(
-            '_old_input',
-            $input
-        );
+        $input = $this->request()->request->all();
 
         try {
-            $id = $this->service->createShift($input);
+            $this->validateCsrf($input);
+
+            $shiftRequest = new ShiftRequest($input);
+
+            $id = $this->service->create(
+                $shiftRequest->all()
+            );
 
             $this->success(
                 'De shift werd succesvol aangemaakt.'
@@ -117,7 +167,8 @@ final class ShiftController extends BaseController
                 '/shifts/' . $id
             );
         } catch (Throwable $throwable) {
-            $this->storeException(
+            $this->flashValidationFailure(
+                $input,
                 $throwable,
                 'De shift kon niet worden aangemaakt.'
             );
@@ -128,9 +179,10 @@ final class ShiftController extends BaseController
         }
     }
 
-    public function update(int $shiftId): Response
+    public function edit(): Response
     {
-        $shift = $this->shiftRepository->find($shiftId);
+        $shiftId = $this->routeId();
+        $shift = $this->service->find($shiftId);
 
         if ($shift === null) {
             return $this->notFound(
@@ -138,17 +190,32 @@ final class ShiftController extends BaseController
             );
         }
 
-        $input = $this->request()->all();
-
-        Session::flash(
-            '_old_input',
-            $input
+        return $this->view(
+            'shifts.edit',
+            [
+                'title' => 'Shift wijzigen',
+                'shift' => $shift,
+                'events' => $this->eventRepository
+                    ->allForAdministration(),
+                'shiftTypes' => $this->service
+                    ->allTypes(),
+            ]
         );
+    }
+
+    public function update(): Response
+    {
+        $shiftId = $this->routeId();
+        $input = $this->request()->request->all();
 
         try {
-            $this->service->updateShift(
+            $this->validateCsrf($input);
+
+            $shiftRequest = new ShiftRequest($input);
+
+            $this->service->update(
                 $shiftId,
-                $input
+                $shiftRequest->all()
             );
 
             $this->success(
@@ -159,7 +226,8 @@ final class ShiftController extends BaseController
                 '/shifts/' . $shiftId
             );
         } catch (Throwable $throwable) {
-            $this->storeException(
+            $this->flashValidationFailure(
+                $input,
                 $throwable,
                 'De shift kon niet worden gewijzigd.'
             );
@@ -170,21 +238,31 @@ final class ShiftController extends BaseController
         }
     }
 
-    public function delete(int $shiftId): Response
+    public function cancelShift(): Response
     {
-        $shift = $this->shiftRepository->find($shiftId);
-
-        if ($shift === null) {
-            return $this->notFound(
-                'Shift niet gevonden.'
-            );
-        }
+        $shiftId = $this->routeId();
+        $input = $this->request()->request->all();
 
         try {
-            $this->service->deleteShift($shiftId);
+            $this->validateCsrf($input);
+
+            $request = new ShiftRegistrationRequest(
+                $input
+            );
+
+            $data = $request->all();
+
+            $cancelledRegistrations = $this->service
+                ->cancelShift(
+                    $shiftId,
+                    $data['annulatie_reden']
+                );
 
             $this->success(
-                'De shift werd succesvol verwijderd.'
+                sprintf(
+                    'De shift werd geannuleerd. %d actieve inschrijving(en) werden eveneens geannuleerd.',
+                    $cancelledRegistrations
+                )
             );
         } catch (Throwable $throwable) {
             $this->error(
@@ -192,16 +270,57 @@ final class ShiftController extends BaseController
             );
         }
 
-        return $this->redirect('/shifts');
+        return $this->redirect(
+            '/shifts/' . $shiftId
+        );
     }
 
-    public function register(int $shiftId): Response
+    public function destroy(): Response
     {
+        $shiftId = $this->routeId();
+        $input = $this->request()->request->all();
+
         try {
+            $this->validateCsrf($input);
+
+            $this->service->delete($shiftId);
+
+            $this->success(
+                'De shift werd succesvol verwijderd.'
+            );
+
+            return $this->redirect('/shifts');
+        } catch (Throwable $throwable) {
+            $this->error(
+                $throwable->getMessage()
+            );
+
+            return $this->redirect(
+                '/shifts/' . $shiftId
+            );
+        }
+    }
+
+    public function register(): Response
+    {
+        $shiftId = $this->routeId();
+        $input = $this->request()->request->all();
+
+        try {
+            $this->validateCsrf($input);
+
+            $memberId = $this->requireMemberId();
+
+            $request = new ShiftRegistrationRequest(
+                $input
+            );
+
+            $data = $request->all();
+
             $this->service->register(
-                $shiftId,
-                (int) auth()->member()->lidId,
-                $this->nullablePostString('opmerking_lid')
+                shiftId: $shiftId,
+                memberId: $memberId,
+                comment: $data['opmerking_lid']
             );
 
             $this->success(
@@ -213,94 +332,99 @@ final class ShiftController extends BaseController
             );
         }
 
-        return $this->redirectBack(
+        return $this->redirect(
             '/shifts/' . $shiftId
         );
     }
 
-    public function approve(int $registrationId): Response
+    public function approve(): Response
     {
-        try {
-            $this->service->approve(
-                $registrationId,
-                (int) auth()->user()->gebruikerId
+        return $this->handleDecision(
+            static function (
+                ShiftService $service,
+                int $registrationId
+            ): void {
+                $service->approve(
+                    $registrationId
+                );
+            },
+            'De inschrijving werd goedgekeurd.'
+        );
+    }
+
+    public function reserve(): Response
+    {
+        return $this->handleDecision(
+            static function (
+                ShiftService $service,
+                int $registrationId
+            ): void {
+                $service->reserve(
+                    $registrationId
+                );
+            },
+            'De inschrijving werd op de reservelijst geplaatst.'
+        );
+    }
+
+    public function reject(): Response
+    {
+        return $this->handleDecision(
+            static function (
+                ShiftService $service,
+                int $registrationId
+            ): void {
+                $service->reject(
+                    $registrationId
+                );
+            },
+            'De inschrijving werd geweigerd.'
+        );
+    }
+
+    public function cancelRegistration(): Response
+    {
+        $registrationId = $this->routeId(
+            'registrationId'
+        );
+
+        $registration = $this->service
+            ->findRegistration(
+                $registrationId
             );
 
-            $this->success(
-                'De inschrijving werd goedgekeurd.'
-            );
-        } catch (Throwable $throwable) {
-            $this->error(
-                $throwable->getMessage()
+        if ($registration === null) {
+            return $this->notFound(
+                'Shiftinschrijving niet gevonden.'
             );
         }
 
-        return $this->redirectBack('/shifts');
-    }
+        $input = $this->request()->request->all();
 
-    public function reserve(int $registrationId): Response
-    {
         try {
-            $this->service->reserve(
-                $registrationId,
-                (int) auth()->user()->gebruikerId
+            $this->validateCsrf($input);
+
+            $request = new ShiftRegistrationRequest(
+                $input
             );
 
-            $this->success(
-                'De inschrijving werd als reserve gemarkeerd.'
-            );
-        } catch (Throwable $throwable) {
-            $this->error(
-                $throwable->getMessage()
-            );
-        }
+            $data = $request->all();
 
-        return $this->redirectBack('/shifts');
-    }
-
-    public function reject(int $registrationId): Response
-    {
-        try {
-            $this->service->reject(
-                $registrationId,
-                (int) auth()->user()->gebruikerId,
-                $this->nullablePostString('reden')
-            );
-
-            $this->success(
-                'De inschrijving werd geweigerd.'
-            );
-        } catch (Throwable $throwable) {
-            $this->error(
-                $throwable->getMessage()
-            );
-        }
-
-        return $this->redirectBack('/shifts');
-    }
-
-    public function cancel(int $registrationId): Response
-    {
-        try {
-            $user = auth()->user();
-            $reason = $this->nullablePostString('reden');
-
-            if ($user->isAdmin() || $user->isEventManager()) {
+            if (Auth::isAdmin()) {
                 $this->service->cancelByAdmin(
                     $registrationId,
-                    (int) $user->gebruikerId,
-                    $reason
+                    $data['annulatie_reden']
                 );
             } else {
                 $this->service->cancelByVolunteer(
                     $registrationId,
-                    (int) auth()->member()->lidId,
-                    $reason
+                    $this->requireMemberId(),
+                    $data['annulatie_reden']
                 );
             }
 
             $this->success(
-                'De inschrijving werd geannuleerd.'
+                'De shiftinschrijving werd geannuleerd.'
             );
         } catch (Throwable $throwable) {
             $this->error(
@@ -308,16 +432,48 @@ final class ShiftController extends BaseController
             );
         }
 
-        return $this->redirectBack('/shifts');
+        return $this->redirect(
+            '/shifts/' . $registration->shiftId
+        );
     }
 
-    public function lock(int $shiftId): Response
+    public function presence(): Response
     {
+        $registrationId = $this->routeId(
+            'registrationId'
+        );
+
+        $registration = $this->service
+            ->findRegistration(
+                $registrationId
+            );
+
+        if ($registration === null) {
+            return $this->notFound(
+                'Shiftinschrijving niet gevonden.'
+            );
+        }
+
+        $input = $this->request()->request->all();
+
         try {
-            $this->service->lockShift($shiftId);
+            $this->validateCsrf($input);
+
+            $request = new ShiftRegistrationRequest(
+                $input
+            );
+
+            $data = $request->all();
+
+            $this->service->setPresence(
+                $registrationId,
+                $data['aanwezig']
+            );
 
             $this->success(
-                'De shift werd vergrendeld.'
+                $data['aanwezig']
+                    ? 'De vrijwilliger werd als aanwezig gemarkeerd.'
+                    : 'De aanwezigheidsmarkering werd verwijderd.'
             );
         } catch (Throwable $throwable) {
             $this->error(
@@ -325,45 +481,87 @@ final class ShiftController extends BaseController
             );
         }
 
-        return $this->redirectBack(
-            '/shifts/' . $shiftId
+        return $this->redirect(
+            '/shifts/' . $registration->shiftId
         );
     }
 
-    public function unlock(int $shiftId): Response
-    {
+    /**
+     * @param callable(ShiftService, int): void $decision
+     */
+    private function handleDecision(
+        callable $decision,
+        string $successMessage
+    ): Response {
+        $registrationId = $this->routeId(
+            'registrationId'
+        );
+
+        $registration = $this->service
+            ->findRegistration(
+                $registrationId
+            );
+
+        if ($registration === null) {
+            return $this->notFound(
+                'Shiftinschrijving niet gevonden.'
+            );
+        }
+
+        $input = $this->request()->request->all();
+
         try {
-            $this->service->unlockShift($shiftId);
+            $this->validateCsrf($input);
 
-            $this->success(
-                'De shift werd ontgrendeld.'
+            $decision(
+                $this->service,
+                $registrationId
             );
+
+            $this->success($successMessage);
         } catch (Throwable $throwable) {
             $this->error(
                 $throwable->getMessage()
             );
         }
 
-        return $this->redirectBack(
-            '/shifts/' . $shiftId
+        return $this->redirect(
+            '/shifts/' . $registration->shiftId
         );
     }
 
-    private function notFound(string $message): Response
+    /**
+     * @param array<string, mixed> $input
+     */
+    private function validateCsrf(array $input): void
     {
-        return $this->view(
-            'core::errors.404',
-            [
-                'message' => $message,
-            ],
-            404
-        );
+        $token = $input['_token'] ?? null;
+
+        if (
+            !is_string($token)
+            || !$this->csrf->validate($token)
+        ) {
+            throw new RuntimeException(
+                'De beveiligingstoken is ongeldig of verlopen. Probeer opnieuw.'
+            );
+        }
     }
 
-    private function storeException(
+    /**
+     * @param array<string, mixed> $input
+     */
+    private function flashValidationFailure(
+        array $input,
         Throwable $throwable,
-        string $message
+        string $flashMessage
     ): void {
+        unset($input['_token']);
+
+        Session::flash(
+            '_old_input',
+            $input
+        );
+
         Session::flash(
             '_errors',
             [
@@ -373,31 +571,43 @@ final class ShiftController extends BaseController
             ]
         );
 
-        $this->error($message);
+        $this->error($flashMessage);
     }
 
-    private function nullablePostString(string $key): ?string
+    private function requireMemberId(): int
     {
-        $value = trim(
-            (string) $this->post(
-                $key,
-                ''
-            )
-        );
+        $memberId = Auth::memberId();
 
-        return $value === ''
-            ? null
-            : $value;
-    }
-
-    private function redirectBack(string $fallback): Response
-    {
-        $referer = $_SERVER['HTTP_REFERER'] ?? null;
-
-        if (!is_string($referer) || trim($referer) === '') {
-            return $this->redirect($fallback);
+        if (
+            $memberId === null
+            || $memberId <= 0
+        ) {
+            throw new RuntimeException(
+                'Aan dit gebruikersaccount is geen geldig lid gekoppeld.'
+            );
         }
 
-        return $this->redirect($referer);
+        return $memberId;
+    }
+
+    private function routeId(
+        string $key = 'id'
+    ): int {
+        return (int) $this->request()->route(
+            $key,
+            0
+        );
+    }
+
+    private function notFound(
+        string $message
+    ): Response {
+        return $this->view(
+            'core::errors.404',
+            [
+                'message' => $message,
+            ],
+            404
+        );
     }
 }

@@ -4,57 +4,121 @@ declare(strict_types=1);
 
 namespace App\Repositories;
 
-use AEFS\Core\BaseRepository;
 use AEFS\Core\Database;
 use App\Mappers\ShiftRegistrationMapper;
 use App\Models\ShiftRegistration;
+use PDO;
 
-final class ShiftRegistrationRepository extends BaseRepository
+final class ShiftRegistrationRepository
 {
-    protected string $table = 'shift_registrations';
-
-    protected string $primaryKey = 'id';
+    private const SELECT_REGISTRATION = <<<'SQL'
+        SELECT
+            si.*,
+            l.voornaam AS lid_voornaam,
+            l.achternaam AS lid_achternaam,
+            l.email AS lid_email,
+            s.naam AS shift_naam,
+            s.start_op AS shift_start_op,
+            s.eind_op AS shift_eind_op,
+            e.titel AS event_titel,
+            st.naam AS type_naam,
+            NULLIF(
+                TRIM(CONCAT_WS(' ', gl.voornaam, gl.achternaam)),
+                ''
+            ) AS goedgekeurd_door_naam,
+            NULLIF(
+                TRIM(CONCAT_WS(' ', al.voornaam, al.achternaam)),
+                ''
+            ) AS geannuleerd_door_naam
+        FROM shift_inschrijvingen si
+        INNER JOIN leden l
+            ON l.lid_id = si.lid_id
+        INNER JOIN shifts s
+            ON s.shift_id = si.shift_id
+        INNER JOIN evenementen e
+            ON e.event_id = s.event_id
+        INNER JOIN shift_types st
+            ON st.type_id = s.type_id
+        LEFT JOIN gebruikers gu
+            ON gu.gebruiker_id = si.goedgekeurd_door
+        LEFT JOIN leden gl
+            ON gl.lid_id = gu.lid_id
+        LEFT JOIN gebruikers au
+            ON au.gebruiker_id = si.geannuleerd_door
+        LEFT JOIN leden al
+            ON al.lid_id = au.lid_id
+        SQL;
 
     public function __construct(
-        Database $database,
+        private readonly Database $database,
         private readonly ShiftRegistrationMapper $mapper
     ) {
-        parent::__construct($database);
     }
 
-    protected function map(array $row): ShiftRegistration
+    public function find(int $id): ?ShiftRegistration
     {
-        return $this->mapper->map($row);
+        return $this->findUsingCondition(
+            'si.inschrijving_id = :inschrijving_id',
+            [
+                'inschrijving_id' => $id,
+            ]
+        );
     }
 
-    public function createRegistration(
-        int $shiftId,
-        int $lidId,
-        string $status = ShiftRegistration::STATUS_WACHTEND
-    ): int {
-        return $this->insert([
-            'shift_id' => $shiftId,
-            'lid_id' => $lidId,
-            'status' => $status,
+    public function findForUpdate(int $id): ?ShiftRegistration
+    {
+        $statement = $this->database->prepare(<<<'SQL'
+            SELECT
+                si.*,
+                l.voornaam AS lid_voornaam,
+                l.achternaam AS lid_achternaam,
+                l.email AS lid_email,
+                s.naam AS shift_naam,
+                s.start_op AS shift_start_op,
+                s.eind_op AS shift_eind_op,
+                e.titel AS event_titel,
+                st.naam AS type_naam,
+                NULL AS goedgekeurd_door_naam,
+                NULL AS geannuleerd_door_naam
+            FROM shift_inschrijvingen si
+            INNER JOIN leden l
+                ON l.lid_id = si.lid_id
+            INNER JOIN shifts s
+                ON s.shift_id = si.shift_id
+            INNER JOIN evenementen e
+                ON e.event_id = s.event_id
+            INNER JOIN shift_types st
+                ON st.type_id = s.type_id
+            WHERE si.inschrijving_id = :inschrijving_id
+            LIMIT 1
+            FOR UPDATE
+            SQL);
+
+        $statement->execute([
+            'inschrijving_id' => $id,
         ]);
+
+        $row = $statement->fetch(PDO::FETCH_ASSOC);
+
+        return is_array($row)
+            ? $this->mapper->fromDatabase($row)
+            : null;
     }
 
-    public function existsForMember(
+    public function findByShiftAndMember(
         int $shiftId,
-        int $lidId
-    ): bool {
-        $row = $this->fetch("
-            SELECT COUNT(*) AS aantal
-            FROM shift_registrations
-            WHERE shift_id = :shift_id
-              AND lid_id = :lid_id
-              AND status <> 'geannuleerd'
-        ", [
-            'shift_id' => $shiftId,
-            'lid_id' => $lidId,
-        ]);
-
-        return (int) ($row['aantal'] ?? 0) > 0;
+        int $memberId
+    ): ?ShiftRegistration {
+        return $this->findUsingCondition(
+            <<<'SQL'
+                si.shift_id = :shift_id
+                AND si.lid_id = :lid_id
+                SQL,
+            [
+                'shift_id' => $shiftId,
+                'lid_id' => $memberId,
+            ]
+        );
     }
 
     /**
@@ -62,163 +126,348 @@ final class ShiftRegistrationRepository extends BaseRepository
      */
     public function findByShift(int $shiftId): array
     {
-        return array_map(
-            [$this, 'map'],
-            $this->fetchAll("
-                SELECT
-                    sr.*,
-                    l.voornaam AS lid_voornaam,
-                    l.achternaam AS lid_achternaam,
-                    l.email AS lid_email
-                FROM shift_registrations sr
-                INNER JOIN leden l
-                    ON l.lid_id = sr.lid_id
-                WHERE sr.shift_id = :shift_id
+        $statement = $this->database->prepare(
+            self::SELECT_REGISTRATION
+            . PHP_EOL
+            . <<<'SQL'
+                WHERE si.shift_id = :shift_id
                 ORDER BY
-                    FIELD(sr.status, 'bevestigd', 'wachtend', 'reserve', 'geweigerd', 'geannuleerd'),
-                    sr.aangemaakt_op ASC
-            ", [
-                'shift_id' => $shiftId,
-            ])
+                    FIELD(
+                        si.status,
+                        'wachtend',
+                        'bevestigd',
+                        'reserve',
+                        'geweigerd',
+                        'geannuleerd'
+                    ),
+                    si.aangemaakt_op ASC,
+                    si.inschrijving_id ASC
+                SQL
+        );
+
+        $statement->execute([
+            'shift_id' => $shiftId,
+        ]);
+
+        return $this->mapRows(
+            $statement->fetchAll(PDO::FETCH_ASSOC)
         );
     }
 
     /**
      * @return ShiftRegistration[]
      */
-    public function findByMember(int $lidId): array
+    public function findByMember(int $memberId): array
     {
-        return array_map(
-            [$this, 'map'],
-            $this->fetchAll("
-                SELECT
-                    sr.*
-                FROM shift_registrations sr
-                WHERE sr.lid_id = :lid_id
-                ORDER BY sr.aangemaakt_op DESC
-            ", [
-                'lid_id' => $lidId,
-            ])
+        $statement = $this->database->prepare(
+            self::SELECT_REGISTRATION
+            . PHP_EOL
+            . <<<'SQL'
+                WHERE si.lid_id = :lid_id
+                ORDER BY
+                    s.start_op DESC,
+                    si.inschrijving_id DESC
+                SQL
+        );
+
+        $statement->execute([
+            'lid_id' => $memberId,
+        ]);
+
+        return $this->mapRows(
+            $statement->fetchAll(PDO::FETCH_ASSOC)
         );
     }
 
-    public function approve(
-        int $registrationId,
-        int $approvedBy
-    ): bool {
-        return $this->updateById($registrationId, [
-            'status' => ShiftRegistration::STATUS_BEVESTIGD,
-            'goedgekeurd_door' => $approvedBy,
-            'goedgekeurd_op' => date('Y-m-d H:i:s'),
+    /**
+     * @return ShiftRegistration[]
+     */
+    public function findPending(): array
+    {
+        $statement = $this->database->prepare(
+            self::SELECT_REGISTRATION
+            . PHP_EOL
+            . <<<'SQL'
+                WHERE si.status = :status
+                ORDER BY s.start_op ASC, si.aangemaakt_op ASC
+                SQL
+        );
+
+        $statement->execute([
+            'status' => ShiftRegistration::STATUS_WACHTEND,
         ]);
+
+        return $this->mapRows(
+            $statement->fetchAll(PDO::FETCH_ASSOC)
+        );
     }
 
-    public function reserve(
-        int $registrationId,
-        int $approvedBy
-    ): bool {
-        return $this->updateById($registrationId, [
-            'status' => ShiftRegistration::STATUS_RESERVE,
-            'goedgekeurd_door' => $approvedBy,
-            'goedgekeurd_op' => date('Y-m-d H:i:s'),
+    public function submit(
+        int $shiftId,
+        int $memberId,
+        ?string $comment
+    ): int {
+        $statement = $this->database->prepare(<<<'SQL'
+            INSERT INTO shift_inschrijvingen
+            (
+                shift_id,
+                lid_id,
+                status,
+                opmerking_lid,
+                goedgekeurd_door,
+                goedgekeurd_op,
+                geannuleerd_door,
+                geannuleerd_op,
+                annulatie_reden,
+                aanwezig,
+                aanwezig_afgevinkt_op,
+                aangemaakt_op,
+                bijgewerkt_op
+            )
+            VALUES
+            (
+                :shift_id,
+                :lid_id,
+                :status,
+                :opmerking_lid,
+                NULL,
+                NULL,
+                NULL,
+                NULL,
+                NULL,
+                0,
+                NULL,
+                NOW(),
+                NULL
+            )
+            ON DUPLICATE KEY UPDATE
+                status = VALUES(status),
+                opmerking_lid = VALUES(opmerking_lid),
+                goedgekeurd_door = NULL,
+                goedgekeurd_op = NULL,
+                geannuleerd_door = NULL,
+                geannuleerd_op = NULL,
+                annulatie_reden = NULL,
+                aanwezig = 0,
+                aanwezig_afgevinkt_op = NULL,
+                aangemaakt_op = NOW(),
+                bijgewerkt_op = NOW(),
+                inschrijving_id = LAST_INSERT_ID(inschrijving_id)
+            SQL);
+
+        $statement->execute([
+            'shift_id' => $shiftId,
+            'lid_id' => $memberId,
+            'status' => ShiftRegistration::STATUS_WACHTEND,
+            'opmerking_lid' => $comment,
         ]);
+
+        return $this->database->lastInsertId();
     }
 
-    public function reject(
-        int $registrationId,
+    public function setDecision(
+        int $id,
+        string $status,
         int $approvedBy
-    ): bool {
-        return $this->updateById($registrationId, [
-            'status' => ShiftRegistration::STATUS_GEWEIGERD,
+    ): void {
+        $statement = $this->database->prepare(<<<'SQL'
+            UPDATE shift_inschrijvingen
+            SET
+                status = :status,
+                goedgekeurd_door = :goedgekeurd_door,
+                goedgekeurd_op = NOW(),
+                geannuleerd_door = NULL,
+                geannuleerd_op = NULL,
+                annulatie_reden = NULL,
+                bijgewerkt_op = NOW()
+            WHERE inschrijving_id = :inschrijving_id
+            SQL);
+
+        $statement->execute([
+            'inschrijving_id' => $id,
+            'status' => $status,
             'goedgekeurd_door' => $approvedBy,
-            'goedgekeurd_op' => date('Y-m-d H:i:s'),
         ]);
     }
 
     public function cancel(
-        int $registrationId,
+        int $id,
         int $cancelledBy,
-        ?string $reason = null
-    ): bool {
-        return $this->updateById($registrationId, [
+        ?string $reason
+    ): void {
+        $statement = $this->database->prepare(<<<'SQL'
+            UPDATE shift_inschrijvingen
+            SET
+                status = :status,
+                geannuleerd_door = :geannuleerd_door,
+                geannuleerd_op = NOW(),
+                annulatie_reden = :annulatie_reden,
+                aanwezig = 0,
+                aanwezig_afgevinkt_op = NULL,
+                bijgewerkt_op = NOW()
+            WHERE inschrijving_id = :inschrijving_id
+            SQL);
+
+        $statement->execute([
+            'inschrijving_id' => $id,
             'status' => ShiftRegistration::STATUS_GEANNULEERD,
             'geannuleerd_door' => $cancelledBy,
-            'geannuleerd_op' => date('Y-m-d H:i:s'),
             'annulatie_reden' => $reason,
         ]);
     }
 
-    public function findNextReserve(int $shiftId): ?ShiftRegistration
-    {
-        $row = $this->fetch("
-            SELECT
-                sr.*,
-                l.voornaam AS lid_voornaam,
-                l.achternaam AS lid_achternaam,
-                l.email AS lid_email
-            FROM shift_registrations sr
-            INNER JOIN leden l
-                ON l.lid_id = sr.lid_id
-            WHERE sr.shift_id = :shift_id
-              AND sr.status = 'reserve'
-            ORDER BY sr.aangemaakt_op ASC
-            LIMIT 1
-        ", [
+    public function cancelActiveByShift(
+        int $shiftId,
+        int $cancelledBy,
+        ?string $reason
+    ): void {
+        $statement = $this->database->prepare(<<<'SQL'
+            UPDATE shift_inschrijvingen
+            SET
+                status = :cancelled_status,
+                geannuleerd_door = :geannuleerd_door,
+                geannuleerd_op = NOW(),
+                annulatie_reden = :annulatie_reden,
+                aanwezig = 0,
+                aanwezig_afgevinkt_op = NULL,
+                bijgewerkt_op = NOW()
+            WHERE shift_id = :shift_id
+              AND status IN (
+                  :waiting_status,
+                  :confirmed_status,
+                  :reserve_status
+              )
+            SQL);
+
+        $statement->execute([
             'shift_id' => $shiftId,
+            'cancelled_status' => ShiftRegistration::STATUS_GEANNULEERD,
+            'waiting_status' => ShiftRegistration::STATUS_WACHTEND,
+            'confirmed_status' => ShiftRegistration::STATUS_BEVESTIGD,
+            'reserve_status' => ShiftRegistration::STATUS_RESERVE,
+            'geannuleerd_door' => $cancelledBy,
+            'annulatie_reden' => $reason,
         ]);
-
-        return $row ? $this->map($row) : null;
     }
 
-    /**
-     * @return ShiftRegistration[]
-     */
-    public function findWaiting(int $shiftId): array
-    {
-        return $this->findByShiftAndStatus($shiftId, ShiftRegistration::STATUS_WACHTEND);
+    public function setPresence(
+        int $id,
+        bool $present
+    ): void {
+        $statement = $this->database->prepare(<<<'SQL'
+            UPDATE shift_inschrijvingen
+            SET
+                aanwezig = :aanwezig,
+                aanwezig_afgevinkt_op = CASE
+                    WHEN :aanwezig_timestamp = 1 THEN NOW()
+                    ELSE NULL
+                END,
+                bijgewerkt_op = NOW()
+            WHERE inschrijving_id = :inschrijving_id
+            SQL);
+
+        $statement->execute([
+            'inschrijving_id' => $id,
+            'aanwezig' => $present ? 1 : 0,
+            'aanwezig_timestamp' => $present ? 1 : 0,
+        ]);
     }
 
-    /**
-     * @return ShiftRegistration[]
-     */
-    public function findReserve(int $shiftId): array
-    {
-        return $this->findByShiftAndStatus($shiftId, ShiftRegistration::STATUS_RESERVE);
-    }
-
-    /**
-     * @return ShiftRegistration[]
-     */
-    public function findConfirmed(int $shiftId): array
-    {
-        return $this->findByShiftAndStatus($shiftId, ShiftRegistration::STATUS_BEVESTIGD);
-    }
-
-    /**
-     * @return ShiftRegistration[]
-     */
-    private function findByShiftAndStatus(
+    public function countByStatus(
         int $shiftId,
         string $status
-    ): array {
-        return array_map(
-            [$this, 'map'],
-            $this->fetchAll("
-                SELECT
-                    sr.*,
-                    l.voornaam AS lid_voornaam,
-                    l.achternaam AS lid_achternaam,
-                    l.email AS lid_email
-                FROM shift_registrations sr
-                INNER JOIN leden l
-                    ON l.lid_id = sr.lid_id
-                WHERE sr.shift_id = :shift_id
-                  AND sr.status = :status
-                ORDER BY sr.aangemaakt_op ASC
-            ", [
+    ): int {
+        $statement = $this->database->prepare(<<<'SQL'
+            SELECT COUNT(*)
+            FROM shift_inschrijvingen
+            WHERE shift_id = :shift_id
+              AND status = :status
+            SQL);
+
+        $statement->execute([
+            'shift_id' => $shiftId,
+            'status' => $status,
+        ]);
+
+        return (int) $statement->fetchColumn();
+    }
+
+    public function findNextReserve(
+        int $shiftId
+    ): ?ShiftRegistration {
+        return $this->findUsingCondition(
+            <<<'SQL'
+                si.shift_id = :shift_id
+                AND si.status = :status
+                SQL,
+            [
                 'shift_id' => $shiftId,
-                'status' => $status,
-            ])
+                'status' => ShiftRegistration::STATUS_RESERVE,
+            ],
+            'si.aangemaakt_op ASC, si.inschrijving_id ASC'
+        );
+    }
+
+    public function memberHasEventRegistration(
+        int $eventId,
+        int $memberId
+    ): bool {
+        $statement = $this->database->prepare(<<<'SQL'
+            SELECT COUNT(*)
+            FROM event_inschrijvingen
+            WHERE event_id = :event_id
+              AND lid_id = :lid_id
+              AND uitgeschreven_op IS NULL
+              AND status <> 'geweigerd'
+            SQL);
+
+        $statement->execute([
+            'event_id' => $eventId,
+            'lid_id' => $memberId,
+        ]);
+
+        return (int) $statement->fetchColumn() > 0;
+    }
+
+    /**
+     * @param array<string, mixed> $parameters
+     */
+    private function findUsingCondition(
+        string $condition,
+        array $parameters,
+        ?string $orderBy = null
+    ): ?ShiftRegistration {
+        $sql = self::SELECT_REGISTRATION
+            . PHP_EOL
+            . 'WHERE '
+            . $condition;
+
+        if ($orderBy !== null) {
+            $sql .= PHP_EOL . 'ORDER BY ' . $orderBy;
+        }
+
+        $sql .= PHP_EOL . 'LIMIT 1';
+
+        $statement = $this->database->prepare($sql);
+        $statement->execute($parameters);
+
+        $row = $statement->fetch(PDO::FETCH_ASSOC);
+
+        return is_array($row)
+            ? $this->mapper->fromDatabase($row)
+            : null;
+    }
+
+    /**
+     * @param array<int, array<string, mixed>> $rows
+     *
+     * @return ShiftRegistration[]
+     */
+    private function mapRows(array $rows): array
+    {
+        return array_map(
+            fn(array $row): ShiftRegistration => $this->mapper->fromDatabase($row),
+            $rows
         );
     }
 }

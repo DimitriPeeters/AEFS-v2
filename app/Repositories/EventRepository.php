@@ -241,7 +241,7 @@ final class EventRepository
                 ) AS inschrijvingen,
                 (
                     SELECT COUNT(*)
-                    FROM event_shifts
+                    FROM shifts
                     WHERE event_id = :shift_event_id
                 ) AS shifts
             SQL);
@@ -254,8 +254,12 @@ final class EventRepository
         $row = $statement->fetch(PDO::FETCH_ASSOC);
 
         return [
-            'inschrijvingen' => (int) ($row['inschrijvingen'] ?? 0),
-            'shifts' => (int) ($row['shifts'] ?? 0),
+            'inschrijvingen' => (int) (
+                $row['inschrijvingen'] ?? 0
+            ),
+            'shifts' => (int) (
+                $row['shifts'] ?? 0
+            ),
         ];
     }
 

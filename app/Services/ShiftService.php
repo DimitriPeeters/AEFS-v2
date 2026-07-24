@@ -4,634 +4,959 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use AEFS\Core\Auth;
+use AEFS\Core\Database;
+use App\Models\Event;
 use App\Models\Shift;
 use App\Models\ShiftRegistration;
+use App\Models\ShiftType;
 use App\Repositories\EventRepository;
 use App\Repositories\ShiftRegistrationRepository;
 use App\Repositories\ShiftRepository;
-use DateInterval;
-use DateTime;
+use App\Repositories\ShiftTypeRepository;
+use App\Validators\ShiftRegistrationValidator;
+use App\Validators\ShiftValidator;
+use DateTimeImmutable;
+use DomainException;
+use InvalidArgumentException;
 use RuntimeException;
-use Throwable;
 
 final class ShiftService
 {
     public function __construct(
+        private readonly Database $database,
         private readonly ShiftRepository $shiftRepository,
         private readonly ShiftRegistrationRepository $registrationRepository,
+        private readonly ShiftTypeRepository $typeRepository,
         private readonly EventRepository $eventRepository,
-        private readonly NotificationService $notificationService,
-        private readonly AuditService $auditService,
+        private readonly ShiftValidator $shiftValidator,
+        private readonly ShiftRegistrationValidator $registrationValidator,
+        private readonly AuditLogService $auditLog
     ) {
     }
 
     /**
-     * =========================================================================
-     * SHIFTS
-     * =========================================================================
+     * @return Shift[]
      */
-
-    public function createShift(
-        int $eventId,
-        string $functie,
-        string $datum,
-        string $starttijd,
-        string $eindtijd,
-        int $maxVrijwilligers
-    ): int {
-
-        if ($functie === '') {
-            $functie = 'Steward';
-        }
-
-        if ($maxVrijwilligers < 1) {
-            throw new RuntimeException(
-                'Maximum vrijwilligers moet minstens 1 zijn.'
-            );
-        }
-
-        if ($starttijd >= $eindtijd) {
-            throw new RuntimeException(
-                'Eindtijd moet later liggen dan de starttijd.'
-            );
-        }
-
-        $id = $this->shiftRepository->createShift(
-            $eventId,
-            $functie,
-            $datum,
-            $starttijd,
-            $eindtijd,
-            $maxVrijwilligers
-        );
-
-        $this->auditService->log(
-            'shift',
-            $id,
-            'create'
-        );
-
-        return $id;
-    }
-
-    public function updateShift(
-        int $shiftId,
-        string $functie,
-        string $datum,
-        string $starttijd,
-        string $eindtijd,
-        int $maxVrijwilligers
-    ): void {
-
-        $shift = $this->shiftRepository->find($shiftId);
-
-        if (!$shift instanceof Shift) {
-            throw new RuntimeException(
-                'Shift niet gevonden.'
-            );
-        }
-
-        if ($starttijd >= $eindtijd) {
-            throw new RuntimeException(
-                'Eindtijd moet later liggen dan de starttijd.'
-            );
-        }
-
-        if ($maxVrijwilligers < 1) {
-            throw new RuntimeException(
-                'Ongeldig maximum.'
-            );
-        }
-
-        $this->shiftRepository->updateShift(
-            $shiftId,
-            $functie,
-            $datum,
-            $starttijd,
-            $eindtijd,
-            $maxVrijwilligers
-        );
-
-        $this->auditService->log(
-            'shift',
-            $shiftId,
-            'update'
-        );
-    }
-
-    public function cancelShift(
-        int $shiftId,
-        int $adminId
-    ): void {
-
-        $shift = $this->shiftRepository->find($shiftId);
-
-        if (!$shift instanceof Shift) {
-            throw new RuntimeException(
-                'Shift niet gevonden.'
-            );
-        }
-
-        $this->shiftRepository->cancel($shiftId);
-
-        foreach (
-            $this->registrationRepository->findByShift($shiftId)
-            as $registration
-        ) {
-
-            $this->notificationService
-                ->shiftCancelled(
-                    $registration
-                );
-        }
-
-        $this->auditService->log(
-            'shift',
-            $shiftId,
-            'cancel'
-        );
-    }
-
-    public function deleteShift(
-        int $shiftId
-    ): void {
-
-        $shift = $this->shiftRepository->find($shiftId);
-
-        if (!$shift instanceof Shift) {
-            throw new RuntimeException(
-                'Shift niet gevonden.'
-            );
-        }
-
-        $this->shiftRepository->deleteShift(
-            $shiftId
-        );
-
-        $this->auditService->log(
-            'shift',
-            $shiftId,
-            'delete'
-        );
+    public function allForAdministration(): array
+    {
+        return $this->shiftRepository->allForAdministration();
     }
 
     /**
-     * =========================================================================
-     * REGISTRATIONS
-     * =========================================================================
+     * @return Shift[]
      */
-
-    public function registerVolunteer(
-        int $shiftId,
-        int $memberId
-    ): int {
-
-        if (
-            $this->registrationRepository
-                ->existsForMember(
-                    $shiftId,
-                    $memberId
-                )
-        ) {
-
-            throw new RuntimeException(
-                'Je bent reeds ingeschreven.'
-            );
-        }
-
-        $shift = $this->shiftRepository
-            ->find($shiftId);
-
-        if (!$shift instanceof Shift) {
-            throw new RuntimeException(
-                'Shift niet gevonden.'
-            );
-        }
-
-        if (!$shift->isActief()) {
-            throw new RuntimeException(
-                'Shift is niet actief.'
-            );
-        }
-
-        $status = ShiftRegistration::STATUS_WACHTEND;
-
-        if ($this->shiftRepository->isFull($shiftId)) {
-            $status = ShiftRegistration::STATUS_RESERVE;
-        }
-
-        $registrationId =
-            $this->registrationRepository
-                ->createRegistration(
-                    $shiftId,
-                    $memberId,
-                    $status
-                );
-
-        $this->auditService->log(
-            'shift_registration',
-            $registrationId,
-            'create'
-        );
-
-        return $registrationId;
+    public function visibleToMembers(): array
+    {
+        return $this->shiftRepository->visibleToMembers();
     }
-
-        public function approveRegistration(
-        int $registrationId,
-        int $approvedBy
-    ): void {
-
-        $registration = $this->registrationRepository->find($registrationId);
-
-        if (!$registration instanceof ShiftRegistration) {
-            throw new RuntimeException(
-                'Inschrijving niet gevonden.'
-            );
-        }
-
-        $shift = $this->shiftRepository->find($registration->shiftId);
-
-        if (!$shift instanceof Shift) {
-            throw new RuntimeException(
-                'Shift niet gevonden.'
-            );
-        }
-
-        $this->shiftRepository->beginTransaction();
-
-        try {
-
-            if ($this->shiftRepository->isFull($shift->id)) {
-
-                $this->registrationRepository->reserve(
-                    $registrationId,
-                    $approvedBy
-                );
-
-                $this->notificationService->shiftReserve(
-                    $registration
-                );
-
-            } else {
-
-                $this->registrationRepository->approve(
-                    $registrationId,
-                    $approvedBy
-                );
-
-                $this->notificationService->shiftApproved(
-                    $registration
-                );
-            }
-
-            $this->auditService->log(
-                'shift_registration',
-                $registrationId,
-                'approve'
-            );
-
-            $this->shiftRepository->commit();
-
-        } catch (Throwable $e) {
-
-            $this->shiftRepository->rollBack();
-
-            throw $e;
-        }
-    }
-
-    public function rejectRegistration(
-        int $registrationId,
-        int $approvedBy
-    ): void {
-
-        $registration = $this->registrationRepository->find($registrationId);
-
-        if (!$registration instanceof ShiftRegistration) {
-            throw new RuntimeException(
-                'Inschrijving niet gevonden.'
-            );
-        }
-
-        $this->registrationRepository->reject(
-            $registrationId,
-            $approvedBy
-        );
-
-        $this->notificationService->shiftRejected(
-            $registration
-        );
-
-        $this->auditService->log(
-            'shift_registration',
-            $registrationId,
-            'reject'
-        );
-    }
-
-    public function reserveRegistration(
-        int $registrationId,
-        int $approvedBy
-    ): void {
-
-        $registration = $this->registrationRepository->find($registrationId);
-
-        if (!$registration instanceof ShiftRegistration) {
-            throw new RuntimeException(
-                'Inschrijving niet gevonden.'
-            );
-        }
-
-        $this->registrationRepository->reserve(
-            $registrationId,
-            $approvedBy
-        );
-
-        $this->notificationService->shiftReserve(
-            $registration
-        );
-
-        $this->auditService->log(
-            'shift_registration',
-            $registrationId,
-            'reserve'
-        );
-    }
-
-    public function cancelRegistration(
-        int $registrationId,
-        int $userId,
-        bool $isAdmin = false,
-        ?string $reason = null
-    ): void {
-
-        $registration = $this->registrationRepository->find($registrationId);
-
-        if (!$registration instanceof ShiftRegistration) {
-            throw new RuntimeException(
-                'Inschrijving niet gevonden.'
-            );
-        }
-
-        $shift = $this->shiftRepository->find($registration->shiftId);
-
-        if (!$shift instanceof Shift) {
-            throw new RuntimeException(
-                'Shift niet gevonden.'
-            );
-        }
-
-        if (!$isAdmin) {
-
-            $eventDate = new DateTime($shift->shiftDatum);
-            $limitDate = (clone $eventDate)->sub(
-                new DateInterval('P14D')
-            );
-
-            if (new DateTime() >= $limitDate) {
-                throw new RuntimeException(
-                    'Vanaf 14 dagen voor het evenement kan enkel een administrator of eventmanager een annulatie uitvoeren.'
-                );
-            }
-        }
-
-        $this->shiftRepository->beginTransaction();
-
-        try {
-
-            $this->registrationRepository->cancel(
-                $registrationId,
-                $userId,
-                $reason
-            );
-
-            if ($isAdmin) {
-
-                $this->notificationService
-                    ->shiftCancelledByAdmin(
-                        $registration,
-                        $reason
-                    );
-
-            } else {
-
-                $this->notificationService
-                    ->shiftCancelledByVolunteer(
-                        $registration,
-                        $reason
-                    );
-            }
-
-            $this->promoteReserveList(
-                $registration->shiftId,
-                $userId
-            );
-
-            $this->auditService->log(
-                'shift_registration',
-                $registrationId,
-                'cancel'
-            );
-
-            $this->shiftRepository->commit();
-
-        } catch (Throwable $e) {
-
-            $this->shiftRepository->rollBack();
-
-            throw $e;
-        }
-    }
-
-    private function promoteReserveList(
-        int $shiftId,
-        int $approvedBy
-    ): void {
-
-        if ($this->shiftRepository->isFull($shiftId)) {
-            return;
-        }
-
-        $reserve = $this->registrationRepository
-            ->findNextReserve($shiftId);
-
-        if (!$reserve instanceof ShiftRegistration) {
-            return;
-        }
-
-        $this->registrationRepository->approve(
-            $reserve->id,
-            $approvedBy
-        );
-
-        $this->notificationService
-            ->reservePromoted($reserve);
-
-        $this->auditService->log(
-            'shift_registration',
-            $reserve->id,
-            'reserve_promoted'
-        );
-    }
-
-        /**
-     * =========================================================================
-     * OPVRAGEN
-     * =========================================================================
-     */
 
     /**
      * @return Shift[]
      */
     public function findByEvent(
         int $eventId,
-        bool $activeOnly = false
+        bool $includeCancelled = true
     ): array {
-
-        if ($activeOnly) {
-            return $this->shiftRepository->findActiveByEvent($eventId);
+        if ($eventId <= 0) {
+            return [];
         }
 
-        return $this->shiftRepository->findByEvent($eventId);
+        return $this->shiftRepository->findByEvent(
+            $eventId,
+            $includeCancelled
+        );
     }
 
-    public function findShift(
-        int $shiftId
-    ): ?Shift {
+    public function find(int $id): ?Shift
+    {
+        if ($id <= 0) {
+            return null;
+        }
 
-        return $this->shiftRepository
-            ->findWithStatistics($shiftId);
+        return $this->shiftRepository->find($id);
+    }
+
+    public function findVisibleToMembers(int $id): ?Shift
+    {
+        if ($id <= 0) {
+            return null;
+        }
+
+        return $this->shiftRepository->findVisibleToMembers($id);
+    }
+
+    /**
+     * @return ShiftType[]
+     */
+    public function allTypes(): array
+    {
+        return $this->typeRepository->all();
+    }
+
+    /**
+     * @return ShiftType[]
+     */
+    public function activeTypes(): array
+    {
+        $this->typeRepository->ensureDefault();
+
+        return $this->typeRepository->active();
     }
 
     /**
      * @return ShiftRegistration[]
      */
-    public function findRegistrations(
-        int $shiftId
-    ): array {
+    public function registrationsForShift(int $shiftId): array
+    {
+        if ($shiftId <= 0) {
+            return [];
+        }
 
-        return $this->registrationRepository
-            ->findByShift($shiftId);
+        return $this->registrationRepository->findByShift($shiftId);
     }
 
     /**
      * @return ShiftRegistration[]
      */
-    public function confirmedRegistrations(
-        int $shiftId
-    ): array {
+    public function registrationsForMember(int $memberId): array
+    {
+        if ($memberId <= 0) {
+            return [];
+        }
 
-        return $this->registrationRepository
-            ->findConfirmed($shiftId);
+        return $this->registrationRepository->findByMember($memberId);
     }
 
     /**
      * @return ShiftRegistration[]
      */
-    public function waitingRegistrations(
-        int $shiftId
-    ): array {
+    public function pendingRegistrations(): array
+    {
+        return $this->registrationRepository->findPending();
+    }
 
-        return $this->registrationRepository
-            ->findWaiting($shiftId);
+    public function findRegistration(
+        int $registrationId
+    ): ?ShiftRegistration {
+        if ($registrationId <= 0) {
+            return null;
+        }
+
+        return $this->registrationRepository->find($registrationId);
+    }
+
+    public function findMemberRegistration(
+        int $shiftId,
+        int $memberId
+    ): ?ShiftRegistration {
+        if ($shiftId <= 0 || $memberId <= 0) {
+            return null;
+        }
+
+        return $this->registrationRepository->findByShiftAndMember(
+            $shiftId,
+            $memberId
+        );
     }
 
     /**
-     * @return ShiftRegistration[]
+     * @param array<string, mixed> $data
      */
-    public function reserveRegistrations(
-        int $shiftId
-    ): array {
+    public function create(array $data): int
+    {
+        $data['status'] = Shift::STATUS_ACTIEF;
 
-        return $this->registrationRepository
-            ->findReserve($shiftId);
-    }
+        $event = $this->requireEvent(
+            (int) ($data['event_id'] ?? 0)
+        );
 
-    public function statistics(
-        int $shiftId
-    ): array {
+        $type = $this->requireType(
+            (int) ($data['type_id'] ?? 0)
+        );
 
-        $shift = $this->shiftRepository
-            ->findWithStatistics($shiftId);
-
-        if (!$shift instanceof Shift) {
-            throw new RuntimeException(
-                'Shift niet gevonden.'
+        if (!$type->isActief()) {
+            throw new DomainException(
+                'Het gekozen shifttype is niet actief.'
             );
         }
 
-        return [
-            'max_vrijwilligers' => $shift->maxVrijwilligers,
-            'bevestigd' => $shift->aantalBevestigd,
-            'wachtend' => $shift->aantalWachtend,
-            'reserve' => $shift->aantalReserve,
-            'beschikbaar' => $shift->beschikbarePlaatsen(),
-            'volzet' => $shift->isVolzet(),
-        ];
-    }
-
-    public function canVolunteerCancel(
-        int $shiftId
-    ): bool {
-
-        $shift = $this->shiftRepository->find($shiftId);
-
-        if (!$shift instanceof Shift) {
-            return false;
-        }
-
-        $eventDate = new DateTime($shift->shiftDatum);
-        $limitDate = (clone $eventDate)->sub(
-            new DateInterval('P14D')
+        $this->shiftValidator->validateForEvent(
+            $data,
+            $event
         );
 
-        return new DateTime() < $limitDate;
+        return $this->database->transaction(
+            function () use ($data): int {
+                $id = $this->shiftRepository->create($data);
+
+                $this->auditLog->created(
+                    entity: 'shift',
+                    id: $id,
+                    userId: Auth::id(),
+                    values: $data
+                );
+
+                return $id;
+            }
+        );
     }
 
-    public function isShiftFull(
-        int $shiftId
-    ): bool {
-
-        return $this->shiftRepository
-            ->isFull($shiftId);
-    }
-
-    public function availablePlaces(
-        int $shiftId
-    ): int {
-
-        $shift = $this->shiftRepository
-            ->findWithStatistics($shiftId);
-
-        if (!$shift instanceof Shift) {
-            return 0;
+    /**
+     * @param array<string, mixed> $data
+     */
+    public function update(
+        int $id,
+        array $data
+    ): void {
+        if ($id <= 0) {
+            throw new InvalidArgumentException(
+                'Ongeldige shift.'
+            );
         }
 
-        return $shift->beschikbarePlaatsen();
+        $this->database->transaction(
+            function () use ($id, $data): void {
+                $shift = $this->shiftRepository->lockForUpdate($id);
+
+                if ($shift === null) {
+                    throw new InvalidArgumentException(
+                        'Shift niet gevonden.'
+                    );
+                }
+
+                $requestedStatus = (string) (
+                    $data['status'] ?? $shift->status
+                );
+
+                if ($requestedStatus !== $shift->status) {
+                    throw new DomainException(
+                        'Wijzig de status niet via het formulier. Gebruik de afzonderlijke annuleeractie.'
+                    );
+                }
+
+                $data['status'] = $shift->status;
+
+                $event = $this->requireEvent(
+                    (int) ($data['event_id'] ?? 0)
+                );
+
+                $type = $this->requireType(
+                    (int) ($data['type_id'] ?? 0)
+                );
+
+                if (
+                    !$type->isActief()
+                    && $type->typeId !== $shift->typeId
+                ) {
+                    throw new DomainException(
+                        'Het gekozen shifttype is niet actief.'
+                    );
+                }
+
+                $this->shiftValidator->validateForEvent(
+                    $data,
+                    $event
+                );
+
+                $registrationCount = $this->shiftRepository
+                    ->countRegistrations($id);
+
+                if (
+                    $registrationCount > 0
+                    && (int) $data['event_id'] !== $shift->eventId
+                ) {
+                    throw new DomainException(
+                        'Een shift met inschrijvingen kan niet naar een ander evenement worden verplaatst.'
+                    );
+                }
+
+                $confirmedCount = $this->shiftRepository
+                    ->countConfirmed($id);
+
+                if ((int) $data['max_personen'] < $confirmedCount) {
+                    throw new DomainException(
+                        sprintf(
+                            'De capaciteit kan niet lager zijn dan het huidige aantal van %d bevestigde vrijwilligers.',
+                            $confirmedCount
+                        )
+                    );
+                }
+
+                $this->shiftRepository->update(
+                    $id,
+                    $data
+                );
+
+                $this->auditLog->updated(
+                    entity: 'shift',
+                    id: $id,
+                    userId: Auth::id(),
+                    oldValues: $shift->toAuditArray(),
+                    newValues: $data
+                );
+            }
+        );
     }
 
-    public function countConfirmed(
-        int $shiftId
+    public function cancelShift(
+        int $id,
+        ?string $reason = null
     ): int {
+        if ($id <= 0) {
+            throw new InvalidArgumentException(
+                'Ongeldige shift.'
+            );
+        }
 
-        return $this->shiftRepository
-            ->countConfirmed($shiftId);
+        $reason = $this->normalizeReason(
+            $reason,
+            'Shift geannuleerd door een administrator.'
+        );
+
+        $this->registrationValidator
+            ->validateCancellationReason($reason);
+
+        return $this->database->transaction(
+            function () use ($id, $reason): int {
+                $shift = $this->shiftRepository->lockForUpdate($id);
+
+                if ($shift === null) {
+                    throw new InvalidArgumentException(
+                        'Shift niet gevonden.'
+                    );
+                }
+
+                if ($shift->isGeannuleerd()) {
+                    throw new DomainException(
+                        'Deze shift is al geannuleerd.'
+                    );
+                }
+
+                $userId = $this->requireAuthenticatedUserId();
+
+                $registrations = $this->registrationRepository
+                    ->findByShift($id);
+
+                $activeRegistrations = array_values(
+                    array_filter(
+                        $registrations,
+                        static fn(
+                            ShiftRegistration $registration
+                        ): bool => $registration->isActief()
+                    )
+                );
+
+                $this->shiftRepository->setStatus(
+                    $id,
+                    Shift::STATUS_GEANNULEERD
+                );
+
+                $this->registrationRepository->cancelActiveByShift(
+                    shiftId: $id,
+                    cancelledBy: $userId,
+                    reason: $reason
+                );
+
+                $newShiftValues = $shift->toAuditArray();
+                $newShiftValues['status'] = Shift::STATUS_GEANNULEERD;
+
+                $this->auditLog->updated(
+                    entity: 'shift',
+                    id: $id,
+                    userId: $userId,
+                    oldValues: $shift->toAuditArray(),
+                    newValues: $newShiftValues
+                );
+
+                foreach ($activeRegistrations as $registration) {
+                    $updated = $this->registrationRepository->find(
+                        $registration->inschrijvingId
+                    );
+
+                    if ($updated === null) {
+                        continue;
+                    }
+
+                    $this->auditLog->updated(
+                        entity: 'shift_registration',
+                        id: $registration->inschrijvingId,
+                        userId: $userId,
+                        oldValues: $registration->toAuditArray(),
+                        newValues: $updated->toAuditArray()
+                    );
+                }
+
+                return count($activeRegistrations);
+            }
+        );
     }
 
-    public function countWaiting(
-        int $shiftId
-    ): int {
+    public function delete(int $id): void
+    {
+        if ($id <= 0) {
+            throw new InvalidArgumentException(
+                'Ongeldige shift.'
+            );
+        }
 
-        return $this->shiftRepository
-            ->countWaiting($shiftId);
+        $this->database->transaction(
+            function () use ($id): void {
+                $shift = $this->shiftRepository->lockForUpdate($id);
+
+                if ($shift === null) {
+                    throw new InvalidArgumentException(
+                        'Shift niet gevonden.'
+                    );
+                }
+
+                if ($this->shiftRepository->countRegistrations($id) > 0) {
+                    throw new DomainException(
+                        'Een shift met inschrijvingen kan niet worden verwijderd. Annuleer de shift in plaats daarvan.'
+                    );
+                }
+
+                $this->shiftRepository->delete($id);
+
+                $this->auditLog->deleted(
+                    entity: 'shift',
+                    id: $id,
+                    userId: Auth::id(),
+                    oldValues: $shift->toAuditArray()
+                );
+            }
+        );
     }
 
-    public function countReserve(
-        int $shiftId
+    public function register(
+        int $shiftId,
+        int $memberId,
+        ?string $comment = null
     ): int {
+        if ($shiftId <= 0 || $memberId <= 0) {
+            throw new InvalidArgumentException(
+                'Ongeldige shiftinschrijving.'
+            );
+        }
 
-        return $this->shiftRepository
-            ->countReserve($shiftId);
+        $comment = $this->normalizeNullableString($comment);
+
+        $this->registrationValidator->validateComment($comment);
+
+        return $this->database->transaction(
+            function () use (
+                $shiftId,
+                $memberId,
+                $comment
+            ): int {
+                $shift = $this->shiftRepository->lockForUpdate($shiftId);
+
+                if ($shift === null) {
+                    throw new InvalidArgumentException(
+                        'Shift niet gevonden.'
+                    );
+                }
+
+                if (!$shift->isActief()) {
+                    throw new DomainException(
+                        'Voor deze shift kan niet meer worden ingeschreven.'
+                    );
+                }
+
+                if ($shift->eventStatus !== Event::STATUS_PUBLISHED) {
+                    throw new DomainException(
+                        'Dit evenement staat niet open voor shiftinschrijvingen.'
+                    );
+                }
+
+                if (
+                    new DateTimeImmutable($shift->startOp)
+                    <= new DateTimeImmutable()
+                ) {
+                    throw new DomainException(
+                        'Deze shift is al gestart.'
+                    );
+                }
+
+                if (
+                    !$this->registrationRepository
+                        ->memberHasEventRegistration(
+                            $shift->eventId,
+                            $memberId
+                        )
+                ) {
+                    throw new DomainException(
+                        'Je moet eerst voor het evenement ingeschreven zijn voordat je een shift kunt kiezen.'
+                    );
+                }
+
+                $existing = $this->registrationRepository
+                    ->findByShiftAndMember(
+                        $shiftId,
+                        $memberId
+                    );
+
+                if ($existing !== null && $existing->isActief()) {
+                    throw new DomainException(
+                        'Je bent al voor deze shift ingeschreven.'
+                    );
+                }
+
+                $registrationId = $this->registrationRepository->submit(
+                    shiftId: $shiftId,
+                    memberId: $memberId,
+                    comment: $comment
+                );
+
+                $registration = $this->registrationRepository->find(
+                    $registrationId
+                );
+
+                if ($registration === null) {
+                    throw new RuntimeException(
+                        'De shiftinschrijving kon niet worden geladen.'
+                    );
+                }
+
+                if ($existing === null) {
+                    $this->auditLog->created(
+                        entity: 'shift_registration',
+                        id: $registrationId,
+                        userId: Auth::id(),
+                        values: $registration->toAuditArray()
+                    );
+                } else {
+                    $this->auditLog->updated(
+                        entity: 'shift_registration',
+                        id: $registrationId,
+                        userId: Auth::id(),
+                        oldValues: $existing->toAuditArray(),
+                        newValues: $registration->toAuditArray()
+                    );
+                }
+
+                return $registrationId;
+            }
+        );
+    }
+
+    public function approve(int $registrationId): void
+    {
+        $this->changeDecision(
+            registrationId: $registrationId,
+            targetStatus: ShiftRegistration::STATUS_BEVESTIGD
+        );
+    }
+
+    public function reserve(int $registrationId): void
+    {
+        $this->changeDecision(
+            registrationId: $registrationId,
+            targetStatus: ShiftRegistration::STATUS_RESERVE
+        );
+    }
+
+    public function reject(int $registrationId): void
+    {
+        $this->changeDecision(
+            registrationId: $registrationId,
+            targetStatus: ShiftRegistration::STATUS_GEWEIGERD
+        );
+    }
+
+    public function cancelByAdmin(
+        int $registrationId,
+        ?string $reason = null
+    ): void {
+        $reason = $this->normalizeReason(
+            $reason,
+            'Inschrijving geannuleerd door een administrator.'
+        );
+
+        $this->registrationValidator
+            ->validateCancellationReason($reason);
+
+        $this->cancelRegistration(
+            registrationId: $registrationId,
+            expectedMemberId: null,
+            reason: $reason,
+            enforceMemberDeadline: false
+        );
+    }
+
+    public function cancelByVolunteer(
+        int $registrationId,
+        int $memberId,
+        ?string $reason = null
+    ): void {
+        if ($memberId <= 0) {
+            throw new InvalidArgumentException(
+                'Ongeldig lid.'
+            );
+        }
+
+        $reason = $this->normalizeReason(
+            $reason,
+            'Geannuleerd door het lid.'
+        );
+
+        $this->registrationValidator
+            ->validateCancellationReason($reason);
+
+        $this->cancelRegistration(
+            registrationId: $registrationId,
+            expectedMemberId: $memberId,
+            reason: $reason,
+            enforceMemberDeadline: true
+        );
+    }
+
+    public function setPresence(
+        int $registrationId,
+        bool $present
+    ): void {
+        if ($registrationId <= 0) {
+            throw new InvalidArgumentException(
+                'Ongeldige shiftinschrijving.'
+            );
+        }
+
+        $this->database->transaction(
+            function () use ($registrationId, $present): void {
+                $registration = $this->registrationRepository
+                    ->findForUpdate($registrationId);
+
+                if ($registration === null) {
+                    throw new InvalidArgumentException(
+                        'Shiftinschrijving niet gevonden.'
+                    );
+                }
+
+                if (!$registration->isBevestigd()) {
+                    throw new DomainException(
+                        'Aanwezigheid kan alleen voor bevestigde vrijwilligers worden geregistreerd.'
+                    );
+                }
+
+                if ($registration->aanwezig === $present) {
+                    return;
+                }
+
+                $this->registrationRepository->setPresence(
+                    $registrationId,
+                    $present
+                );
+
+                $updated = $this->registrationRepository->find(
+                    $registrationId
+                );
+
+                if ($updated === null) {
+                    throw new RuntimeException(
+                        'De gewijzigde shiftinschrijving kon niet worden geladen.'
+                    );
+                }
+
+                $this->auditLog->updated(
+                    entity: 'shift_registration',
+                    id: $registrationId,
+                    userId: Auth::id(),
+                    oldValues: $registration->toAuditArray(),
+                    newValues: $updated->toAuditArray()
+                );
+            }
+        );
+    }
+
+    private function changeDecision(
+        int $registrationId,
+        string $targetStatus
+    ): void {
+        if ($registrationId <= 0) {
+            throw new InvalidArgumentException(
+                'Ongeldige shiftinschrijving.'
+            );
+        }
+
+        if (
+            !in_array(
+                $targetStatus,
+                [
+                    ShiftRegistration::STATUS_BEVESTIGD,
+                    ShiftRegistration::STATUS_RESERVE,
+                    ShiftRegistration::STATUS_GEWEIGERD,
+                ],
+                true
+            )
+        ) {
+            throw new InvalidArgumentException(
+                'Ongeldige beslissing.'
+            );
+        }
+
+        $registrationSnapshot = $this->registrationRepository->find(
+            $registrationId
+        );
+
+        if ($registrationSnapshot === null) {
+            throw new InvalidArgumentException(
+                'Shiftinschrijving niet gevonden.'
+            );
+        }
+
+        $this->database->transaction(
+            function () use (
+                $registrationId,
+                $targetStatus,
+                $registrationSnapshot
+            ): void {
+                $shift = $this->shiftRepository->lockForUpdate(
+                    $registrationSnapshot->shiftId
+                );
+
+                if ($shift === null) {
+                    throw new InvalidArgumentException(
+                        'Shift niet gevonden.'
+                    );
+                }
+
+                $registration = $this->registrationRepository
+                    ->findForUpdate($registrationId);
+
+                if ($registration === null) {
+                    throw new InvalidArgumentException(
+                        'Shiftinschrijving niet gevonden.'
+                    );
+                }
+
+                if ($registration->shiftId !== $shift->shiftId) {
+                    throw new RuntimeException(
+                        'De shiftinschrijving werd gelijktijdig gewijzigd.'
+                    );
+                }
+
+                if ($registration->status === $targetStatus) {
+                    return;
+                }
+
+                if (
+                    !in_array(
+                        $registration->status,
+                        [
+                            ShiftRegistration::STATUS_WACHTEND,
+                            ShiftRegistration::STATUS_RESERVE,
+                        ],
+                        true
+                    )
+                ) {
+                    throw new DomainException(
+                        'Deze shiftinschrijving kan niet meer op deze manier worden beoordeeld.'
+                    );
+                }
+
+                if (
+                    $targetStatus === ShiftRegistration::STATUS_BEVESTIGD
+                    && $this->registrationRepository->countByStatus(
+                        $shift->shiftId,
+                        ShiftRegistration::STATUS_BEVESTIGD
+                    ) >= $shift->maxPersonen
+                ) {
+                    throw new DomainException(
+                        'Deze shift is volzet. Plaats het lid op de reservelijst.'
+                    );
+                }
+
+                $userId = $this->requireAuthenticatedUserId();
+
+                $this->registrationRepository->setDecision(
+                    id: $registrationId,
+                    status: $targetStatus,
+                    approvedBy: $userId
+                );
+
+                $updated = $this->registrationRepository->find(
+                    $registrationId
+                );
+
+                if ($updated === null) {
+                    throw new RuntimeException(
+                        'De gewijzigde shiftinschrijving kon niet worden geladen.'
+                    );
+                }
+
+                $this->auditLog->updated(
+                    entity: 'shift_registration',
+                    id: $registrationId,
+                    userId: $userId,
+                    oldValues: $registration->toAuditArray(),
+                    newValues: $updated->toAuditArray()
+                );
+            }
+        );
+    }
+
+    private function cancelRegistration(
+        int $registrationId,
+        ?int $expectedMemberId,
+        string $reason,
+        bool $enforceMemberDeadline
+    ): void {
+        if ($registrationId <= 0) {
+            throw new InvalidArgumentException(
+                'Ongeldige shiftinschrijving.'
+            );
+        }
+
+        $registrationSnapshot = $this->registrationRepository->find(
+            $registrationId
+        );
+
+        if ($registrationSnapshot === null) {
+            throw new InvalidArgumentException(
+                'Shiftinschrijving niet gevonden.'
+            );
+        }
+
+        $this->database->transaction(
+            function () use (
+                $registrationId,
+                $registrationSnapshot,
+                $expectedMemberId,
+                $reason,
+                $enforceMemberDeadline
+            ): void {
+                $shift = $this->shiftRepository->lockForUpdate(
+                    $registrationSnapshot->shiftId
+                );
+
+                if ($shift === null) {
+                    throw new InvalidArgumentException(
+                        'Shift niet gevonden.'
+                    );
+                }
+
+                $registration = $this->registrationRepository
+                    ->findForUpdate($registrationId);
+
+                if ($registration === null) {
+                    throw new InvalidArgumentException(
+                        'Shiftinschrijving niet gevonden.'
+                    );
+                }
+
+                if (
+                    $expectedMemberId !== null
+                    && $registration->lidId !== $expectedMemberId
+                ) {
+                    throw new DomainException(
+                        'Je kunt alleen je eigen shiftinschrijving annuleren.'
+                    );
+                }
+
+                if (!$registration->isActief()) {
+                    throw new DomainException(
+                        'Deze shiftinschrijving is niet meer actief.'
+                    );
+                }
+
+                if (
+                    $enforceMemberDeadline
+                    && !$shift->magLidZelfAnnuleren()
+                ) {
+                    throw new DomainException(
+                        'Vanaf veertien dagen voor de start van het evenement kan alleen een administrator deze inschrijving annuleren.'
+                    );
+                }
+
+                $userId = $this->requireAuthenticatedUserId();
+
+                $this->registrationRepository->cancel(
+                    id: $registrationId,
+                    cancelledBy: $userId,
+                    reason: $reason
+                );
+
+                $updated = $this->registrationRepository->find(
+                    $registrationId
+                );
+
+                if ($updated === null) {
+                    throw new RuntimeException(
+                        'De geannuleerde shiftinschrijving kon niet worden geladen.'
+                    );
+                }
+
+                $this->auditLog->updated(
+                    entity: 'shift_registration',
+                    id: $registrationId,
+                    userId: $userId,
+                    oldValues: $registration->toAuditArray(),
+                    newValues: $updated->toAuditArray()
+                );
+            }
+        );
+    }
+
+    private function requireEvent(int $eventId): Event
+    {
+        if ($eventId <= 0) {
+            throw new InvalidArgumentException(
+                'Kies een geldig evenement.'
+            );
+        }
+
+        return $this->eventRepository->find($eventId)
+            ?? throw new InvalidArgumentException(
+                'Evenement niet gevonden.'
+            );
+    }
+
+    private function requireType(int $typeId): ShiftType
+    {
+        if ($typeId <= 0) {
+            throw new InvalidArgumentException(
+                'Kies een geldig shifttype.'
+            );
+        }
+
+        return $this->typeRepository->find($typeId)
+            ?? throw new InvalidArgumentException(
+                'Shifttype niet gevonden.'
+            );
+    }
+
+    private function requireAuthenticatedUserId(): int
+    {
+        $userId = Auth::id();
+
+        if ($userId === null || $userId <= 0) {
+            throw new RuntimeException(
+                'Er is geen aangemelde gebruiker beschikbaar.'
+            );
+        }
+
+        return $userId;
+    }
+
+    private function normalizeReason(
+        ?string $reason,
+        string $default
+    ): string {
+        return $this->normalizeNullableString($reason)
+            ?? $default;
+    }
+
+    private function normalizeNullableString(
+        ?string $value
+    ): ?string {
+        if ($value === null) {
+            return null;
+        }
+
+        $value = trim($value);
+
+        return $value !== ''
+            ? $value
+            : null;
     }
 }

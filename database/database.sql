@@ -52,7 +52,8 @@ INSERT INTO `audit_logs` (`audit_id`, `entity`, `entity_id`, `action`, `user_id`
 	(10, 'user', 112, 'create', NULL, '[]', '{"rol": "lid", "email": "d.peeters@procertus.be", "actief": false, "lid_id": 117, "mail_blacklist": false, "goedkeuringsstatus": "wachtend"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36', '2026-07-24 00:02:00'),
 	(11, 'user', 112, 'update', 15, '{"rol": "lid", "actief": false, "mail_blacklist": false, "goedkeuringsstatus": "wachtend"}', '{"rol": "lid", "actief": true, "mail_blacklist": false, "goedkeuringsstatus": "goedgekeurd"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36', '2026-07-24 00:07:11'),
 	(12, 'member', 117, 'update', 15, '{"actief": false}', '{"actief": true}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36', '2026-07-24 00:07:11'),
-	(13, 'user', 112, 'update', 15, '{"rol": "lid", "actief": true, "mail_blacklist": false, "goedkeuringsstatus": "goedgekeurd"}', '{"rol": "lid", "actief": true, "mail_blacklist": false, "goedkeuringsstatus": "goedgekeurd"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36', '2026-07-24 00:07:31');
+	(13, 'user', 112, 'update', 15, '{"rol": "lid", "actief": true, "mail_blacklist": false, "goedkeuringsstatus": "goedgekeurd"}', '{"rol": "lid", "actief": true, "mail_blacklist": false, "goedkeuringsstatus": "goedgekeurd"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36', '2026-07-24 00:07:31'),
+	(14, 'event', 9, 'create', 15, '[]', '{"titel": "testevent", "status": "concept", "locatie": "boom", "einddatum": null, "startdatum": "2026-08-07", "beschrijving": "dit is een test", "max_deelnemers": 50}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36', '2026-07-24 00:56:20');
 
 -- Structuur van  tabel aefs_v2.betalingen wordt geschreven
 CREATE TABLE IF NOT EXISTS `betalingen` (
@@ -111,9 +112,10 @@ CREATE TABLE IF NOT EXISTS `evenementen` (
 ) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Dumpen data van tabel aefs_v2.evenementen: ~2 rows (ongeveer)
-INSERT INTO `evenementen` (`event_id`, `titel`, `beschrijving`, `locatie`, `max_deelnemers`, `aangemaakt_op`, `startdatum`, `einddatum`, `planning_verstuurd`) VALUES
-	(7, 'Tomorrowland 2026 WE1', '', 'De Schorre - Boom', 42, '2026-05-06 12:41:45', '2026-07-17', '2026-07-19', NULL),
-	(8, 'Tomorrowland 2026 WE2', '', 'De Schorre - Boom', 42, '2026-05-07 06:09:20', '2026-07-24', '2026-07-26', NULL);
+INSERT INTO `evenementen` (`event_id`, `titel`, `beschrijving`, `locatie`, `max_deelnemers`, `aangemaakt_op`, `bijgewerkt_op`, `startdatum`, `einddatum`, `planning_verstuurd`, `status`) VALUES
+	(7, 'Tomorrowland 2026 WE1', '', 'De Schorre - Boom', 42, '2026-05-06 12:41:45', NULL, '2026-07-17', '2026-07-19', NULL, 'gepubliceerd'),
+	(8, 'Tomorrowland 2026 WE2', '', 'De Schorre - Boom', 42, '2026-05-07 06:09:20', NULL, '2026-07-24', '2026-07-26', NULL, 'gepubliceerd'),
+	(9, 'testevent', 'dit is een test', 'boom', 50, '2026-07-23 22:56:20', '2026-07-24 00:56:20', '2026-08-07', NULL, NULL, 'concept');
 
 -- Structuur van  tabel aefs_v2.event_inschrijvingen wordt geschreven
 CREATE TABLE IF NOT EXISTS `event_inschrijvingen` (

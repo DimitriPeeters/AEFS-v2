@@ -7,6 +7,7 @@ namespace App\Repositories;
 use AEFS\Database\DB;
 use AEFS\Database\Query\Expression;
 use App\Models\Event;
+use App\Models\Shift;
 use App\Models\User;
 
 final class DashboardRepository
@@ -78,7 +79,18 @@ final class DashboardRepository
 
     public function countOpenShifts(): int
     {
-        return (int) DB::table('event_shifts')->count();
+        return DB::table('shifts')
+            ->where(
+                'status',
+                '=',
+                Shift::STATUS_ACTIEF
+            )
+            ->where(
+                'eind_op',
+                '>=',
+                date('Y-m-d H:i:s')
+            )
+            ->count();
     }
 
     /**
@@ -176,8 +188,18 @@ final class DashboardRepository
      */
     public function openShifts(int $limit = 5): array
     {
-        return DB::table('event_shifts')
-            ->orderBy('shift_id', 'DESC')
+        return DB::table('shifts')
+            ->where(
+                'status',
+                '=',
+                Shift::STATUS_ACTIEF
+            )
+            ->where(
+                'eind_op',
+                '>=',
+                date('Y-m-d H:i:s')
+            )
+            ->orderBy('start_op', 'ASC')
             ->limit(max(1, $limit))
             ->get();
     }

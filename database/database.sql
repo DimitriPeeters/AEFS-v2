@@ -1,26 +1,28 @@
--- --------------------------------------------------------
--- Host:                         127.0.0.1
--- Server versie:                8.4.3 - MySQL Community Server - GPL
--- Server OS:                    Win64
--- HeidiSQL Versie:              12.8.0.6908
--- --------------------------------------------------------
+-- MySQL dump 10.13  Distrib 8.4.3, for Win64 (x86_64)
+--
+-- Host: localhost    Database: aefs_v2
+-- ------------------------------------------------------
+-- Server version	8.4.3
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
-/*!40101 SET NAMES utf8 */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
 /*!50503 SET NAMES utf8mb4 */;
 /*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
 /*!40103 SET TIME_ZONE='+00:00' */;
+/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
 /*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
 /*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
+--
+-- Table structure for table `audit_logs`
+--
 
--- Databasestructuur van aefs_v2 wordt geschreven
-CREATE DATABASE IF NOT EXISTS `aefs_v2` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci */ /*!80016 DEFAULT ENCRYPTION='N' */;
-USE `aefs_v2`;
-
--- Structuur van  tabel aefs_v2.audit_logs wordt geschreven
-CREATE TABLE IF NOT EXISTS `audit_logs` (
+DROP TABLE IF EXISTS `audit_logs`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `audit_logs` (
   `audit_id` bigint NOT NULL AUTO_INCREMENT,
   `entity` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
   `entity_id` int NOT NULL,
@@ -36,27 +38,27 @@ CREATE TABLE IF NOT EXISTS `audit_logs` (
   KEY `idx_entity_id` (`entity_id`),
   KEY `idx_created` (`created_at`),
   KEY `idx_user` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=26 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
 
--- Dumpen data van tabel aefs_v2.audit_logs: ~13 rows (ongeveer)
-INSERT INTO `audit_logs` (`audit_id`, `entity`, `entity_id`, `action`, `user_id`, `old_values`, `new_values`, `ip_address`, `user_agent`, `created_at`) VALUES
-	(1, 'member', 60, 'update', NULL, '{"land": null, "email": "9480.alejandro@gmail.com", "lidId": 60, "actief": true, "straat": "43 rue des Trévires", "gemeente": "Luxembourg (Luxemburg)", "geslacht": null, "postcode": "2628", "telefoon": "00352621149792", "voornaam": "Alejandro", "achternaam": "Romaguera Gil", "tshirtmaat": null, "gdprConsent": false, "opmerkingen": null, "aangemaaktOp": "2026-05-08 15:14:02", "bijgewerktOp": "2026-05-20 17:49:34", "gdprTimestamp": null, "geboortedatum": null, "rekeningnummer": "LU87 0019 7855 0057 6000", "rijksregisternummer": null}', '{"land": "Luxembourg", "email": "9480.alejandro@gmail.com", "actief": true, "straat": "43 rue des Trévires", "gemeente": "Luxembourg", "geslacht": "M", "postcode": "2628", "telefoon": "00352621149792", "voornaam": "Alejandro", "achternaam": "Romaguera Gil", "tshirtmaat": "", "opmerkingen": "", "gdpr_consent": false, "geboortedatum": null, "rekeningnummer": "LU870019785500576000", "rijksregisternummer": ""}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36', '2026-07-23 21:50:08'),
-	(2, 'member', 115, 'create', NULL, '[]', '{"land": "België", "email": "tester@test.com", "actief": true, "straat": "TESTER", "gemeente": "TTEST", "geslacht": "M", "postcode": "3190", "telefoon": "0477852071", "voornaam": "TESTER", "achternaam": "TEST", "tshirtmaat": "XXL", "opmerkingen": "", "gdpr_consent": false, "geboortedatum": "1980-08-15", "rekeningnummer": "BE63736010169708", "rijksregisternummer": "80081526947"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36', '2026-07-23 21:59:20'),
-	(3, 'member', 19, 'update', 15, '{"land": null, "email": "dimitri.peeters3@telenet.be", "lidId": 19, "actief": true, "straat": "Wespelaarsebaan 113", "gemeente": "Boortmeerbeek", "geslacht": null, "postcode": "3190", "telefoon": "0477/852071", "voornaam": "Dimitri", "achternaam": "Peeters", "tshirtmaat": null, "gdprConsent": false, "opmerkingen": null, "aangemaaktOp": "2026-01-10 15:01:43", "bijgewerktOp": "2026-01-10 15:09:54", "gdprTimestamp": null, "geboortedatum": "1980-08-15", "rekeningnummer": "BE63 7360 1016 9708", "rijksregisternummer": "wlSPuOkcf1IDzv7JH349hNUacVBdguADv2gBOdc643E="}', '{"land": "België", "email": "dimitri.peeters3@telenet.be", "actief": true, "straat": "Wespelaarsebaan 113", "gemeente": "Boortmeerbeek", "geslacht": "", "postcode": "3190", "telefoon": "0477/852071", "voornaam": "Dimitri", "achternaam": "Peeters", "tshirtmaat": "XXL", "opmerkingen": "", "gdpr_consent": false, "geboortedatum": "1980-08-15", "rekeningnummer": "BE63736010169708", "rijksregisternummer": "80081526947"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36', '2026-07-23 22:55:36'),
-	(4, 'member', 106, 'update', 15, '{"land": null, "email": "aligatro.a.l.i@gmail.com", "lidId": 106, "actief": true, "straat": "Edouard Kufferathlaan", "gemeente": "Brussel", "geslacht": null, "postcode": "1020", "telefoon": "0486728120", "voornaam": "Ali", "achternaam": "Jabbar", "tshirtmaat": null, "gdprConsent": false, "opmerkingen": null, "aangemaaktOp": "2026-06-25 18:29:41", "bijgewerktOp": "2026-06-25 18:29:41", "gdprTimestamp": null, "geboortedatum": null, "rekeningnummer": "BE09950227011657", "rijksregisternummer": null}', '{"land": "België", "email": "aligatro.a.l.i@gmail.com", "actief": false, "straat": "Edouard Kufferathlaan", "gemeente": "Brussel", "geslacht": "", "postcode": "1020", "telefoon": "0486728120", "voornaam": "Ali", "achternaam": "Jabbar", "tshirtmaat": "", "opmerkingen": "", "gdpr_consent": false, "geboortedatum": null, "rekeningnummer": "BE09950227011657", "rijksregisternummer": ""}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36', '2026-07-23 22:58:48'),
-	(5, 'member', 116, 'create', NULL, '[]', '{"bus": "", "land": "België", "email": "dimitri.peeters10@gmail.com", "actief": false, "straat": "testerstraat", "gemeente": "boortmeerbeek", "geslacht": "M", "postcode": "3190", "telefoon": "0477852071", "voornaam": "tester", "achternaam": "test", "huisnummer": "113", "tshirtmaat": "XXL", "opmerkingen": "", "gdpr_consent": true, "geboortedatum": "1980-08-15"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36', '2026-07-23 23:40:36'),
-	(6, 'user', 111, 'create', NULL, '[]', '{"rol": "lid", "email": "dimitri.peeters10@gmail.com", "actief": false, "lid_id": 116, "mail_blacklist": false}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36', '2026-07-23 23:40:36'),
-	(7, 'member', 116, 'update', 15, '{"land": "België", "email": "dimitri.peeters10@gmail.com", "lidId": 116, "actief": false, "straat": "testerstraat", "gemeente": "boortmeerbeek", "geslacht": "M", "postcode": "3190", "telefoon": "0477852071", "voornaam": "tester", "achternaam": "test", "tshirtmaat": "XXL", "gdprConsent": true, "opmerkingen": null, "aangemaaktOp": "2026-07-23 23:40:35", "bijgewerktOp": "2026-07-23 23:40:35", "gdprTimestamp": "2026-07-23 21:40:35", "geboortedatum": "1980-08-15", "rekeningnummer": "[afgeschermd]", "rijksregisternummer": "[afgeschermd]"}', '{"land": "België", "email": "dimitri.peeters10@gmail.com", "actief": true, "straat": "testerstraat", "gemeente": "boortmeerbeek", "geslacht": "M", "postcode": "3190", "telefoon": "0477852071", "voornaam": "tester", "achternaam": "test", "tshirtmaat": "XXL", "opmerkingen": "", "gdpr_consent": true, "geboortedatum": "1980-08-15", "gdpr_timestamp": "2026-07-23 21:40:35", "rekeningnummer": "[afgeschermd]", "rijksregisternummer": "[afgeschermd]"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36', '2026-07-23 23:41:48'),
-	(8, 'user', 111, 'update', 15, '{"rol": "lid", "email": "dimitri.peeters10@gmail.com", "actief": false, "mail_blacklist": false}', '{"rol": "lid", "email": "dimitri.peeters10@gmail.com", "actief": true, "mail_blacklist": false}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36', '2026-07-23 23:41:48'),
-	(9, 'member', 117, 'create', NULL, '[]', '{"bus": "", "land": "België", "email": "d.peeters@procertus.be", "actief": false, "straat": "test", "gemeente": "tester", "geslacht": "M", "postcode": "3190", "telefoon": "0477852071", "voornaam": "Dimi", "achternaam": "Peeters", "huisnummer": "113", "tshirtmaat": "XXL", "opmerkingen": "", "gdpr_consent": true, "geboortedatum": "1980-08-15"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36', '2026-07-24 00:02:00'),
-	(10, 'user', 112, 'create', NULL, '[]', '{"rol": "lid", "email": "d.peeters@procertus.be", "actief": false, "lid_id": 117, "mail_blacklist": false, "goedkeuringsstatus": "wachtend"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36', '2026-07-24 00:02:00'),
-	(11, 'user', 112, 'update', 15, '{"rol": "lid", "actief": false, "mail_blacklist": false, "goedkeuringsstatus": "wachtend"}', '{"rol": "lid", "actief": true, "mail_blacklist": false, "goedkeuringsstatus": "goedgekeurd"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36', '2026-07-24 00:07:11'),
-	(12, 'member', 117, 'update', 15, '{"actief": false}', '{"actief": true}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36', '2026-07-24 00:07:11'),
-	(13, 'user', 112, 'update', 15, '{"rol": "lid", "actief": true, "mail_blacklist": false, "goedkeuringsstatus": "goedgekeurd"}', '{"rol": "lid", "actief": true, "mail_blacklist": false, "goedkeuringsstatus": "goedgekeurd"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36', '2026-07-24 00:07:31'),
-	(14, 'event', 9, 'create', 15, '[]', '{"titel": "testevent", "status": "concept", "locatie": "boom", "einddatum": null, "startdatum": "2026-08-07", "beschrijving": "dit is een test", "max_deelnemers": 50}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36', '2026-07-24 00:56:20');
+--
+-- Dumping data for table `audit_logs`
+--
 
--- Structuur van  tabel aefs_v2.betalingen wordt geschreven
-CREATE TABLE IF NOT EXISTS `betalingen` (
+LOCK TABLES `audit_logs` WRITE;
+/*!40000 ALTER TABLE `audit_logs` DISABLE KEYS */;
+INSERT INTO `audit_logs` VALUES (1,'member',60,'update',NULL,'{\"land\": null, \"email\": \"9480.alejandro@gmail.com\", \"lidId\": 60, \"actief\": true, \"straat\": \"43 rue des Trévires\", \"gemeente\": \"Luxembourg (Luxemburg)\", \"geslacht\": null, \"postcode\": \"2628\", \"telefoon\": \"00352621149792\", \"voornaam\": \"Alejandro\", \"achternaam\": \"Romaguera Gil\", \"tshirtmaat\": null, \"gdprConsent\": false, \"opmerkingen\": null, \"aangemaaktOp\": \"2026-05-08 15:14:02\", \"bijgewerktOp\": \"2026-05-20 17:49:34\", \"gdprTimestamp\": null, \"geboortedatum\": null, \"rekeningnummer\": \"LU87 0019 7855 0057 6000\", \"rijksregisternummer\": null}','{\"land\": \"Luxembourg\", \"email\": \"9480.alejandro@gmail.com\", \"actief\": true, \"straat\": \"43 rue des Trévires\", \"gemeente\": \"Luxembourg\", \"geslacht\": \"M\", \"postcode\": \"2628\", \"telefoon\": \"00352621149792\", \"voornaam\": \"Alejandro\", \"achternaam\": \"Romaguera Gil\", \"tshirtmaat\": \"\", \"opmerkingen\": \"\", \"gdpr_consent\": false, \"geboortedatum\": null, \"rekeningnummer\": \"LU870019785500576000\", \"rijksregisternummer\": \"\"}','::1','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36','2026-07-23 21:50:08'),(2,'member',115,'create',NULL,'[]','{\"land\": \"België\", \"email\": \"tester@test.com\", \"actief\": true, \"straat\": \"TESTER\", \"gemeente\": \"TTEST\", \"geslacht\": \"M\", \"postcode\": \"3190\", \"telefoon\": \"0477852071\", \"voornaam\": \"TESTER\", \"achternaam\": \"TEST\", \"tshirtmaat\": \"XXL\", \"opmerkingen\": \"\", \"gdpr_consent\": false, \"geboortedatum\": \"1980-08-15\", \"rekeningnummer\": \"BE63736010169708\", \"rijksregisternummer\": \"80081526947\"}','::1','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36','2026-07-23 21:59:20'),(3,'member',19,'update',15,'{\"land\": null, \"email\": \"dimitri.peeters3@telenet.be\", \"lidId\": 19, \"actief\": true, \"straat\": \"Wespelaarsebaan 113\", \"gemeente\": \"Boortmeerbeek\", \"geslacht\": null, \"postcode\": \"3190\", \"telefoon\": \"0477/852071\", \"voornaam\": \"Dimitri\", \"achternaam\": \"Peeters\", \"tshirtmaat\": null, \"gdprConsent\": false, \"opmerkingen\": null, \"aangemaaktOp\": \"2026-01-10 15:01:43\", \"bijgewerktOp\": \"2026-01-10 15:09:54\", \"gdprTimestamp\": null, \"geboortedatum\": \"1980-08-15\", \"rekeningnummer\": \"BE63 7360 1016 9708\", \"rijksregisternummer\": \"wlSPuOkcf1IDzv7JH349hNUacVBdguADv2gBOdc643E=\"}','{\"land\": \"België\", \"email\": \"dimitri.peeters3@telenet.be\", \"actief\": true, \"straat\": \"Wespelaarsebaan 113\", \"gemeente\": \"Boortmeerbeek\", \"geslacht\": \"\", \"postcode\": \"3190\", \"telefoon\": \"0477/852071\", \"voornaam\": \"Dimitri\", \"achternaam\": \"Peeters\", \"tshirtmaat\": \"XXL\", \"opmerkingen\": \"\", \"gdpr_consent\": false, \"geboortedatum\": \"1980-08-15\", \"rekeningnummer\": \"BE63736010169708\", \"rijksregisternummer\": \"80081526947\"}','::1','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36','2026-07-23 22:55:36'),(4,'member',106,'update',15,'{\"land\": null, \"email\": \"aligatro.a.l.i@gmail.com\", \"lidId\": 106, \"actief\": true, \"straat\": \"Edouard Kufferathlaan\", \"gemeente\": \"Brussel\", \"geslacht\": null, \"postcode\": \"1020\", \"telefoon\": \"0486728120\", \"voornaam\": \"Ali\", \"achternaam\": \"Jabbar\", \"tshirtmaat\": null, \"gdprConsent\": false, \"opmerkingen\": null, \"aangemaaktOp\": \"2026-06-25 18:29:41\", \"bijgewerktOp\": \"2026-06-25 18:29:41\", \"gdprTimestamp\": null, \"geboortedatum\": null, \"rekeningnummer\": \"BE09950227011657\", \"rijksregisternummer\": null}','{\"land\": \"België\", \"email\": \"aligatro.a.l.i@gmail.com\", \"actief\": false, \"straat\": \"Edouard Kufferathlaan\", \"gemeente\": \"Brussel\", \"geslacht\": \"\", \"postcode\": \"1020\", \"telefoon\": \"0486728120\", \"voornaam\": \"Ali\", \"achternaam\": \"Jabbar\", \"tshirtmaat\": \"\", \"opmerkingen\": \"\", \"gdpr_consent\": false, \"geboortedatum\": null, \"rekeningnummer\": \"BE09950227011657\", \"rijksregisternummer\": \"\"}','::1','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36','2026-07-23 22:58:48'),(5,'member',116,'create',NULL,'[]','{\"bus\": \"\", \"land\": \"België\", \"email\": \"dimitri.peeters10@gmail.com\", \"actief\": false, \"straat\": \"testerstraat\", \"gemeente\": \"boortmeerbeek\", \"geslacht\": \"M\", \"postcode\": \"3190\", \"telefoon\": \"0477852071\", \"voornaam\": \"tester\", \"achternaam\": \"test\", \"huisnummer\": \"113\", \"tshirtmaat\": \"XXL\", \"opmerkingen\": \"\", \"gdpr_consent\": true, \"geboortedatum\": \"1980-08-15\"}','::1','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36','2026-07-23 23:40:36'),(6,'user',111,'create',NULL,'[]','{\"rol\": \"lid\", \"email\": \"dimitri.peeters10@gmail.com\", \"actief\": false, \"lid_id\": 116, \"mail_blacklist\": false}','::1','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36','2026-07-23 23:40:36'),(7,'member',116,'update',15,'{\"land\": \"België\", \"email\": \"dimitri.peeters10@gmail.com\", \"lidId\": 116, \"actief\": false, \"straat\": \"testerstraat\", \"gemeente\": \"boortmeerbeek\", \"geslacht\": \"M\", \"postcode\": \"3190\", \"telefoon\": \"0477852071\", \"voornaam\": \"tester\", \"achternaam\": \"test\", \"tshirtmaat\": \"XXL\", \"gdprConsent\": true, \"opmerkingen\": null, \"aangemaaktOp\": \"2026-07-23 23:40:35\", \"bijgewerktOp\": \"2026-07-23 23:40:35\", \"gdprTimestamp\": \"2026-07-23 21:40:35\", \"geboortedatum\": \"1980-08-15\", \"rekeningnummer\": \"[afgeschermd]\", \"rijksregisternummer\": \"[afgeschermd]\"}','{\"land\": \"België\", \"email\": \"dimitri.peeters10@gmail.com\", \"actief\": true, \"straat\": \"testerstraat\", \"gemeente\": \"boortmeerbeek\", \"geslacht\": \"M\", \"postcode\": \"3190\", \"telefoon\": \"0477852071\", \"voornaam\": \"tester\", \"achternaam\": \"test\", \"tshirtmaat\": \"XXL\", \"opmerkingen\": \"\", \"gdpr_consent\": true, \"geboortedatum\": \"1980-08-15\", \"gdpr_timestamp\": \"2026-07-23 21:40:35\", \"rekeningnummer\": \"[afgeschermd]\", \"rijksregisternummer\": \"[afgeschermd]\"}','::1','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36','2026-07-23 23:41:48'),(8,'user',111,'update',15,'{\"rol\": \"lid\", \"email\": \"dimitri.peeters10@gmail.com\", \"actief\": false, \"mail_blacklist\": false}','{\"rol\": \"lid\", \"email\": \"dimitri.peeters10@gmail.com\", \"actief\": true, \"mail_blacklist\": false}','::1','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36','2026-07-23 23:41:48'),(9,'member',117,'create',NULL,'[]','{\"bus\": \"\", \"land\": \"België\", \"email\": \"d.peeters@procertus.be\", \"actief\": false, \"straat\": \"test\", \"gemeente\": \"tester\", \"geslacht\": \"M\", \"postcode\": \"3190\", \"telefoon\": \"0477852071\", \"voornaam\": \"Dimi\", \"achternaam\": \"Peeters\", \"huisnummer\": \"113\", \"tshirtmaat\": \"XXL\", \"opmerkingen\": \"\", \"gdpr_consent\": true, \"geboortedatum\": \"1980-08-15\"}','::1','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36','2026-07-24 00:02:00'),(10,'user',112,'create',NULL,'[]','{\"rol\": \"lid\", \"email\": \"d.peeters@procertus.be\", \"actief\": false, \"lid_id\": 117, \"mail_blacklist\": false, \"goedkeuringsstatus\": \"wachtend\"}','::1','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36','2026-07-24 00:02:00'),(11,'user',112,'update',15,'{\"rol\": \"lid\", \"actief\": false, \"mail_blacklist\": false, \"goedkeuringsstatus\": \"wachtend\"}','{\"rol\": \"lid\", \"actief\": true, \"mail_blacklist\": false, \"goedkeuringsstatus\": \"goedgekeurd\"}','::1','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36','2026-07-24 00:07:11'),(12,'member',117,'update',15,'{\"actief\": false}','{\"actief\": true}','::1','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36','2026-07-24 00:07:11'),(13,'user',112,'update',15,'{\"rol\": \"lid\", \"actief\": true, \"mail_blacklist\": false, \"goedkeuringsstatus\": \"goedgekeurd\"}','{\"rol\": \"lid\", \"actief\": true, \"mail_blacklist\": false, \"goedkeuringsstatus\": \"goedgekeurd\"}','::1','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36','2026-07-24 00:07:31'),(14,'event',9,'create',15,'[]','{\"titel\": \"testevent\", \"status\": \"concept\", \"locatie\": \"boom\", \"einddatum\": null, \"startdatum\": \"2026-08-07\", \"beschrijving\": \"dit is een test\", \"max_deelnemers\": 50}','::1','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36','2026-07-24 00:56:20'),(15,'event',7,'update',15,'{\"titel\": \"Tomorrowland 2026 WE1\", \"status\": \"gepubliceerd\", \"locatie\": \"De Schorre - Boom\", \"einddatum\": \"2026-07-19\", \"startdatum\": \"2026-07-17\", \"beschrijving\": null, \"max_deelnemers\": 42, \"planning_verstuurd\": null}','{\"titel\": \"Tomorrowland 2026 WE1\", \"status\": \"gepubliceerd\", \"locatie\": \"De Schorre - Boom\", \"einddatum\": \"2026-07-19\", \"startdatum\": \"2026-07-17\", \"beschrijving\": null, \"max_deelnemers\": 46}','::1','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36','2026-07-24 01:34:27'),(16,'event',8,'update',15,'{\"titel\": \"Tomorrowland 2026 WE2\", \"status\": \"gepubliceerd\", \"locatie\": \"De Schorre - Boom\", \"einddatum\": \"2026-07-26\", \"startdatum\": \"2026-07-24\", \"beschrijving\": null, \"max_deelnemers\": 42, \"planning_verstuurd\": null}','{\"titel\": \"Tomorrowland 2026 WE2\", \"status\": \"gepubliceerd\", \"locatie\": \"De Schorre - Boom\", \"einddatum\": \"2026-07-26\", \"startdatum\": \"2026-07-24\", \"beschrijving\": null, \"max_deelnemers\": 46}','::1','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36','2026-07-24 01:34:56'),(17,'shift_registration',2250,'update',15,'{\"lid_id\": 106, \"status\": \"bevestigd\", \"aanwezig\": false, \"shift_id\": 7, \"opmerking_lid\": null, \"geannuleerd_op\": null, \"goedgekeurd_op\": \"2026-06-30 17:11:06\", \"annulatie_reden\": null, \"geannuleerd_door\": null, \"goedgekeurd_door\": null, \"aanwezig_afgevinkt_op\": null}','{\"lid_id\": 106, \"status\": \"geannuleerd\", \"aanwezig\": false, \"shift_id\": 7, \"opmerking_lid\": null, \"geannuleerd_op\": \"2026-07-28 19:46:08\", \"goedgekeurd_op\": \"2026-06-30 17:11:06\", \"annulatie_reden\": \"Geannuleerd door een administrator.\", \"geannuleerd_door\": 15, \"goedgekeurd_door\": null, \"aanwezig_afgevinkt_op\": null}','::1','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36','2026-07-28 19:46:08'),(18,'shift_registration',2307,'update',15,'{\"lid_id\": 104, \"status\": \"bevestigd\", \"aanwezig\": false, \"shift_id\": 7, \"opmerking_lid\": null, \"geannuleerd_op\": null, \"goedgekeurd_op\": \"2026-06-30 17:11:06\", \"annulatie_reden\": null, \"geannuleerd_door\": null, \"goedgekeurd_door\": null, \"aanwezig_afgevinkt_op\": null}','{\"lid_id\": 104, \"status\": \"geannuleerd\", \"aanwezig\": false, \"shift_id\": 7, \"opmerking_lid\": null, \"geannuleerd_op\": \"2026-07-28 19:46:20\", \"goedgekeurd_op\": \"2026-06-30 17:11:06\", \"annulatie_reden\": \"Geannuleerd door een administrator.\", \"geannuleerd_door\": 15, \"goedgekeurd_door\": null, \"aanwezig_afgevinkt_op\": null}','::1','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36','2026-07-28 19:46:20'),(19,'shift_registration',2340,'update',15,'{\"lid_id\": 52, \"status\": \"bevestigd\", \"aanwezig\": false, \"shift_id\": 7, \"opmerking_lid\": null, \"geannuleerd_op\": null, \"goedgekeurd_op\": \"2026-06-30 17:11:06\", \"annulatie_reden\": null, \"geannuleerd_door\": null, \"goedgekeurd_door\": null, \"aanwezig_afgevinkt_op\": null}','{\"lid_id\": 52, \"status\": \"geannuleerd\", \"aanwezig\": false, \"shift_id\": 7, \"opmerking_lid\": null, \"geannuleerd_op\": \"2026-07-28 19:46:29\", \"goedgekeurd_op\": \"2026-06-30 17:11:06\", \"annulatie_reden\": \"Geannuleerd door een administrator.\", \"geannuleerd_door\": 15, \"goedgekeurd_door\": null, \"aanwezig_afgevinkt_op\": null}','::1','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36','2026-07-28 19:46:29'),(20,'shift_registration',2256,'update',15,'{\"lid_id\": 113, \"status\": \"bevestigd\", \"aanwezig\": false, \"shift_id\": 7, \"opmerking_lid\": null, \"geannuleerd_op\": null, \"goedgekeurd_op\": \"2026-06-30 17:11:06\", \"annulatie_reden\": null, \"geannuleerd_door\": null, \"goedgekeurd_door\": null, \"aanwezig_afgevinkt_op\": null}','{\"lid_id\": 113, \"status\": \"bevestigd\", \"aanwezig\": true, \"shift_id\": 7, \"opmerking_lid\": null, \"geannuleerd_op\": null, \"goedgekeurd_op\": \"2026-06-30 17:11:06\", \"annulatie_reden\": null, \"geannuleerd_door\": null, \"goedgekeurd_door\": null, \"aanwezig_afgevinkt_op\": \"2026-07-28 19:47:40\"}','::1','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36','2026-07-28 19:47:40'),(21,'shift_registration',2265,'update',15,'{\"lid_id\": 67, \"status\": \"bevestigd\", \"aanwezig\": false, \"shift_id\": 7, \"opmerking_lid\": null, \"geannuleerd_op\": null, \"goedgekeurd_op\": \"2026-06-30 17:11:06\", \"annulatie_reden\": null, \"geannuleerd_door\": null, \"goedgekeurd_door\": null, \"aanwezig_afgevinkt_op\": null}','{\"lid_id\": 67, \"status\": \"bevestigd\", \"aanwezig\": true, \"shift_id\": 7, \"opmerking_lid\": null, \"geannuleerd_op\": null, \"goedgekeurd_op\": \"2026-06-30 17:11:06\", \"annulatie_reden\": null, \"geannuleerd_door\": null, \"goedgekeurd_door\": null, \"aanwezig_afgevinkt_op\": \"2026-07-28 19:47:44\"}','::1','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36','2026-07-28 19:47:44'),(22,'shift_registration',2268,'update',15,'{\"lid_id\": 34, \"status\": \"bevestigd\", \"aanwezig\": false, \"shift_id\": 7, \"opmerking_lid\": null, \"geannuleerd_op\": null, \"goedgekeurd_op\": \"2026-06-30 17:11:06\", \"annulatie_reden\": null, \"geannuleerd_door\": null, \"goedgekeurd_door\": null, \"aanwezig_afgevinkt_op\": null}','{\"lid_id\": 34, \"status\": \"bevestigd\", \"aanwezig\": true, \"shift_id\": 7, \"opmerking_lid\": null, \"geannuleerd_op\": null, \"goedgekeurd_op\": \"2026-06-30 17:11:06\", \"annulatie_reden\": null, \"geannuleerd_door\": null, \"goedgekeurd_door\": null, \"aanwezig_afgevinkt_op\": \"2026-07-28 19:47:50\"}','::1','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36','2026-07-28 19:47:50'),(23,'shift_registration',2271,'update',15,'{\"lid_id\": 19, \"status\": \"bevestigd\", \"aanwezig\": false, \"shift_id\": 7, \"opmerking_lid\": null, \"geannuleerd_op\": null, \"goedgekeurd_op\": \"2026-06-30 17:11:06\", \"annulatie_reden\": null, \"geannuleerd_door\": null, \"goedgekeurd_door\": null, \"aanwezig_afgevinkt_op\": null}','{\"lid_id\": 19, \"status\": \"bevestigd\", \"aanwezig\": true, \"shift_id\": 7, \"opmerking_lid\": null, \"geannuleerd_op\": null, \"goedgekeurd_op\": \"2026-06-30 17:11:06\", \"annulatie_reden\": null, \"geannuleerd_door\": null, \"goedgekeurd_door\": null, \"aanwezig_afgevinkt_op\": \"2026-07-28 19:47:54\"}','::1','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36','2026-07-28 19:47:54'),(24,'shift',7,'update',15,'{\"naam\": \"Vroege\", \"status\": \"actief\", \"eind_op\": \"2026-07-17 18:30:00\", \"type_id\": 9, \"event_id\": 7, \"start_op\": \"2026-07-17 11:30:00\", \"max_personen\": 21}','{\"naam\": \"Vroege\", \"status\": \"actief\", \"eind_op\": \"2026-07-17 18:30:00\", \"type_id\": 9, \"event_id\": 7, \"start_op\": \"2026-07-17 11:30:00\", \"max_personen\": 23}','::1','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36','2026-07-28 19:50:02'),(25,'shift_registration',2277,'update',15,'{\"lid_id\": 84, \"status\": \"bevestigd\", \"aanwezig\": false, \"shift_id\": 7, \"opmerking_lid\": null, \"geannuleerd_op\": null, \"goedgekeurd_op\": \"2026-06-30 17:11:06\", \"annulatie_reden\": null, \"geannuleerd_door\": null, \"goedgekeurd_door\": null, \"aanwezig_afgevinkt_op\": null}','{\"lid_id\": 84, \"status\": \"bevestigd\", \"aanwezig\": true, \"shift_id\": 7, \"opmerking_lid\": null, \"geannuleerd_op\": null, \"goedgekeurd_op\": \"2026-06-30 17:11:06\", \"annulatie_reden\": null, \"geannuleerd_door\": null, \"goedgekeurd_door\": null, \"aanwezig_afgevinkt_op\": \"2026-07-28 19:57:49\"}','::1','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36','2026-07-28 19:57:49');
+/*!40000 ALTER TABLE `audit_logs` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `betalingen`
+--
+
+DROP TABLE IF EXISTS `betalingen`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `betalingen` (
   `betaling_id` int NOT NULL AUTO_INCREMENT,
   `lid_id` int NOT NULL,
   `jaar` int NOT NULL,
@@ -67,11 +69,25 @@ CREATE TABLE IF NOT EXISTS `betalingen` (
   UNIQUE KEY `lid_id` (`lid_id`,`jaar`),
   CONSTRAINT `fk_betaling_lid` FOREIGN KEY (`lid_id`) REFERENCES `leden` (`lid_id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
 
--- Dumpen data van tabel aefs_v2.betalingen: ~0 rows (ongeveer)
+--
+-- Dumping data for table `betalingen`
+--
 
--- Structuur van  tabel aefs_v2.contact_berichten wordt geschreven
-CREATE TABLE IF NOT EXISTS `contact_berichten` (
+LOCK TABLES `betalingen` WRITE;
+/*!40000 ALTER TABLE `betalingen` DISABLE KEYS */;
+/*!40000 ALTER TABLE `betalingen` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `contact_berichten`
+--
+
+DROP TABLE IF EXISTS `contact_berichten`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `contact_berichten` (
   `bericht_id` int NOT NULL AUTO_INCREMENT,
   `naam` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
   `email` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
@@ -82,43 +98,88 @@ CREATE TABLE IF NOT EXISTS `contact_berichten` (
   `aangemaakt_op` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`bericht_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
 
--- Dumpen data van tabel aefs_v2.contact_berichten: ~11 rows (ongeveer)
-INSERT INTO `contact_berichten` (`bericht_id`, `naam`, `email`, `bericht`, `gdpr_consent`, `consent_timestamp`, `ip_adres`, `aangemaakt_op`) VALUES
-	(1, 'dimi', 'dimitri.peeters3@telenet.be', 'test', 1, '2026-01-09 13:35:32', '2a02:1810:1e10:5700:651f:70b6:a038:f032', '2026-01-09 13:35:32'),
-	(2, 'dimi', 'dimitri.peeters3@telenet.be', 'test', 1, '2026-01-09 13:35:39', '2a02:1810:1e10:5700:651f:70b6:a038:f032', '2026-01-09 13:35:39'),
-	(3, 'Renske', 'renskedauwe@gmail.com', 'test test hallo Dimi', 1, '2026-01-10 19:30:04', '2a02:1810:1e0d:4e00:30c6:3dfb:8:a26f', '2026-01-10 19:30:04'),
-	(4, 'Guy de wit', '001guy.dewit001@gmail.com', 'Hallo,\r\n\r\nIk heb mijn profiel aangevuld.\r\nNa gegevens opgeslagen te hebben waren alle ingevulde rubrieken terug leeg.\r\n\r\nIk laat dit gewoon even ter info weten.\r\nGroeten,\r\nGuy', 1, '2026-05-14 09:38:43', '2a02:1810:1c17:e600:5d62:95d3:bf05:59de', '2026-05-14 09:38:43'),
-	(5, 'Vranken Johan', 'johanvranken1@gmail.com', 'Hallo, ik heb een tijdje terug een mail gekregen dat ik in het weekend van 17,18,19 juli van 7u tot 18u kom helpen op TML. Ik had gevraagd om zekerheid te hebben voor een parkeerticket op de medewerkersparking omdat als we na onze shift nog een uur naar onze auto moeten lopen en dan nog 1 uur naar huis moeten rijden dan we zeer weinig kunnen slapen. Ik rij al samen met Dirk Crauwels. Hij doet dezelfde shiften. En we kunnen nog 1 iemand extra mee nemen. Kan u bevestigen dat ik een parkeerticket kan krijgen aub?\r\n\r\nMvg,\r\n\r\nJohan', 1, '2026-05-14 11:32:54', '178.51.18.203', '2026-05-14 11:32:54'),
-	(6, 'johan leers', 'Johan.leers@hotmail.com', 'Hallo ,\r\nGraag had ik geweten of ik en mijn vriendin dit jaar terug als vrijwilliger aan de slag kunnen bij tomorrowland 2026 daar ik vorig jaar ook heb kunnen ervaren hoe leuk het was.\r\ngraag had ik een antwoord ontvangen van de eventuele schiften die we moeten maken .\r\nMvg Johan', 1, '2026-05-18 12:29:10', '2a02:1810:bd7f:a800:61bf:4e54:6e73:f523', '2026-05-18 12:29:10'),
-	(7, 'Nico', 'nico.laeremans83@gmail.com', 'Na gegevens op te slagen alles terug leeg. Normaal?', 1, '2026-05-19 12:43:13', '193.191.150.33', '2026-05-19 12:43:13'),
-	(8, 'Jessica_vandebosch@hotmail.com', 'jessica_vandebosch@hotmail.com', 'Hallo\r\n\r\nKunnen wij een plaats op de camping voor tomorrowland?\r\n\r\nMvg jessica en jeroen', 1, '2026-05-29 07:13:50', '194.78.1.242', '2026-05-29 07:13:50'),
-	(9, 'Jaimie Vandevoort', 'jaimie.vinmat@gmail.com', 'Ik zou me graag  2 wknd’s willen opgeven voor Tomorrowland.\r\nSamen met mijn vriendin, Tresje Bruggeman.\r\nZij gaat de link ook invullen.\r\nMet de eerste week te bevestigen, sprong het 2 e wknd uit. En drukte te snel door. Kan deze nu niet meer wijzigen als ‘werken heel Event’ .', 1, '2026-06-10 22:17:32', '94.109.23.195', '2026-06-10 22:17:32'),
-	(10, 'Van Reempts Ellen', 'evanreempts@hotmail.com', 'Beste \r\n\r\nIk dien te annuleren voor het event wegens familiale omstandigheden. Kan u me uitschrijven? \r\n\r\nMvg\r\nEllen Van Reempts', 1, '2026-06-15 12:28:57', '2a02:1808:67:2453:19f7:5b2b:9098:7a8c', '2026-06-15 12:28:57'),
-	(11, 'Van Reempts Ellen', 'evanreempts@hotmail.com', 'Beste \r\n\r\nIk dien te annuleren voor het event wegens familiale omstandigheden. Kan u me uitschrijven? \r\n\r\nMvg\r\nEllen Van Reempts', 1, '2026-06-15 13:08:04', '2a02:1808:67:2453:19f7:5b2b:9098:7a8c', '2026-06-15 13:08:04');
+--
+-- Dumping data for table `contact_berichten`
+--
 
--- Structuur van  tabel aefs_v2.evenementen wordt geschreven
-CREATE TABLE IF NOT EXISTS `evenementen` (
+LOCK TABLES `contact_berichten` WRITE;
+/*!40000 ALTER TABLE `contact_berichten` DISABLE KEYS */;
+INSERT INTO `contact_berichten` VALUES (1,'dimi','dimitri.peeters3@telenet.be','test',1,'2026-01-09 13:35:32','2a02:1810:1e10:5700:651f:70b6:a038:f032','2026-01-09 13:35:32'),(2,'dimi','dimitri.peeters3@telenet.be','test',1,'2026-01-09 13:35:39','2a02:1810:1e10:5700:651f:70b6:a038:f032','2026-01-09 13:35:39'),(3,'Renske','renskedauwe@gmail.com','test test hallo Dimi',1,'2026-01-10 19:30:04','2a02:1810:1e0d:4e00:30c6:3dfb:8:a26f','2026-01-10 19:30:04'),(4,'Guy de wit','001guy.dewit001@gmail.com','Hallo,\r\n\r\nIk heb mijn profiel aangevuld.\r\nNa gegevens opgeslagen te hebben waren alle ingevulde rubrieken terug leeg.\r\n\r\nIk laat dit gewoon even ter info weten.\r\nGroeten,\r\nGuy',1,'2026-05-14 09:38:43','2a02:1810:1c17:e600:5d62:95d3:bf05:59de','2026-05-14 09:38:43'),(5,'Vranken Johan','johanvranken1@gmail.com','Hallo, ik heb een tijdje terug een mail gekregen dat ik in het weekend van 17,18,19 juli van 7u tot 18u kom helpen op TML. Ik had gevraagd om zekerheid te hebben voor een parkeerticket op de medewerkersparking omdat als we na onze shift nog een uur naar onze auto moeten lopen en dan nog 1 uur naar huis moeten rijden dan we zeer weinig kunnen slapen. Ik rij al samen met Dirk Crauwels. Hij doet dezelfde shiften. En we kunnen nog 1 iemand extra mee nemen. Kan u bevestigen dat ik een parkeerticket kan krijgen aub?\r\n\r\nMvg,\r\n\r\nJohan',1,'2026-05-14 11:32:54','178.51.18.203','2026-05-14 11:32:54'),(6,'johan leers','Johan.leers@hotmail.com','Hallo ,\r\nGraag had ik geweten of ik en mijn vriendin dit jaar terug als vrijwilliger aan de slag kunnen bij tomorrowland 2026 daar ik vorig jaar ook heb kunnen ervaren hoe leuk het was.\r\ngraag had ik een antwoord ontvangen van de eventuele schiften die we moeten maken .\r\nMvg Johan',1,'2026-05-18 12:29:10','2a02:1810:bd7f:a800:61bf:4e54:6e73:f523','2026-05-18 12:29:10'),(7,'Nico','nico.laeremans83@gmail.com','Na gegevens op te slagen alles terug leeg. Normaal?',1,'2026-05-19 12:43:13','193.191.150.33','2026-05-19 12:43:13'),(8,'Jessica_vandebosch@hotmail.com','jessica_vandebosch@hotmail.com','Hallo\r\n\r\nKunnen wij een plaats op de camping voor tomorrowland?\r\n\r\nMvg jessica en jeroen',1,'2026-05-29 07:13:50','194.78.1.242','2026-05-29 07:13:50'),(9,'Jaimie Vandevoort','jaimie.vinmat@gmail.com','Ik zou me graag  2 wknd’s willen opgeven voor Tomorrowland.\r\nSamen met mijn vriendin, Tresje Bruggeman.\r\nZij gaat de link ook invullen.\r\nMet de eerste week te bevestigen, sprong het 2 e wknd uit. En drukte te snel door. Kan deze nu niet meer wijzigen als ‘werken heel Event’ .',1,'2026-06-10 22:17:32','94.109.23.195','2026-06-10 22:17:32'),(10,'Van Reempts Ellen','evanreempts@hotmail.com','Beste \r\n\r\nIk dien te annuleren voor het event wegens familiale omstandigheden. Kan u me uitschrijven? \r\n\r\nMvg\r\nEllen Van Reempts',1,'2026-06-15 12:28:57','2a02:1808:67:2453:19f7:5b2b:9098:7a8c','2026-06-15 12:28:57'),(11,'Van Reempts Ellen','evanreempts@hotmail.com','Beste \r\n\r\nIk dien te annuleren voor het event wegens familiale omstandigheden. Kan u me uitschrijven? \r\n\r\nMvg\r\nEllen Van Reempts',1,'2026-06-15 13:08:04','2a02:1808:67:2453:19f7:5b2b:9098:7a8c','2026-06-15 13:08:04');
+/*!40000 ALTER TABLE `contact_berichten` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `evenementen`
+--
+
+DROP TABLE IF EXISTS `evenementen`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `evenementen` (
   `event_id` int NOT NULL AUTO_INCREMENT,
   `titel` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
   `beschrijving` text COLLATE utf8mb4_general_ci,
   `locatie` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
   `max_deelnemers` int DEFAULT NULL,
   `aangemaakt_op` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `bijgewerkt_op` datetime DEFAULT NULL,
   `startdatum` date NOT NULL,
   `einddatum` date DEFAULT NULL,
   `planning_verstuurd` datetime DEFAULT NULL,
-  PRIMARY KEY (`event_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `status` enum('concept','gepubliceerd','afgesloten','geannuleerd') COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'concept',
+  PRIMARY KEY (`event_id`),
+  KEY `idx_evenementen_status_startdatum` (`status`,`startdatum`),
+  KEY `idx_evenementen_einddatum` (`einddatum`)
+) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
 
--- Dumpen data van tabel aefs_v2.evenementen: ~2 rows (ongeveer)
-INSERT INTO `evenementen` (`event_id`, `titel`, `beschrijving`, `locatie`, `max_deelnemers`, `aangemaakt_op`, `bijgewerkt_op`, `startdatum`, `einddatum`, `planning_verstuurd`, `status`) VALUES
-	(7, 'Tomorrowland 2026 WE1', '', 'De Schorre - Boom', 42, '2026-05-06 12:41:45', NULL, '2026-07-17', '2026-07-19', NULL, 'gepubliceerd'),
-	(8, 'Tomorrowland 2026 WE2', '', 'De Schorre - Boom', 42, '2026-05-07 06:09:20', NULL, '2026-07-24', '2026-07-26', NULL, 'gepubliceerd'),
-	(9, 'testevent', 'dit is een test', 'boom', 50, '2026-07-23 22:56:20', '2026-07-24 00:56:20', '2026-08-07', NULL, NULL, 'concept');
+--
+-- Dumping data for table `evenementen`
+--
 
--- Structuur van  tabel aefs_v2.event_inschrijvingen wordt geschreven
-CREATE TABLE IF NOT EXISTS `event_inschrijvingen` (
+LOCK TABLES `evenementen` WRITE;
+/*!40000 ALTER TABLE `evenementen` DISABLE KEYS */;
+INSERT INTO `evenementen` VALUES (7,'Tomorrowland 2026 WE1',NULL,'De Schorre - Boom',46,'2026-05-06 12:41:45','2026-07-24 01:34:27','2026-07-17','2026-07-19',NULL,'gepubliceerd'),(8,'Tomorrowland 2026 WE2',NULL,'De Schorre - Boom',46,'2026-05-07 06:09:20','2026-07-24 01:34:56','2026-07-24','2026-07-26',NULL,'gepubliceerd'),(9,'testevent','dit is een test','boom',50,'2026-07-23 22:56:20','2026-07-24 00:56:20','2026-08-07',NULL,NULL,'concept');
+/*!40000 ALTER TABLE `evenementen` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `event_inschrijving_dagen`
+--
+
+DROP TABLE IF EXISTS `event_inschrijving_dagen`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `event_inschrijving_dagen` (
+  `inschrijving_dag_id` int NOT NULL AUTO_INCREMENT,
+  `inschrijving_id` int NOT NULL,
+  `datum` date NOT NULL,
+  PRIMARY KEY (`inschrijving_dag_id`),
+  KEY `inschrijving_id` (`inschrijving_id`),
+  CONSTRAINT `event_inschrijving_dagen_ibfk_1` FOREIGN KEY (`inschrijving_id`) REFERENCES `event_inschrijvingen` (`inschrijving_id`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=266 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `event_inschrijving_dagen`
+--
+
+LOCK TABLES `event_inschrijving_dagen` WRITE;
+/*!40000 ALTER TABLE `event_inschrijving_dagen` DISABLE KEYS */;
+INSERT INTO `event_inschrijving_dagen` VALUES (13,9,'2026-07-17'),(14,9,'2026-07-18'),(15,9,'2026-07-19'),(16,10,'2026-07-24'),(17,10,'2026-07-25'),(18,10,'2026-07-26'),(19,11,'2026-07-17'),(20,11,'2026-07-18'),(21,11,'2026-07-19'),(22,12,'2026-07-17'),(23,12,'2026-07-18'),(24,12,'2026-07-19'),(25,13,'2026-07-17'),(26,13,'2026-07-18'),(27,13,'2026-07-19'),(28,14,'2026-07-17'),(29,14,'2026-07-18'),(30,14,'2026-07-19'),(31,15,'2026-07-24'),(32,15,'2026-07-25'),(33,15,'2026-07-26'),(34,16,'2026-07-24'),(35,16,'2026-07-25'),(36,16,'2026-07-26'),(37,17,'2026-07-24'),(38,17,'2026-07-25'),(39,17,'2026-07-26'),(40,18,'2026-07-17'),(41,18,'2026-07-18'),(42,18,'2026-07-19'),(43,19,'2026-07-17'),(44,19,'2026-07-18'),(45,19,'2026-07-19'),(46,20,'2026-07-24'),(47,20,'2026-07-25'),(48,20,'2026-07-26'),(49,21,'2026-07-17'),(50,21,'2026-07-18'),(51,21,'2026-07-19'),(61,26,'2026-07-24'),(62,26,'2026-07-25'),(63,26,'2026-07-26'),(64,27,'2026-07-24'),(65,27,'2026-07-25'),(66,27,'2026-07-26'),(67,28,'2026-07-24'),(68,28,'2026-07-25'),(69,28,'2026-07-26'),(70,29,'2026-07-24'),(71,29,'2026-07-25'),(72,29,'2026-07-26'),(73,30,'2026-07-24'),(74,30,'2026-07-25'),(75,30,'2026-07-26'),(76,31,'2026-07-24'),(77,31,'2026-07-25'),(78,31,'2026-07-26'),(79,32,'2026-07-17'),(80,32,'2026-07-18'),(81,32,'2026-07-19'),(82,33,'2026-07-24'),(83,33,'2026-07-25'),(84,33,'2026-07-26'),(85,36,'2026-07-24'),(86,36,'2026-07-25'),(87,36,'2026-07-26'),(88,37,'2026-07-17'),(89,37,'2026-07-18'),(90,37,'2026-07-19'),(91,38,'2026-07-24'),(92,38,'2026-07-25'),(93,38,'2026-07-26'),(94,39,'2026-07-17'),(95,39,'2026-07-18'),(96,39,'2026-07-19'),(97,40,'2026-07-17'),(98,40,'2026-07-18'),(99,40,'2026-07-19'),(100,41,'2026-07-24'),(101,41,'2026-07-25'),(102,41,'2026-07-26'),(103,43,'2026-07-17'),(104,43,'2026-07-18'),(105,43,'2026-07-19'),(106,44,'2026-07-24'),(107,44,'2026-07-25'),(108,44,'2026-07-26'),(109,45,'2026-07-24'),(110,45,'2026-07-25'),(111,45,'2026-07-26'),(112,46,'2026-07-17'),(113,46,'2026-07-18'),(114,46,'2026-07-19'),(115,47,'2026-07-17'),(116,47,'2026-07-18'),(117,47,'2026-07-19'),(118,49,'2026-07-17'),(119,49,'2026-07-18'),(120,49,'2026-07-19'),(121,51,'2026-07-24'),(122,51,'2026-07-25'),(123,51,'2026-07-26'),(124,52,'2026-07-24'),(125,52,'2026-07-25'),(126,52,'2026-07-26'),(127,53,'2026-07-24'),(128,53,'2026-07-25'),(129,53,'2026-07-26'),(130,54,'2026-07-18'),(131,56,'2026-07-18'),(132,57,'2026-07-17'),(133,57,'2026-07-18'),(134,57,'2026-07-19'),(138,60,'2026-07-17'),(139,60,'2026-07-18'),(140,60,'2026-07-19'),(147,64,'2026-07-17'),(148,64,'2026-07-18'),(149,64,'2026-07-19'),(150,65,'2026-07-24'),(151,65,'2026-07-25'),(152,65,'2026-07-26'),(153,66,'2026-07-17'),(154,66,'2026-07-18'),(155,66,'2026-07-19'),(156,67,'2026-07-17'),(157,67,'2026-07-18'),(158,67,'2026-07-19'),(159,68,'2026-07-24'),(160,68,'2026-07-25'),(161,68,'2026-07-26'),(162,69,'2026-07-17'),(163,69,'2026-07-18'),(164,69,'2026-07-19'),(165,70,'2026-07-24'),(166,70,'2026-07-25'),(167,70,'2026-07-26'),(168,71,'2026-07-24'),(169,71,'2026-07-25'),(170,71,'2026-07-26'),(171,72,'2026-07-24'),(172,72,'2026-07-25'),(173,72,'2026-07-26'),(174,73,'2026-07-17'),(175,73,'2026-07-18'),(176,73,'2026-07-19'),(177,75,'2026-07-24'),(178,75,'2026-07-25'),(179,75,'2026-07-26'),(180,76,'2026-07-18'),(181,76,'2026-07-19'),(182,77,'2026-07-24'),(183,77,'2026-07-25'),(184,77,'2026-07-26'),(185,78,'2026-07-24'),(186,78,'2026-07-25'),(187,78,'2026-07-26'),(188,79,'2026-07-17'),(189,79,'2026-07-18'),(190,79,'2026-07-19'),(194,81,'2026-07-17'),(195,81,'2026-07-18'),(196,81,'2026-07-19'),(197,83,'2026-07-17'),(198,83,'2026-07-18'),(199,83,'2026-07-19'),(200,84,'2026-07-25'),(201,84,'2026-07-26'),(205,87,'2026-07-17'),(206,87,'2026-07-18'),(207,87,'2026-07-19'),(208,88,'2026-07-24'),(209,88,'2026-07-25'),(210,88,'2026-07-26'),(211,89,'2026-07-17'),(212,89,'2026-07-18'),(213,89,'2026-07-19'),(214,90,'2026-07-24'),(215,90,'2026-07-25'),(216,90,'2026-07-26'),(217,91,'2026-07-24'),(218,91,'2026-07-25'),(219,91,'2026-07-26'),(223,93,'2026-07-17'),(224,93,'2026-07-18'),(225,93,'2026-07-19'),(226,94,'2026-07-17'),(227,94,'2026-07-18'),(228,94,'2026-07-19'),(229,96,'2026-07-17'),(230,96,'2026-07-18'),(231,96,'2026-07-19'),(232,97,'2026-07-24'),(233,97,'2026-07-25'),(234,97,'2026-07-26'),(235,98,'2026-07-17'),(236,98,'2026-07-18'),(237,98,'2026-07-19'),(238,99,'2026-07-19'),(239,100,'2026-07-17'),(240,100,'2026-07-18'),(241,100,'2026-07-19'),(248,104,'2026-07-17'),(249,104,'2026-07-18'),(250,104,'2026-07-19'),(251,105,'2026-07-17'),(252,105,'2026-07-18'),(253,105,'2026-07-19'),(254,106,'2026-07-17'),(255,106,'2026-07-18'),(256,106,'2026-07-19'),(257,107,'2026-07-17'),(258,107,'2026-07-18'),(259,107,'2026-07-19'),(260,108,'2026-07-17'),(261,108,'2026-07-18'),(262,108,'2026-07-19'),(263,109,'2026-07-17'),(264,109,'2026-07-18'),(265,109,'2026-07-19');
+/*!40000 ALTER TABLE `event_inschrijving_dagen` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `event_inschrijvingen`
+--
+
+DROP TABLE IF EXISTS `event_inschrijvingen`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `event_inschrijvingen` (
   `inschrijving_id` int NOT NULL AUTO_INCREMENT,
   `event_id` int NOT NULL,
   `lid_id` int NOT NULL,
@@ -132,360 +193,26 @@ CREATE TABLE IF NOT EXISTS `event_inschrijvingen` (
   CONSTRAINT `event_inschrijvingen_ibfk_1` FOREIGN KEY (`event_id`) REFERENCES `evenementen` (`event_id`) ON DELETE CASCADE,
   CONSTRAINT `event_inschrijvingen_ibfk_2` FOREIGN KEY (`lid_id`) REFERENCES `leden` (`lid_id`) ON DELETE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=110 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
 
--- Dumpen data van tabel aefs_v2.event_inschrijvingen: ~86 rows (ongeveer)
-INSERT INTO `event_inschrijvingen` (`inschrijving_id`, `event_id`, `lid_id`, `status`, `aangemeld_op`, `uitschrijfreden`, `uitgeschreven_op`) VALUES
-	(9, 7, 25, 'bevestigd', '2026-05-07 07:11:50', NULL, NULL),
-	(10, 8, 23, 'wachtend', '2026-05-07 07:12:01', NULL, NULL),
-	(11, 7, 32, 'bevestigd', '2026-05-07 07:30:09', NULL, NULL),
-	(12, 7, 29, 'bevestigd', '2026-05-07 07:35:03', NULL, NULL),
-	(13, 7, 31, 'bevestigd', '2026-05-07 07:38:22', NULL, NULL),
-	(14, 7, 33, 'bevestigd', '2026-05-07 07:40:45', NULL, NULL),
-	(15, 8, 30, 'wachtend', '2026-05-07 07:43:31', NULL, NULL),
-	(16, 8, 24, 'wachtend', '2026-05-07 07:44:35', NULL, NULL),
-	(17, 8, 28, 'wachtend', '2026-05-07 07:47:35', NULL, NULL),
-	(18, 7, 36, 'bevestigd', '2026-05-07 08:10:00', NULL, NULL),
-	(19, 7, 38, 'bevestigd', '2026-05-07 08:16:55', NULL, NULL),
-	(20, 8, 39, 'wachtend', '2026-05-07 08:21:08', NULL, NULL),
-	(21, 7, 34, 'bevestigd', '2026-05-07 08:23:05', NULL, NULL),
-	(26, 8, 34, 'wachtend', '2026-05-07 08:23:58', NULL, NULL),
-	(27, 8, 26, 'wachtend', '2026-05-07 08:32:15', NULL, NULL),
-	(28, 8, 40, 'wachtend', '2026-05-07 08:54:19', NULL, NULL),
-	(29, 8, 41, 'bevestigd', '2026-05-07 08:54:56', NULL, NULL),
-	(30, 8, 42, 'wachtend', '2026-05-07 12:31:21', NULL, NULL),
-	(31, 8, 51, 'wachtend', '2026-05-07 16:12:43', NULL, NULL),
-	(32, 7, 53, 'bevestigd', '2026-05-07 16:17:45', NULL, NULL),
-	(33, 8, 47, 'wachtend', '2026-05-07 16:17:50', NULL, NULL),
-	(35, 7, 52, 'bevestigd', '2026-05-07 19:51:38', NULL, NULL),
-	(36, 8, 45, 'wachtend', '2026-05-07 20:41:14', NULL, NULL),
-	(37, 7, 61, 'bevestigd', '2026-05-09 07:24:30', NULL, NULL),
-	(38, 8, 44, 'wachtend', '2026-05-09 07:35:22', NULL, NULL),
-	(39, 7, 55, 'bevestigd', '2026-05-09 07:35:30', NULL, NULL),
-	(40, 7, 56, 'bevestigd', '2026-05-09 19:47:47', NULL, NULL),
-	(41, 8, 54, 'wachtend', '2026-05-10 15:00:45', NULL, NULL),
-	(42, 7, 54, 'bevestigd', '2026-05-10 15:00:46', NULL, NULL),
-	(43, 7, 59, 'bevestigd', '2026-05-10 19:33:11', NULL, NULL),
-	(44, 8, 58, 'wachtend', '2026-05-11 07:01:18', NULL, NULL),
-	(45, 8, 64, 'wachtend', '2026-05-11 08:26:52', NULL, NULL),
-	(46, 7, 66, 'bevestigd', '2026-05-11 15:59:46', NULL, NULL),
-	(47, 7, 70, 'bevestigd', '2026-05-11 16:16:59', NULL, NULL),
-	(48, 8, 70, 'wachtend', '2026-05-11 16:17:02', NULL, NULL),
-	(49, 7, 71, 'bevestigd', '2026-05-11 17:51:12', NULL, NULL),
-	(50, 8, 71, 'bevestigd', '2026-05-11 17:51:14', NULL, NULL),
-	(51, 8, 27, 'wachtend', '2026-05-13 06:21:29', NULL, NULL),
-	(52, 8, 79, 'wachtend', '2026-05-14 07:03:28', NULL, NULL),
-	(53, 8, 74, 'wachtend', '2026-05-14 08:35:20', NULL, NULL),
-	(54, 7, 76, 'reserve', '2026-05-14 08:35:20', NULL, NULL),
-	(55, 8, 76, 'wachtend', '2026-05-14 08:35:22', NULL, NULL),
-	(56, 7, 74, 'reserve', '2026-05-14 08:35:27', NULL, NULL),
-	(57, 7, 49, 'bevestigd', '2026-05-15 07:58:17', NULL, NULL),
-	(59, 8, 62, 'wachtend', '2026-05-17 15:26:03', NULL, NULL),
-	(60, 7, 81, 'bevestigd', '2026-05-19 11:57:36', NULL, NULL),
-	(64, 7, 20, 'bevestigd', '2026-05-19 12:45:32', NULL, NULL),
-	(65, 8, 82, 'wachtend', '2026-05-19 14:28:58', NULL, NULL),
-	(66, 7, 80, 'bevestigd', '2026-05-20 08:43:58', NULL, NULL),
-	(67, 7, 83, 'bevestigd', '2026-05-20 15:32:27', NULL, NULL),
-	(68, 8, 83, 'wachtend', '2026-05-20 15:32:33', NULL, NULL),
-	(69, 7, 19, 'bevestigd', '2026-05-20 16:23:23', NULL, NULL),
-	(70, 8, 68, 'wachtend', '2026-05-25 21:39:00', NULL, NULL),
-	(71, 8, 87, 'wachtend', '2026-05-26 14:59:16', NULL, NULL),
-	(72, 8, 77, 'wachtend', '2026-05-26 15:06:33', NULL, NULL),
-	(73, 7, 67, 'bevestigd', '2026-05-26 15:09:29', NULL, NULL),
-	(74, 8, 67, 'wachtend', '2026-05-26 15:09:30', NULL, NULL),
-	(75, 8, 65, 'wachtend', '2026-05-26 15:41:36', NULL, NULL),
-	(76, 7, 68, 'reserve', '2026-05-26 18:39:43', NULL, NULL),
-	(77, 8, 94, 'wachtend', '2026-05-26 20:32:30', NULL, NULL),
-	(78, 8, 91, 'wachtend', '2026-05-26 20:33:08', NULL, NULL),
-	(79, 7, 89, 'bevestigd', '2026-05-26 20:37:10', NULL, NULL),
-	(81, 7, 88, 'bevestigd', '2026-05-26 20:39:19', NULL, NULL),
-	(82, 8, 88, 'wachtend', '2026-05-26 20:39:21', NULL, NULL),
-	(83, 7, 92, 'bevestigd', '2026-05-26 20:44:39', NULL, NULL),
-	(84, 8, 96, 'reserve', '2026-05-27 14:23:03', NULL, NULL),
-	(86, 7, 85, 'bevestigd', '2026-05-28 07:40:46', NULL, NULL),
-	(87, 7, 84, 'bevestigd', '2026-05-28 09:29:26', NULL, NULL),
-	(88, 8, 95, 'wachtend', '2026-05-31 10:22:16', NULL, NULL),
-	(89, 7, 75, 'bevestigd', '2026-05-31 18:31:24', NULL, NULL),
-	(90, 8, 93, 'wachtend', '2026-05-31 20:04:02', NULL, NULL),
-	(91, 8, 90, 'wachtend', '2026-05-31 20:07:09', NULL, NULL),
-	(93, 7, 69, 'bevestigd', '2026-06-10 19:07:15', NULL, NULL),
-	(94, 7, 104, 'bevestigd', '2026-06-10 22:09:24', NULL, NULL),
-	(95, 8, 104, 'wachtend', '2026-06-10 22:09:28', NULL, NULL),
-	(96, 7, 44, 'bevestigd', '2026-06-12 05:24:10', NULL, NULL),
-	(97, 8, 103, 'wachtend', '2026-06-12 15:47:23', NULL, NULL),
-	(98, 7, 101, 'bevestigd', '2026-06-13 06:16:57', NULL, NULL),
-	(99, 7, 37, 'reserve', '2026-06-23 07:34:38', NULL, NULL),
-	(100, 7, 106, 'bevestigd', '2026-06-25 17:04:21', NULL, NULL),
-	(104, 7, 107, 'bevestigd', '2026-06-29 10:52:53', NULL, NULL),
-	(105, 7, 110, 'bevestigd', '2026-06-29 11:10:37', NULL, NULL),
-	(106, 7, 109, 'bevestigd', '2026-06-29 11:21:42', NULL, NULL),
-	(107, 7, 111, 'bevestigd', '2026-06-29 11:26:17', NULL, NULL),
-	(108, 7, 112, 'bevestigd', '2026-06-29 12:27:09', NULL, NULL),
-	(109, 7, 113, 'bevestigd', '2026-06-29 15:20:28', NULL, NULL);
+--
+-- Dumping data for table `event_inschrijvingen`
+--
 
--- Structuur van  tabel aefs_v2.event_inschrijving_dagen wordt geschreven
-CREATE TABLE IF NOT EXISTS `event_inschrijving_dagen` (
-  `inschrijving_dag_id` int NOT NULL AUTO_INCREMENT,
-  `inschrijving_id` int NOT NULL,
-  `datum` date NOT NULL,
-  PRIMARY KEY (`inschrijving_dag_id`),
-  KEY `inschrijving_id` (`inschrijving_id`),
-  CONSTRAINT `event_inschrijving_dagen_ibfk_1` FOREIGN KEY (`inschrijving_id`) REFERENCES `event_inschrijvingen` (`inschrijving_id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=266 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+LOCK TABLES `event_inschrijvingen` WRITE;
+/*!40000 ALTER TABLE `event_inschrijvingen` DISABLE KEYS */;
+INSERT INTO `event_inschrijvingen` VALUES (9,7,25,'bevestigd','2026-05-07 07:11:50',NULL,NULL),(10,8,23,'wachtend','2026-05-07 07:12:01',NULL,NULL),(11,7,32,'bevestigd','2026-05-07 07:30:09',NULL,NULL),(12,7,29,'bevestigd','2026-05-07 07:35:03',NULL,NULL),(13,7,31,'bevestigd','2026-05-07 07:38:22',NULL,NULL),(14,7,33,'bevestigd','2026-05-07 07:40:45',NULL,NULL),(15,8,30,'wachtend','2026-05-07 07:43:31',NULL,NULL),(16,8,24,'wachtend','2026-05-07 07:44:35',NULL,NULL),(17,8,28,'wachtend','2026-05-07 07:47:35',NULL,NULL),(18,7,36,'bevestigd','2026-05-07 08:10:00',NULL,NULL),(19,7,38,'bevestigd','2026-05-07 08:16:55',NULL,NULL),(20,8,39,'wachtend','2026-05-07 08:21:08',NULL,NULL),(21,7,34,'bevestigd','2026-05-07 08:23:05',NULL,NULL),(26,8,34,'wachtend','2026-05-07 08:23:58',NULL,NULL),(27,8,26,'wachtend','2026-05-07 08:32:15',NULL,NULL),(28,8,40,'wachtend','2026-05-07 08:54:19',NULL,NULL),(29,8,41,'bevestigd','2026-05-07 08:54:56',NULL,NULL),(30,8,42,'wachtend','2026-05-07 12:31:21',NULL,NULL),(31,8,51,'wachtend','2026-05-07 16:12:43',NULL,NULL),(32,7,53,'bevestigd','2026-05-07 16:17:45',NULL,NULL),(33,8,47,'wachtend','2026-05-07 16:17:50',NULL,NULL),(35,7,52,'bevestigd','2026-05-07 19:51:38',NULL,NULL),(36,8,45,'wachtend','2026-05-07 20:41:14',NULL,NULL),(37,7,61,'bevestigd','2026-05-09 07:24:30',NULL,NULL),(38,8,44,'wachtend','2026-05-09 07:35:22',NULL,NULL),(39,7,55,'bevestigd','2026-05-09 07:35:30',NULL,NULL),(40,7,56,'bevestigd','2026-05-09 19:47:47',NULL,NULL),(41,8,54,'wachtend','2026-05-10 15:00:45',NULL,NULL),(42,7,54,'bevestigd','2026-05-10 15:00:46',NULL,NULL),(43,7,59,'bevestigd','2026-05-10 19:33:11',NULL,NULL),(44,8,58,'wachtend','2026-05-11 07:01:18',NULL,NULL),(45,8,64,'wachtend','2026-05-11 08:26:52',NULL,NULL),(46,7,66,'bevestigd','2026-05-11 15:59:46',NULL,NULL),(47,7,70,'bevestigd','2026-05-11 16:16:59',NULL,NULL),(48,8,70,'wachtend','2026-05-11 16:17:02',NULL,NULL),(49,7,71,'bevestigd','2026-05-11 17:51:12',NULL,NULL),(50,8,71,'bevestigd','2026-05-11 17:51:14',NULL,NULL),(51,8,27,'wachtend','2026-05-13 06:21:29',NULL,NULL),(52,8,79,'wachtend','2026-05-14 07:03:28',NULL,NULL),(53,8,74,'wachtend','2026-05-14 08:35:20',NULL,NULL),(54,7,76,'reserve','2026-05-14 08:35:20',NULL,NULL),(55,8,76,'wachtend','2026-05-14 08:35:22',NULL,NULL),(56,7,74,'reserve','2026-05-14 08:35:27',NULL,NULL),(57,7,49,'bevestigd','2026-05-15 07:58:17',NULL,NULL),(59,8,62,'wachtend','2026-05-17 15:26:03',NULL,NULL),(60,7,81,'bevestigd','2026-05-19 11:57:36',NULL,NULL),(64,7,20,'bevestigd','2026-05-19 12:45:32',NULL,NULL),(65,8,82,'wachtend','2026-05-19 14:28:58',NULL,NULL),(66,7,80,'bevestigd','2026-05-20 08:43:58',NULL,NULL),(67,7,83,'bevestigd','2026-05-20 15:32:27',NULL,NULL),(68,8,83,'wachtend','2026-05-20 15:32:33',NULL,NULL),(69,7,19,'bevestigd','2026-05-20 16:23:23',NULL,NULL),(70,8,68,'wachtend','2026-05-25 21:39:00',NULL,NULL),(71,8,87,'wachtend','2026-05-26 14:59:16',NULL,NULL),(72,8,77,'wachtend','2026-05-26 15:06:33',NULL,NULL),(73,7,67,'bevestigd','2026-05-26 15:09:29',NULL,NULL),(74,8,67,'wachtend','2026-05-26 15:09:30',NULL,NULL),(75,8,65,'wachtend','2026-05-26 15:41:36',NULL,NULL),(76,7,68,'reserve','2026-05-26 18:39:43',NULL,NULL),(77,8,94,'wachtend','2026-05-26 20:32:30',NULL,NULL),(78,8,91,'wachtend','2026-05-26 20:33:08',NULL,NULL),(79,7,89,'bevestigd','2026-05-26 20:37:10',NULL,NULL),(81,7,88,'bevestigd','2026-05-26 20:39:19',NULL,NULL),(82,8,88,'wachtend','2026-05-26 20:39:21',NULL,NULL),(83,7,92,'bevestigd','2026-05-26 20:44:39',NULL,NULL),(84,8,96,'reserve','2026-05-27 14:23:03',NULL,NULL),(86,7,85,'bevestigd','2026-05-28 07:40:46',NULL,NULL),(87,7,84,'bevestigd','2026-05-28 09:29:26',NULL,NULL),(88,8,95,'wachtend','2026-05-31 10:22:16',NULL,NULL),(89,7,75,'bevestigd','2026-05-31 18:31:24',NULL,NULL),(90,8,93,'wachtend','2026-05-31 20:04:02',NULL,NULL),(91,8,90,'wachtend','2026-05-31 20:07:09',NULL,NULL),(93,7,69,'bevestigd','2026-06-10 19:07:15',NULL,NULL),(94,7,104,'bevestigd','2026-06-10 22:09:24',NULL,NULL),(95,8,104,'wachtend','2026-06-10 22:09:28',NULL,NULL),(96,7,44,'bevestigd','2026-06-12 05:24:10',NULL,NULL),(97,8,103,'wachtend','2026-06-12 15:47:23',NULL,NULL),(98,7,101,'bevestigd','2026-06-13 06:16:57',NULL,NULL),(99,7,37,'reserve','2026-06-23 07:34:38',NULL,NULL),(100,7,106,'bevestigd','2026-06-25 17:04:21',NULL,NULL),(104,7,107,'bevestigd','2026-06-29 10:52:53',NULL,NULL),(105,7,110,'bevestigd','2026-06-29 11:10:37',NULL,NULL),(106,7,109,'bevestigd','2026-06-29 11:21:42',NULL,NULL),(107,7,111,'bevestigd','2026-06-29 11:26:17',NULL,NULL),(108,7,112,'bevestigd','2026-06-29 12:27:09',NULL,NULL),(109,7,113,'bevestigd','2026-06-29 15:20:28',NULL,NULL);
+/*!40000 ALTER TABLE `event_inschrijvingen` ENABLE KEYS */;
+UNLOCK TABLES;
 
--- Dumpen data van tabel aefs_v2.event_inschrijving_dagen: ~220 rows (ongeveer)
-INSERT INTO `event_inschrijving_dagen` (`inschrijving_dag_id`, `inschrijving_id`, `datum`) VALUES
-	(13, 9, '2026-07-17'),
-	(14, 9, '2026-07-18'),
-	(15, 9, '2026-07-19'),
-	(16, 10, '2026-07-24'),
-	(17, 10, '2026-07-25'),
-	(18, 10, '2026-07-26'),
-	(19, 11, '2026-07-17'),
-	(20, 11, '2026-07-18'),
-	(21, 11, '2026-07-19'),
-	(22, 12, '2026-07-17'),
-	(23, 12, '2026-07-18'),
-	(24, 12, '2026-07-19'),
-	(25, 13, '2026-07-17'),
-	(26, 13, '2026-07-18'),
-	(27, 13, '2026-07-19'),
-	(28, 14, '2026-07-17'),
-	(29, 14, '2026-07-18'),
-	(30, 14, '2026-07-19'),
-	(31, 15, '2026-07-24'),
-	(32, 15, '2026-07-25'),
-	(33, 15, '2026-07-26'),
-	(34, 16, '2026-07-24'),
-	(35, 16, '2026-07-25'),
-	(36, 16, '2026-07-26'),
-	(37, 17, '2026-07-24'),
-	(38, 17, '2026-07-25'),
-	(39, 17, '2026-07-26'),
-	(40, 18, '2026-07-17'),
-	(41, 18, '2026-07-18'),
-	(42, 18, '2026-07-19'),
-	(43, 19, '2026-07-17'),
-	(44, 19, '2026-07-18'),
-	(45, 19, '2026-07-19'),
-	(46, 20, '2026-07-24'),
-	(47, 20, '2026-07-25'),
-	(48, 20, '2026-07-26'),
-	(49, 21, '2026-07-17'),
-	(50, 21, '2026-07-18'),
-	(51, 21, '2026-07-19'),
-	(61, 26, '2026-07-24'),
-	(62, 26, '2026-07-25'),
-	(63, 26, '2026-07-26'),
-	(64, 27, '2026-07-24'),
-	(65, 27, '2026-07-25'),
-	(66, 27, '2026-07-26'),
-	(67, 28, '2026-07-24'),
-	(68, 28, '2026-07-25'),
-	(69, 28, '2026-07-26'),
-	(70, 29, '2026-07-24'),
-	(71, 29, '2026-07-25'),
-	(72, 29, '2026-07-26'),
-	(73, 30, '2026-07-24'),
-	(74, 30, '2026-07-25'),
-	(75, 30, '2026-07-26'),
-	(76, 31, '2026-07-24'),
-	(77, 31, '2026-07-25'),
-	(78, 31, '2026-07-26'),
-	(79, 32, '2026-07-17'),
-	(80, 32, '2026-07-18'),
-	(81, 32, '2026-07-19'),
-	(82, 33, '2026-07-24'),
-	(83, 33, '2026-07-25'),
-	(84, 33, '2026-07-26'),
-	(85, 36, '2026-07-24'),
-	(86, 36, '2026-07-25'),
-	(87, 36, '2026-07-26'),
-	(88, 37, '2026-07-17'),
-	(89, 37, '2026-07-18'),
-	(90, 37, '2026-07-19'),
-	(91, 38, '2026-07-24'),
-	(92, 38, '2026-07-25'),
-	(93, 38, '2026-07-26'),
-	(94, 39, '2026-07-17'),
-	(95, 39, '2026-07-18'),
-	(96, 39, '2026-07-19'),
-	(97, 40, '2026-07-17'),
-	(98, 40, '2026-07-18'),
-	(99, 40, '2026-07-19'),
-	(100, 41, '2026-07-24'),
-	(101, 41, '2026-07-25'),
-	(102, 41, '2026-07-26'),
-	(103, 43, '2026-07-17'),
-	(104, 43, '2026-07-18'),
-	(105, 43, '2026-07-19'),
-	(106, 44, '2026-07-24'),
-	(107, 44, '2026-07-25'),
-	(108, 44, '2026-07-26'),
-	(109, 45, '2026-07-24'),
-	(110, 45, '2026-07-25'),
-	(111, 45, '2026-07-26'),
-	(112, 46, '2026-07-17'),
-	(113, 46, '2026-07-18'),
-	(114, 46, '2026-07-19'),
-	(115, 47, '2026-07-17'),
-	(116, 47, '2026-07-18'),
-	(117, 47, '2026-07-19'),
-	(118, 49, '2026-07-17'),
-	(119, 49, '2026-07-18'),
-	(120, 49, '2026-07-19'),
-	(121, 51, '2026-07-24'),
-	(122, 51, '2026-07-25'),
-	(123, 51, '2026-07-26'),
-	(124, 52, '2026-07-24'),
-	(125, 52, '2026-07-25'),
-	(126, 52, '2026-07-26'),
-	(127, 53, '2026-07-24'),
-	(128, 53, '2026-07-25'),
-	(129, 53, '2026-07-26'),
-	(130, 54, '2026-07-18'),
-	(131, 56, '2026-07-18'),
-	(132, 57, '2026-07-17'),
-	(133, 57, '2026-07-18'),
-	(134, 57, '2026-07-19'),
-	(138, 60, '2026-07-17'),
-	(139, 60, '2026-07-18'),
-	(140, 60, '2026-07-19'),
-	(147, 64, '2026-07-17'),
-	(148, 64, '2026-07-18'),
-	(149, 64, '2026-07-19'),
-	(150, 65, '2026-07-24'),
-	(151, 65, '2026-07-25'),
-	(152, 65, '2026-07-26'),
-	(153, 66, '2026-07-17'),
-	(154, 66, '2026-07-18'),
-	(155, 66, '2026-07-19'),
-	(156, 67, '2026-07-17'),
-	(157, 67, '2026-07-18'),
-	(158, 67, '2026-07-19'),
-	(159, 68, '2026-07-24'),
-	(160, 68, '2026-07-25'),
-	(161, 68, '2026-07-26'),
-	(162, 69, '2026-07-17'),
-	(163, 69, '2026-07-18'),
-	(164, 69, '2026-07-19'),
-	(165, 70, '2026-07-24'),
-	(166, 70, '2026-07-25'),
-	(167, 70, '2026-07-26'),
-	(168, 71, '2026-07-24'),
-	(169, 71, '2026-07-25'),
-	(170, 71, '2026-07-26'),
-	(171, 72, '2026-07-24'),
-	(172, 72, '2026-07-25'),
-	(173, 72, '2026-07-26'),
-	(174, 73, '2026-07-17'),
-	(175, 73, '2026-07-18'),
-	(176, 73, '2026-07-19'),
-	(177, 75, '2026-07-24'),
-	(178, 75, '2026-07-25'),
-	(179, 75, '2026-07-26'),
-	(180, 76, '2026-07-18'),
-	(181, 76, '2026-07-19'),
-	(182, 77, '2026-07-24'),
-	(183, 77, '2026-07-25'),
-	(184, 77, '2026-07-26'),
-	(185, 78, '2026-07-24'),
-	(186, 78, '2026-07-25'),
-	(187, 78, '2026-07-26'),
-	(188, 79, '2026-07-17'),
-	(189, 79, '2026-07-18'),
-	(190, 79, '2026-07-19'),
-	(194, 81, '2026-07-17'),
-	(195, 81, '2026-07-18'),
-	(196, 81, '2026-07-19'),
-	(197, 83, '2026-07-17'),
-	(198, 83, '2026-07-18'),
-	(199, 83, '2026-07-19'),
-	(200, 84, '2026-07-25'),
-	(201, 84, '2026-07-26'),
-	(205, 87, '2026-07-17'),
-	(206, 87, '2026-07-18'),
-	(207, 87, '2026-07-19'),
-	(208, 88, '2026-07-24'),
-	(209, 88, '2026-07-25'),
-	(210, 88, '2026-07-26'),
-	(211, 89, '2026-07-17'),
-	(212, 89, '2026-07-18'),
-	(213, 89, '2026-07-19'),
-	(214, 90, '2026-07-24'),
-	(215, 90, '2026-07-25'),
-	(216, 90, '2026-07-26'),
-	(217, 91, '2026-07-24'),
-	(218, 91, '2026-07-25'),
-	(219, 91, '2026-07-26'),
-	(223, 93, '2026-07-17'),
-	(224, 93, '2026-07-18'),
-	(225, 93, '2026-07-19'),
-	(226, 94, '2026-07-17'),
-	(227, 94, '2026-07-18'),
-	(228, 94, '2026-07-19'),
-	(229, 96, '2026-07-17'),
-	(230, 96, '2026-07-18'),
-	(231, 96, '2026-07-19'),
-	(232, 97, '2026-07-24'),
-	(233, 97, '2026-07-25'),
-	(234, 97, '2026-07-26'),
-	(235, 98, '2026-07-17'),
-	(236, 98, '2026-07-18'),
-	(237, 98, '2026-07-19'),
-	(238, 99, '2026-07-19'),
-	(239, 100, '2026-07-17'),
-	(240, 100, '2026-07-18'),
-	(241, 100, '2026-07-19'),
-	(248, 104, '2026-07-17'),
-	(249, 104, '2026-07-18'),
-	(250, 104, '2026-07-19'),
-	(251, 105, '2026-07-17'),
-	(252, 105, '2026-07-18'),
-	(253, 105, '2026-07-19'),
-	(254, 106, '2026-07-17'),
-	(255, 106, '2026-07-18'),
-	(256, 106, '2026-07-19'),
-	(257, 107, '2026-07-17'),
-	(258, 107, '2026-07-18'),
-	(259, 107, '2026-07-19'),
-	(260, 108, '2026-07-17'),
-	(261, 108, '2026-07-18'),
-	(262, 108, '2026-07-19'),
-	(263, 109, '2026-07-17'),
-	(264, 109, '2026-07-18'),
-	(265, 109, '2026-07-19');
+--
+-- Table structure for table `gebruikers`
+--
 
--- Structuur van  tabel aefs_v2.event_shifts wordt geschreven
-CREATE TABLE IF NOT EXISTS `event_shifts` (
-  `shift_id` int NOT NULL AUTO_INCREMENT,
-  `event_id` int NOT NULL,
-  `shift_datum` date NOT NULL,
-  `naam` varchar(100) COLLATE utf8mb4_general_ci NOT NULL,
-  `starttijd` time DEFAULT NULL,
-  `eindtijd` time DEFAULT NULL,
-  `max_personen` int NOT NULL DEFAULT '1',
-  PRIMARY KEY (`shift_id`),
-  KEY `event_id` (`event_id`),
-  CONSTRAINT `event_shifts_ibfk_1` FOREIGN KEY (`event_id`) REFERENCES `evenementen` (`event_id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=20 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
--- Dumpen data van tabel aefs_v2.event_shifts: ~12 rows (ongeveer)
-INSERT INTO `event_shifts` (`shift_id`, `event_id`, `shift_datum`, `naam`, `starttijd`, `eindtijd`, `max_personen`) VALUES
-	(7, 7, '2026-07-17', 'Vroege', '11:30:00', '18:30:00', 21),
-	(8, 7, '2026-07-17', 'Late', '18:30:00', '01:00:00', 21),
-	(9, 7, '2026-07-18', 'Vroege', '11:30:00', '18:30:00', 21),
-	(10, 7, '2026-07-18', 'Late', '18:30:00', '01:00:00', 21),
-	(11, 7, '2026-07-19', 'Vroege', '11:30:00', '18:30:00', 21),
-	(12, 7, '2026-07-19', 'Late', '18:30:00', '01:00:00', 21),
-	(14, 8, '2026-07-24', 'Vroege', '11:30:00', '18:30:00', 21),
-	(15, 8, '2026-07-24', 'Late', '18:30:00', '01:00:00', 21),
-	(16, 8, '2026-07-25', 'Vroege', '11:30:00', '18:30:00', 21),
-	(17, 8, '2026-07-25', 'Late', '18:30:00', '01:00:00', 21),
-	(18, 8, '2026-07-26', 'Vroege', '11:30:00', '18:30:00', 21),
-	(19, 8, '2026-07-26', 'Late', '18:30:00', '01:00:00', 21);
-
--- Structuur van  tabel aefs_v2.gebruikers wordt geschreven
-CREATE TABLE IF NOT EXISTS `gebruikers` (
+DROP TABLE IF EXISTS `gebruikers`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `gebruikers` (
   `gebruiker_id` int NOT NULL AUTO_INCREMENT,
   `lid_id` int DEFAULT NULL,
   `email` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
@@ -504,124 +231,52 @@ CREATE TABLE IF NOT EXISTS `gebruikers` (
   KEY `fk_gebruiker_lid` (`lid_id`),
   CONSTRAINT `fk_gebruiker_lid` FOREIGN KEY (`lid_id`) REFERENCES `leden` (`lid_id`) ON DELETE SET NULL
 ) ENGINE=InnoDB AUTO_INCREMENT=113 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
 
--- Dumpen data van tabel aefs_v2.gebruikers: ~99 rows (ongeveer)
-INSERT INTO `gebruikers` (`gebruiker_id`, `lid_id`, `email`, `wachtwoord_hash`, `rol`, `goedkeuringsstatus`, `goedgekeurd_op`, `actief`, `aangemaakt_op`, `wachtwoord_moet_wijzigen`, `reset_token`, `reset_token_expires`, `mail_blacklist`) VALUES
-	(1, 3, 'admin@alleventsforeversure.be', '$2y$12$m2cYb/PsWOlreGio7rdKQuYi4MLB.eps7GDVRF4EfU3jz6dmwSTRq', 'admin', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-01-08 13:09:32', 0, NULL, NULL, 0),
-	(14, 18, 'kenny.verhasselt@gmail.com', '$2y$12$hJFim0cm2cdoBbnZ7dcpBepUqAEA9jVlzYXFKOjpoMx3rDgkGhU5i', 'admin', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-01-10 14:00:41', 0, NULL, NULL, 0),
-	(15, 19, 'dimitri.peeters3@telenet.be', '$2y$12$5mJ5xkjF5e5CZU8wvL5KYOYzgL/FXuKFcdj3GhSZw7UmGeac7mKIa', 'admin', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-01-10 14:01:44', 0, NULL, NULL, 0),
-	(16, 20, 'nico.laeremans83@gmail.com', '$2y$12$C7WRUo0504p0RidcNd9EQuBq0cPVTH0BlmedYypCrPvMYl8QsP4.u', 'admin', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-01-10 16:04:16', 0, NULL, NULL, 0),
-	(17, 21, 'renskedauwe@gmail.com', '$2y$12$gbLWXV9MAHEixeRqhLEv5.R.RQa4HoY.5Mw0k/lVcvz61./EI1tTW', 'admin', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-01-10 19:20:53', 0, NULL, NULL, 0),
-	(18, 22, 'chari.garcia@telenet.be', '$2y$12$Zg0ii10FTHUXvUXJm2LaV.y6prK9tMzcAzqcQnU.V8kPXCr1q2rhC', 'lid', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-02-25 20:50:54', 1, NULL, NULL, 0),
-	(19, 23, 'notenbaert.chloe2@gmail.com', '$2y$12$Y8pwXRd2p93OS8.L4t1V5.j/y067PnWPH8RFNzMZdMwImKQzhCDWu', 'lid', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-05-07 06:52:53', 1, NULL, NULL, 0),
-	(20, 24, 'melissa.gomezsanchez@gmail.com', '$2y$12$RRWfH6bhKmNvbeb5mx5M/uiYvhP/BtQi1wbVeytwTuAwOZAewQqQC', 'lid', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-05-07 06:53:56', 1, NULL, NULL, 0),
-	(21, 25, 'amber.vangramberen@gmail.com', '$2y$12$Kxob2Hc0nuYSx.l42ebr5OcHZOsttjLDTZaaTnh5mv.KLv1g/hcdu', 'lid', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-05-07 06:54:23', 1, NULL, NULL, 0),
-	(22, 26, 'sylvia.de.weerdt@gmail.com', '$2y$12$bmnvzbGIBWS7Zfeegxa1IOPaunM0rmAuX8Me8G/bhQtih6.huPUZO', 'lid', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-05-07 06:55:08', 1, NULL, NULL, 0),
-	(23, 27, 'roslaycv@hotmail.com', '$2y$12$gO8KjJrMhStv9TgezSvmuuhiBrcTTkvTsNy5MuDsUlFyseRxtgXHe', 'lid', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-05-07 07:04:15', 1, NULL, NULL, 0),
-	(24, 28, 'dkieseko@its.jnj.com', '$2y$12$swysYyj7T2MgqNkAKLh2WubaZjV2ySnLDiavjQUAkvvSlwzsJx7PO', 'lid', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-05-07 07:18:32', 1, NULL, NULL, 0),
-	(25, 29, 'erika.verstreken@telenet.be', '$2y$12$ZancLJK5T3eCij//rR21kemKQPTKZAxG1yvoafWEIWuCN1Y3XrTKS', 'lid', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-05-07 07:19:52', 1, NULL, NULL, 0),
-	(26, 30, 'kaat.paternoster1@gmail.com', '$2y$12$.i9TT0.BTaPk9kY5Wual0OtmS766eQzwTTdcfuiFzI/3m2rIBDbUu', 'lid', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-05-07 07:21:55', 1, NULL, NULL, 0),
-	(27, 31, 'ellen.bossuyt1980@gmail.com', '$2y$12$M9wVCRUPLU6D/wO17hNkKeg7txe11XzuBL15FoCvahsZME/ziWnlW', 'lid', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-05-07 07:22:45', 1, NULL, NULL, 0),
-	(28, 32, 'meertwesley@gmail.com', '$2y$12$/WwRN2q43Ir8cgh8iVB0le93r3KFz0j/.8aI/x4wRxO9w9hZnASIO', 'lid', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-05-07 07:22:46', 1, NULL, NULL, 0),
-	(29, 33, 'birthepardon@gmail.com', '$2y$12$gb9UoV.bxr3EirniaY92nO0Y2dGl4KW1HxQDYjxg5Xt72gqyratzu', 'lid', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-05-07 07:32:42', 1, NULL, NULL, 0),
-	(30, 34, 'chloe.vlamynck@hotmail.com', '$2y$12$SUEyJAi2.n0XrhW5uu8lMuvJ1hi4R.yVoeUNdxJErhm.MjAMWkNAK', 'lid', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-05-07 07:32:48', 1, NULL, NULL, 0),
-	(32, 36, 'ilselaeremans@hotmail.com', '$2y$12$ebV9n2Xr.yf.CdXxpyXzeOooRxgEHWLUFAXcC4LHGGMBy.pwKYbYO', 'lid', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-05-07 07:40:37', 1, NULL, NULL, 0),
-	(33, 37, 'coninx_loes@hotmail.com', '$2y$12$SfWAHUrSbAQyC3oHrDvJB.jN8QUyDaVR2kZdfvYAVH2HS2LwMtdh2', 'lid', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-05-07 08:00:07', 1, NULL, NULL, 0),
-	(34, 38, 'dobbelaere.eva05@gmail.com', '$2y$12$WSJY6jq7fC4V0g9zvOhfzud.yKGXtLHPxtyjoOzNuza1PYOvmO4Ui', 'lid', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-05-07 08:07:23', 1, NULL, NULL, 0),
-	(35, 39, 'Simon.linsenbuehler@gmail.com', '$2y$12$sV88sljg/Apyh4fNOThhteStbq9pgg9w66f8IspLaryXPDp9mgkJu', 'lid', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-05-07 08:11:12', 1, NULL, NULL, 0),
-	(36, 40, 'julieclaus06@gmail.com', '$2y$12$VcG9ZT3zufbjaa20AemBQ.oHx2Tm4z40VL1XExMs7quLeD4GlA6o2', 'lid', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-05-07 08:28:37', 1, NULL, NULL, 0),
-	(37, 41, 'Liesbethchielens@live.be', '$2y$12$v7aYntWoi1DrtRodAiaBwu5JOJo3NYrQvQ2WPhoDFQrL2enGEA6uu', 'lid', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-05-07 08:32:13', 1, NULL, NULL, 0),
-	(38, 42, 'michbrouw@gmail.com', '$2y$12$5/P84JiftDL/pGu2YmG7ben173IopMDcPvoRdHs.EH5sE51RZUuoO', 'lid', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-05-07 08:59:21', 1, NULL, NULL, 0),
-	(39, 43, 'hannes.hugaert@detech.be', '$2y$12$2aN/XnbSoIZwBohpx6XG1OyI4.W4HLQEWV6ipBUP0j14gCZjkAaSe', 'lid', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-05-07 09:49:14', 1, NULL, NULL, 0),
-	(40, 44, 'hannes.hugaert@gmail.com', '$2y$12$CLezluB/zXhwBdxW2N52s.Zac1JF/Y45MYaObb7n6akCcqjoc1pYS', 'lid', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-05-07 09:52:04', 1, NULL, NULL, 0),
-	(41, 45, 'grosskarine01@gmail.com', '$2y$12$gqzsFZs/yaHZh7qEOgiCgeNfY4VFRaBcrHBl/ar4LUOrIKimT.xoe', 'lid', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-05-07 11:17:52', 1, NULL, NULL, 0),
-	(42, 46, 'annelieshaine@hotmail.com', '$2y$12$3OffhZ7k8.5LSaQ/jeW7jOE8Tv.ykEv9FMuube2jeGl2YzEOif..O', 'lid', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-05-07 11:28:43', 1, NULL, NULL, 0),
-	(43, 47, 'zoe.vanrode@gmail.com', '$2y$12$p1qpwIQ3iusaMxTcNGyBF.OQxErqBQ2eAiCC98VZJx6zkUqEeLoFa', 'lid', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-05-07 13:08:39', 1, NULL, NULL, 0),
-	(44, 48, 'bart@vanapenstad.be', '$2y$12$.P.ObJOUoYrrX0yIe4JjzO0IxruOMbkCFjptPMCfmBqE7l93iVObK', 'lid', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-05-07 13:40:19', 1, NULL, NULL, 0),
-	(45, 49, 'marleen_34@hotmail.com', '$2y$12$aRW0TOLtEOntjPYKFHiU5.dRwjhUjzQyq.TGTH4TjsU7iKRZJhKJK', 'lid', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-05-07 14:15:06', 1, NULL, NULL, 0),
-	(46, 50, 'rauspuk2007@gmail.com', '$2y$12$UnjTme0xkIxTXgO9AosjlOGPoyy7LvE7ztod0ITfG0z8NH.xXIpvm', 'lid', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-05-07 15:06:35', 1, NULL, NULL, 0),
-	(47, 51, 'lievedeloose@hotmail.com', '$2y$12$Yl7E4cceRKnkpwH/etDfweXl9tocGiehGciewyo8828QqcThA0B7e', 'lid', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-05-07 15:16:35', 1, NULL, NULL, 0),
-	(48, 52, 'michaelasmets.ms@gmail.com', '$2y$12$ybFTkwW3jXQopHEQyYeVwucawYVHjKt4kDGOsua.N.naAnNlcBWLa', 'lid', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-05-07 15:19:38', 1, NULL, NULL, 0),
-	(49, 53, 'laura.machiels@telenet.be', '$2y$12$Chya6eGPDTEIAeVfP0O32.opPIJQSDfGrNCBTp2giau2UT2BBRVJ2', 'lid', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-05-07 16:15:16', 1, NULL, NULL, 0),
-	(50, 54, 'jaimyvg17@outlook.com', '$2y$12$q35lLrST0wTKAXBws2RJ8uhhlOaFCDwulTN7oZRYlbDqWjScY/WU6', 'lid', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-05-07 17:37:08', 1, NULL, NULL, 0),
-	(51, 55, 'jolien.beerens1@gmail.com', '$2y$12$2nqfVWAqxRYT3t0K9E7EIOOA2Hdm5YAf7btrKjg4afcGOPUyH2N9C', 'lid', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-05-07 19:44:32', 1, NULL, NULL, 0),
-	(52, 56, 'elke.van.criekingen@pandora.be', '$2y$12$qM0ATvW/ZA8oKHJuWkrnxuZvRSsdAvPkcAgnrK/NwSJ3WetjnZBMe', 'lid', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-05-07 20:02:18', 1, NULL, NULL, 0),
-	(53, 57, 'anndeman80@gmail.com', '$2y$12$o/jXfFoCm9f7yMXyvP0YEOgSZz6K98p6PoOtrqBbh1D9Lmjkly.b2', 'lid', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-05-08 02:20:33', 1, NULL, NULL, 0),
-	(54, 58, 'aromagueragil@gmail.com', '$2y$12$4g3o88Aj.vbWmx19t8PxH.P6q1ktkhlj./HnYhEww0ojAoU6zcZ72', 'lid', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-05-08 12:48:30', 1, '9b6b9f3e08a6466d61f83bf60340f58c323d28854efdbce5a2ee5abefe1eb7ef', '2026-05-08 14:09:38', 0),
-	(55, 59, 'jeroenleyssen@gmail.com', '$2y$12$iqbYWtp3ssTBAedTPjDlYeulPn.fwufRsjumcFevy9Pgi6PqVEpAm', 'lid', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-05-08 12:56:55', 1, NULL, NULL, 0),
-	(56, 60, '9480.alejandro@gmail.com', '$2y$12$UyUtJ2gSB86GBTcF88EgauxIUeJBl8VBDBgWcyVx7vfG33JOXNN1S', 'lid', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-05-08 13:14:02', 1, NULL, NULL, 0),
-	(57, 61, 'wim.vangramberen@skynet.be', '$2y$12$Nw4VHGmN2Ot7AuAN9mUh0uSCVa9xqfAN2wZNildhirboJT.IG4QX.', 'lid', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-05-08 18:05:51', 1, NULL, NULL, 0),
-	(58, 62, 'elene@eleja.be', '$2y$12$QOA91RpWYAh.YGbXz6S2KOoHdSbueyitpo2EFFSVQT5Df489rpoh.', 'lid', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-05-08 18:12:46', 1, NULL, NULL, 0),
-	(59, 63, 'kira.meerts@gmail.com', '$2y$12$eT1/ZB0/B7slKjSvFKBD4OMYN34atsyfCbWJ4xA22XUXgBtMk7zCi', 'lid', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-05-09 11:19:24', 1, NULL, NULL, 0),
-	(60, 64, 'annelies_zaman@hotmail.com', '$2y$12$vhBLC5u0owoR2aWqQYJune7Rfh.8ySXlq2mPF3cxgq2C4Rd1t7IF2', 'lid', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-05-10 05:31:28', 1, NULL, NULL, 0),
-	(61, 65, 'yanacoeckelberghs@gmail.com', '$2y$12$8WuLxq8eeFg71agRSLs0z.8sI6VqoSyfrQBi3Ycn9AIuDfsr1lWO6', 'lid', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-05-10 07:50:38', 1, NULL, NULL, 0),
-	(62, 66, 'jessica_vandebosch@hotmail.com', '$2y$12$DmEEwCaLJAfupv6r1Tt0F.vs6ZMuC6aNHhjaN5SlxTO1ewJV2kBp2', 'lid', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-05-10 14:19:50', 1, NULL, NULL, 0),
-	(63, 67, 'celinedesmet28@Gmail.com', '$2y$12$gNXk4FVAl7DIztJ5UCJ0.OnCYn2bJ1YoGRFBd5PZ.d/IEb6FJhTQ.', 'lid', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-05-10 16:12:48', 1, NULL, NULL, 0),
-	(64, 68, 'ioannisfarmakis5@gmail.com', '$2y$12$KthMIQiQzybfoK58yiG8Dukxy.IyjGkXkeKKlZp8NDflqkckiLxhO', 'lid', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-05-10 19:44:25', 1, NULL, NULL, 0),
-	(65, 69, 'dirk.crauwels@skynet.be', '$2y$12$1NZAbXweACwRpjsJdcTyw.WubZ9SXLRsVFs.iYsNqoT/H11UDdKuW', 'lid', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-05-11 06:20:28', 1, NULL, NULL, 0),
-	(66, 70, 'hannelore.vdleyden@tsmmechelen.net', '$2y$12$qDklIMPyM3Fs6vXEsAgNz.Kfu3zHOH2E7X7y7NDloWA1jSuZttPbS', 'lid', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-05-11 12:36:13', 1, 'bf1bc213b0cc0a273229572bcc6aa1371221bb81fed68cb79167c00fb9f614c4', '2026-06-17 08:01:57', 0),
-	(67, 71, 'axelle.verstraeten@outlook.com', '$2y$12$I2XP7VMuqFFLGrK0cQy31uDfic2PlWl66ICycIQ3eF5yCi.LPCydS', 'lid', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-05-11 15:26:34', 1, NULL, NULL, 0),
-	(68, 72, 'emmawijndaele6@gmail.com', '$2y$12$oN09lwDruPGIv1dOiJh2pOH7YabRMYGOJwPDjj608wzOxQdsRFoPi', 'lid', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-05-11 15:45:24', 1, NULL, NULL, 0),
-	(69, 73, 'lousberghkevin@gmail.com', '$2y$12$fL6tM80w7QSIXnd5Aqxyj.UbdyVot3TcmZpteKadVr5sCDREz.M6i', 'lid', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-05-11 17:49:02', 1, '4a7f5a426bb9d5330c326575b68f1a9a1202f340dac2f97eb6882f8dcb231fa1', '2026-05-20 20:26:55', 0),
-	(70, 74, 'marc.van.den.broeck.67@telenet.be', '$2y$12$D27kEjPUf8MsnjmZ5J3K8es7i35yWIA2gkeY9D5RLnQ1eAtmgk832', 'lid', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-05-11 18:27:33', 1, NULL, NULL, 0),
-	(71, 75, 'johanvranken1@gmail.com', '$2y$12$uv8TrTQOdVE.V8doqG.FVu5sSF/J8sWqFygLehyNHtHKoW6ZkmfeW', 'lid', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-05-11 18:52:32', 1, 'd31cf503fc4ce83d293b2df7b01033b29a1fb5e1f9cdc4c1501abe9c5c870dd9', '2026-05-31 19:28:56', 0),
-	(72, 76, 'asia.soussi@hotmail.com', '$2y$12$GJ3qgcWmqqECrYWOkMCxH.TLfx8u5KKOQA299zLcxy.SdK2WhX7Sy', 'lid', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-05-11 18:53:56', 1, NULL, NULL, 0),
-	(73, 77, '001guy.dewit001@gmail.com', '$2y$12$Tji6sB1QTDcg15T3nvNAHujWLMBDEHBSVmSJXJ2ev/el4ZXPlnbsa', 'lid', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-05-12 16:10:08', 1, NULL, NULL, 0),
-	(74, 78, 'Johan.leers@hotmail.com', '$2y$12$Fzyqwt8rr5dJZDzKhl8Vj.VncrpylXqj3.NFG.s4luIGJq/y45uv2', 'lid', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-05-12 19:10:12', 1, NULL, NULL, 0),
-	(75, 79, 'robibjames17@gmail.com', '$2y$12$Cpe3oy5MwunVhCuheaS9Oe7kNMzYxdHp21fbjOD0QRF1hhaYCmCcm', 'lid', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-05-13 07:29:33', 1, NULL, NULL, 0),
-	(76, 80, 'kristin.de.leebeeck@gmail.com', '$2y$12$pjT.XKPBK2X7/Y2a2YOK.OnFv.0oUDmNXZLrNs8ylpFTjX6u/mIvy', 'lid', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-05-14 19:48:42', 1, NULL, NULL, 0),
-	(77, 81, 'vd.voorde.k99@gmail.com', '$2y$12$/6Ak3Oj8Lrxhcl26Qqx7Qu4WV4w7NyNo0HWes6qj1TY9WS9i3Hqoa', 'lid', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-05-15 15:55:28', 1, NULL, NULL, 0),
-	(78, 82, 'joppe.mouton@gmail.com', '$2y$12$ishIXmuEsXBLJPPt57Qlnuf4vWUXUFobCXIs63iXk3M6YxgHNYo26', 'lid', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-05-18 13:42:56', 1, NULL, NULL, 0),
-	(79, 83, 'yenno2005@gmail.com', '$2y$12$pz2FBkb1LxRm1D6VEUpm8uQJNNHsSs2Y4qdaJRm7NIC/l1sXy5ROy', 'lid', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-05-20 15:28:33', 1, NULL, NULL, 0),
-	(80, 84, 'edmond.stroobants@telenet.be', '$2y$12$meRmBii105lG3mlDdP6ld.DANmqrJz2c6SmVsBnLSEc2b2KMVtkBq', 'lid', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-05-21 17:46:33', 1, NULL, NULL, 0),
-	(81, 85, 'roan.stroobants@hotmail.com', '$2y$12$TSi18.Y7AFeWuPEhoRNd7eA5l4GRfDyA/c5mEJ4Lk08P4YQ4KT5U2', 'lid', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-05-21 17:48:39', 1, NULL, NULL, 0),
-	(82, 86, 'kitty.vanderstraeten@hotmail.com', '$2y$12$pDtsGXMAhGXCRszOhyIY3O.vER8Wp/SW5oBdm3zQUEJNdacjOX2tO', 'lid', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-05-22 05:17:28', 1, NULL, NULL, 0),
-	(83, 87, 'charlotte.dekimpe1@gmail.com', '$2y$12$Q9kfJ/djSpBUfmFER.2C8uY/HYb2pDTr9gHkzGWXgAGAnJtKqEVX6', 'lid', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-05-25 18:49:21', 1, NULL, NULL, 0),
-	(84, 88, 'remineimry03@gmail.com', '$2y$12$UXRzp8B9IwPEWigkOIkawewbhBmqK1woBkjxwLLGL/WYbhtF4W5sW', 'lid', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-05-26 15:07:26', 1, NULL, NULL, 0),
-	(85, 89, 'scarcezhugo@gmail.com', '$2y$12$x2QQIQi2fCwWU96pZkTwzOIkAQhK0I.9dH6RyWvQed8FX7Sq./KjC', 'lid', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-05-26 15:22:06', 1, NULL, NULL, 0),
-	(86, 90, 'sander.callaert@telenet.be', '$2y$12$oQ3S23SOc.mLEhAMroRckO74DKcGNri6WJBTtZEDI5zTwKdCUQZGi', 'lid', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-05-26 15:32:09', 1, NULL, NULL, 0),
-	(87, 91, 'dbniels@hotmail.com', '$2y$12$m1ynAx08VZ1PvYGcdNs1/e5lnRWy0/dS6cKec1QqFWe8sdrppNr5i', 'lid', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-05-26 15:38:23', 1, '2d574ca6f7af2b3ad9594026e4cac65bc625a64a35bc525cfe4a9a8b6735d258', '2026-05-26 16:39:35', 0),
-	(88, 92, 'germainbesonhe@gmail.com', '$2y$12$juXjiJcrGRdHYxKwoXwakOaNxPzoxLxH1jTtGoetoa.cwQOXuGcFK', 'lid', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-05-26 15:43:27', 1, NULL, NULL, 0),
-	(89, 93, 'lana.callaert@gmail.com', '$2y$12$YER6F7c1h1.m3AfGpKtTfuv3uaoQPEDakOUi12SFvr.iNFyei7dYW', 'lid', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-05-26 15:50:18', 1, NULL, NULL, 0),
-	(90, 94, 'mayaaudenaert@gmail.com', '$2y$12$FFP8SwY0CV.xcLLK68Euo.0w8Pu3QxsOK1ajEc94SxsGNO/HXvxPO', 'lid', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-05-26 16:45:11', 1, NULL, NULL, 0),
-	(91, 95, 'evy.pepermans@telenet.be', '$2y$12$L97dlcPEKqR306CHCj1DaeqRPAEGKd9eh77ZWZA/GgmtrBTEG9kIS', 'lid', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-05-26 20:36:34', 1, NULL, NULL, 0),
-	(92, 96, 'karadepauw@gmail.com', '$2y$12$re2OIuOuDzjSGmyXMB.Ku.gjyd1qO9g5U2VqrR.cRWnWwMAX/LVt2', 'lid', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-05-27 07:28:11', 1, NULL, NULL, 0),
-	(93, 97, 'wout99@live.be', '$2y$12$PAgQJZpouXBfXaPwnAogc.DhCd18RS8YWzoDttkeR3XxnHAjGQw1W', 'lid', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-05-27 08:48:53', 1, NULL, NULL, 0),
-	(94, 98, 'jeroen_vandelaer@hotmail.com', '$2y$12$T9Arv9Ctk27A2iRg1dbzK.Ev4ezM650Nuh2IC7.XBw8qVmovAtpWi', 'lid', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-05-27 09:58:06', 1, NULL, NULL, 0),
-	(95, 99, 'sandyroscam83@hotmail.com', '$2y$12$2eY1fNFhcEaE5UpqdopB.Om6EAaN9cRq25TV6scU2WI9/uqXBMCyq', 'lid', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-05-27 19:00:12', 1, NULL, NULL, 0),
-	(96, 100, 'klaasvandenberghe@proton.me', '$2y$12$HiJVimIYQwJRPQ7qnb6IVOKkgH0CuVu3YyWu4KfDm2yjphB1vwP0q', 'lid', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-05-30 18:22:57', 1, NULL, NULL, 0),
-	(97, 101, 'blood_element@hotmail.be', '$2y$12$XD.fRneDDww1KBzUQ9Vkc.dPSR3x8TM76aAKQBFGioA50ZLcs2lty', 'lid', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-06-01 04:12:13', 1, NULL, NULL, 0),
-	(98, 102, 'evanreempts@hotmail.com', '$2y$12$edIfRCndNzqe9yyhCoFwOumQJbCKIgOOoxpnMdd5BFVGLXVsCfOVC', 'lid', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-06-02 08:52:27', 1, NULL, NULL, 0),
-	(99, 103, 'sander.michiels@icloud.com', '$2y$12$W11wDi1aRrWB3mxeHRejTe2CBJlevBTHboiydmJa9ZI5glisfAWte', 'lid', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-06-06 18:55:15', 1, NULL, NULL, 0),
-	(100, 104, 'jaimie.vinmat@gmail.com', '$2y$12$GaCj4d.Gfwi5i8ORRXHxDeaxCyTLIs7vrY.pyDp4HcdHyqHcU/Aa.', 'lid', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-06-09 13:27:38', 1, NULL, NULL, 0),
-	(101, 105, 'tresje2400@gmail.com', '$2y$12$eVW7cYAMwhG9fG1HTbRKu.51vDGBQy424WH3okws7QjU8qtyk6Q96', 'lid', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-06-13 14:56:32', 1, NULL, NULL, 0),
-	(102, 106, 'aligatro.a.l.i@gmail.com', '$2y$12$hD7Vfc6nf6DoBZehegJ4.ut4wuhQu0A4pFowkYgSNygPGzQEEejcm', 'lid', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-06-25 16:29:41', 1, NULL, NULL, 0),
-	(103, 107, 'sophiedeckmyn@hotmail.com', '$2y$12$zvY55X3hiAblVMgHo4FxOeRTbF12XdcwgxjhqoqrOWYdrjiN2lhqG', 'lid', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-06-26 07:25:41', 1, NULL, NULL, 0),
-	(104, 108, 'Sara.Wellens@hotmail.com', '$2y$12$KqThcd0yBwn7V4/08CPhCuiLRPA0suQm0Usfo6RXC1mgioU.eJ3my', 'lid', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-06-26 11:18:20', 1, NULL, NULL, 0),
-	(105, 109, 'yannickheremans@icloud.com', '$2y$12$OeIlUwYDpQFzvWXUV476R.gCopMBJVIx9iSX9TcbdhZDDx4HAR4Wq', 'lid', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-06-26 13:57:34', 1, NULL, NULL, 0),
-	(106, 110, 'Maya.ghysels@telenet.be', '$2y$12$1uNJGIwfAG4UYoLmIxAtnejlagZsj9RYOh5hSD8NSKaWZ02gKtWDC', 'lid', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-06-26 14:19:45', 1, NULL, NULL, 0),
-	(107, 111, 'tygo.bamps@outlook.com', '$2y$12$RiMTMVs0tjDhtr2lUngHFOrVvVYGFOWPnPdOXtrpY6Tm1Y8ufairu', 'lid', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-06-29 11:25:42', 1, NULL, NULL, 0),
-	(108, 112, 'zoeschepens9@gmail.com', '$2y$12$eV7FVdvtUMB4pFP9aPZ9SeyVi/YGNbeh1h5kLhjm.bc3QGcnVuHt6', 'lid', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-06-29 11:42:57', 1, NULL, NULL, 0),
-	(109, 113, 'arthuranthony2610@gmail.com', '$2y$12$WFZAC1xGyq4Zm5Vei/mdr.wKvLun/CrsmImC4pA09u3zdI9wXmJqa', 'lid', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-06-29 14:57:48', 1, NULL, NULL, 0),
-	(110, 114, 'dewitnoe@gmail.com', '$2y$12$NKxqJOkEm80e6OmHTTv3HuXcqZrHfDgR7XRUxbR1ApwGZGHcMXdfO', 'admin', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-06-30 11:54:48', 1, NULL, NULL, 0),
-	(111, 116, 'dimitri.peeters10@gmail.com', '$2y$12$OJwM.NuAZUArvSWa/9OkquOIRQdP.tPd5eRPHlpC4oucAFqSue2MG', 'lid', 'goedgekeurd', '2026-07-23 23:59:36', 1, '2026-07-23 21:40:36', 1, NULL, NULL, 0),
-	(112, 117, 'd.peeters@procertus.be', '$2y$12$7zVlURh2LUZAaxayoSgs5Oc.B9TyYifxTBpCekLxAorxnS.AmNcqW', 'lid', 'goedgekeurd', '2026-07-24 00:07:11', 1, '2026-07-23 22:02:00', 1, NULL, NULL, 0);
+--
+-- Dumping data for table `gebruikers`
+--
 
--- Structuur van  tabel aefs_v2.groepen wordt geschreven
-CREATE TABLE IF NOT EXISTS `groepen` (
+LOCK TABLES `gebruikers` WRITE;
+/*!40000 ALTER TABLE `gebruikers` DISABLE KEYS */;
+INSERT INTO `gebruikers` VALUES (1,3,'admin@alleventsforeversure.be','$2y$12$m2cYb/PsWOlreGio7rdKQuYi4MLB.eps7GDVRF4EfU3jz6dmwSTRq','admin','goedgekeurd','2026-07-23 23:59:36',1,'2026-01-08 13:09:32',0,NULL,NULL,0),(14,18,'kenny.verhasselt@gmail.com','$2y$12$hJFim0cm2cdoBbnZ7dcpBepUqAEA9jVlzYXFKOjpoMx3rDgkGhU5i','admin','goedgekeurd','2026-07-23 23:59:36',1,'2026-01-10 14:00:41',0,NULL,NULL,0),(15,19,'dimitri.peeters3@telenet.be','$2y$12$5mJ5xkjF5e5CZU8wvL5KYOYzgL/FXuKFcdj3GhSZw7UmGeac7mKIa','admin','goedgekeurd','2026-07-23 23:59:36',1,'2026-01-10 14:01:44',0,NULL,NULL,0),(16,20,'nico.laeremans83@gmail.com','$2y$12$C7WRUo0504p0RidcNd9EQuBq0cPVTH0BlmedYypCrPvMYl8QsP4.u','admin','goedgekeurd','2026-07-23 23:59:36',1,'2026-01-10 16:04:16',0,NULL,NULL,0),(17,21,'renskedauwe@gmail.com','$2y$12$gbLWXV9MAHEixeRqhLEv5.R.RQa4HoY.5Mw0k/lVcvz61./EI1tTW','admin','goedgekeurd','2026-07-23 23:59:36',1,'2026-01-10 19:20:53',0,NULL,NULL,0),(18,22,'chari.garcia@telenet.be','$2y$12$Zg0ii10FTHUXvUXJm2LaV.y6prK9tMzcAzqcQnU.V8kPXCr1q2rhC','lid','goedgekeurd','2026-07-23 23:59:36',1,'2026-02-25 20:50:54',1,NULL,NULL,0),(19,23,'notenbaert.chloe2@gmail.com','$2y$12$Y8pwXRd2p93OS8.L4t1V5.j/y067PnWPH8RFNzMZdMwImKQzhCDWu','lid','goedgekeurd','2026-07-23 23:59:36',1,'2026-05-07 06:52:53',1,NULL,NULL,0),(20,24,'melissa.gomezsanchez@gmail.com','$2y$12$RRWfH6bhKmNvbeb5mx5M/uiYvhP/BtQi1wbVeytwTuAwOZAewQqQC','lid','goedgekeurd','2026-07-23 23:59:36',1,'2026-05-07 06:53:56',1,NULL,NULL,0),(21,25,'amber.vangramberen@gmail.com','$2y$12$Kxob2Hc0nuYSx.l42ebr5OcHZOsttjLDTZaaTnh5mv.KLv1g/hcdu','lid','goedgekeurd','2026-07-23 23:59:36',1,'2026-05-07 06:54:23',1,NULL,NULL,0),(22,26,'sylvia.de.weerdt@gmail.com','$2y$12$bmnvzbGIBWS7Zfeegxa1IOPaunM0rmAuX8Me8G/bhQtih6.huPUZO','lid','goedgekeurd','2026-07-23 23:59:36',1,'2026-05-07 06:55:08',1,NULL,NULL,0),(23,27,'roslaycv@hotmail.com','$2y$12$gO8KjJrMhStv9TgezSvmuuhiBrcTTkvTsNy5MuDsUlFyseRxtgXHe','lid','goedgekeurd','2026-07-23 23:59:36',1,'2026-05-07 07:04:15',1,NULL,NULL,0),(24,28,'dkieseko@its.jnj.com','$2y$12$swysYyj7T2MgqNkAKLh2WubaZjV2ySnLDiavjQUAkvvSlwzsJx7PO','lid','goedgekeurd','2026-07-23 23:59:36',1,'2026-05-07 07:18:32',1,NULL,NULL,0),(25,29,'erika.verstreken@telenet.be','$2y$12$ZancLJK5T3eCij//rR21kemKQPTKZAxG1yvoafWEIWuCN1Y3XrTKS','lid','goedgekeurd','2026-07-23 23:59:36',1,'2026-05-07 07:19:52',1,NULL,NULL,0),(26,30,'kaat.paternoster1@gmail.com','$2y$12$.i9TT0.BTaPk9kY5Wual0OtmS766eQzwTTdcfuiFzI/3m2rIBDbUu','lid','goedgekeurd','2026-07-23 23:59:36',1,'2026-05-07 07:21:55',1,NULL,NULL,0),(27,31,'ellen.bossuyt1980@gmail.com','$2y$12$M9wVCRUPLU6D/wO17hNkKeg7txe11XzuBL15FoCvahsZME/ziWnlW','lid','goedgekeurd','2026-07-23 23:59:36',1,'2026-05-07 07:22:45',1,NULL,NULL,0),(28,32,'meertwesley@gmail.com','$2y$12$/WwRN2q43Ir8cgh8iVB0le93r3KFz0j/.8aI/x4wRxO9w9hZnASIO','lid','goedgekeurd','2026-07-23 23:59:36',1,'2026-05-07 07:22:46',1,NULL,NULL,0),(29,33,'birthepardon@gmail.com','$2y$12$gb9UoV.bxr3EirniaY92nO0Y2dGl4KW1HxQDYjxg5Xt72gqyratzu','lid','goedgekeurd','2026-07-23 23:59:36',1,'2026-05-07 07:32:42',1,NULL,NULL,0),(30,34,'chloe.vlamynck@hotmail.com','$2y$12$SUEyJAi2.n0XrhW5uu8lMuvJ1hi4R.yVoeUNdxJErhm.MjAMWkNAK','lid','goedgekeurd','2026-07-23 23:59:36',1,'2026-05-07 07:32:48',1,NULL,NULL,0),(32,36,'ilselaeremans@hotmail.com','$2y$12$ebV9n2Xr.yf.CdXxpyXzeOooRxgEHWLUFAXcC4LHGGMBy.pwKYbYO','lid','goedgekeurd','2026-07-23 23:59:36',1,'2026-05-07 07:40:37',1,NULL,NULL,0),(33,37,'coninx_loes@hotmail.com','$2y$12$SfWAHUrSbAQyC3oHrDvJB.jN8QUyDaVR2kZdfvYAVH2HS2LwMtdh2','lid','goedgekeurd','2026-07-23 23:59:36',1,'2026-05-07 08:00:07',1,NULL,NULL,0),(34,38,'dobbelaere.eva05@gmail.com','$2y$12$WSJY6jq7fC4V0g9zvOhfzud.yKGXtLHPxtyjoOzNuza1PYOvmO4Ui','lid','goedgekeurd','2026-07-23 23:59:36',1,'2026-05-07 08:07:23',1,NULL,NULL,0),(35,39,'Simon.linsenbuehler@gmail.com','$2y$12$sV88sljg/Apyh4fNOThhteStbq9pgg9w66f8IspLaryXPDp9mgkJu','lid','goedgekeurd','2026-07-23 23:59:36',1,'2026-05-07 08:11:12',1,NULL,NULL,0),(36,40,'julieclaus06@gmail.com','$2y$12$VcG9ZT3zufbjaa20AemBQ.oHx2Tm4z40VL1XExMs7quLeD4GlA6o2','lid','goedgekeurd','2026-07-23 23:59:36',1,'2026-05-07 08:28:37',1,NULL,NULL,0),(37,41,'Liesbethchielens@live.be','$2y$12$v7aYntWoi1DrtRodAiaBwu5JOJo3NYrQvQ2WPhoDFQrL2enGEA6uu','lid','goedgekeurd','2026-07-23 23:59:36',1,'2026-05-07 08:32:13',1,NULL,NULL,0),(38,42,'michbrouw@gmail.com','$2y$12$5/P84JiftDL/pGu2YmG7ben173IopMDcPvoRdHs.EH5sE51RZUuoO','lid','goedgekeurd','2026-07-23 23:59:36',1,'2026-05-07 08:59:21',1,NULL,NULL,0),(39,43,'hannes.hugaert@detech.be','$2y$12$2aN/XnbSoIZwBohpx6XG1OyI4.W4HLQEWV6ipBUP0j14gCZjkAaSe','lid','goedgekeurd','2026-07-23 23:59:36',1,'2026-05-07 09:49:14',1,NULL,NULL,0),(40,44,'hannes.hugaert@gmail.com','$2y$12$CLezluB/zXhwBdxW2N52s.Zac1JF/Y45MYaObb7n6akCcqjoc1pYS','lid','goedgekeurd','2026-07-23 23:59:36',1,'2026-05-07 09:52:04',1,NULL,NULL,0),(41,45,'grosskarine01@gmail.com','$2y$12$gqzsFZs/yaHZh7qEOgiCgeNfY4VFRaBcrHBl/ar4LUOrIKimT.xoe','lid','goedgekeurd','2026-07-23 23:59:36',1,'2026-05-07 11:17:52',1,NULL,NULL,0),(42,46,'annelieshaine@hotmail.com','$2y$12$3OffhZ7k8.5LSaQ/jeW7jOE8Tv.ykEv9FMuube2jeGl2YzEOif..O','lid','goedgekeurd','2026-07-23 23:59:36',1,'2026-05-07 11:28:43',1,NULL,NULL,0),(43,47,'zoe.vanrode@gmail.com','$2y$12$p1qpwIQ3iusaMxTcNGyBF.OQxErqBQ2eAiCC98VZJx6zkUqEeLoFa','lid','goedgekeurd','2026-07-23 23:59:36',1,'2026-05-07 13:08:39',1,NULL,NULL,0),(44,48,'bart@vanapenstad.be','$2y$12$.P.ObJOUoYrrX0yIe4JjzO0IxruOMbkCFjptPMCfmBqE7l93iVObK','lid','goedgekeurd','2026-07-23 23:59:36',1,'2026-05-07 13:40:19',1,NULL,NULL,0),(45,49,'marleen_34@hotmail.com','$2y$12$aRW0TOLtEOntjPYKFHiU5.dRwjhUjzQyq.TGTH4TjsU7iKRZJhKJK','lid','goedgekeurd','2026-07-23 23:59:36',1,'2026-05-07 14:15:06',1,NULL,NULL,0),(46,50,'rauspuk2007@gmail.com','$2y$12$UnjTme0xkIxTXgO9AosjlOGPoyy7LvE7ztod0ITfG0z8NH.xXIpvm','lid','goedgekeurd','2026-07-23 23:59:36',1,'2026-05-07 15:06:35',1,NULL,NULL,0),(47,51,'lievedeloose@hotmail.com','$2y$12$Yl7E4cceRKnkpwH/etDfweXl9tocGiehGciewyo8828QqcThA0B7e','lid','goedgekeurd','2026-07-23 23:59:36',1,'2026-05-07 15:16:35',1,NULL,NULL,0),(48,52,'michaelasmets.ms@gmail.com','$2y$12$ybFTkwW3jXQopHEQyYeVwucawYVHjKt4kDGOsua.N.naAnNlcBWLa','lid','goedgekeurd','2026-07-23 23:59:36',1,'2026-05-07 15:19:38',1,NULL,NULL,0),(49,53,'laura.machiels@telenet.be','$2y$12$Chya6eGPDTEIAeVfP0O32.opPIJQSDfGrNCBTp2giau2UT2BBRVJ2','lid','goedgekeurd','2026-07-23 23:59:36',1,'2026-05-07 16:15:16',1,NULL,NULL,0),(50,54,'jaimyvg17@outlook.com','$2y$12$q35lLrST0wTKAXBws2RJ8uhhlOaFCDwulTN7oZRYlbDqWjScY/WU6','lid','goedgekeurd','2026-07-23 23:59:36',1,'2026-05-07 17:37:08',1,NULL,NULL,0),(51,55,'jolien.beerens1@gmail.com','$2y$12$2nqfVWAqxRYT3t0K9E7EIOOA2Hdm5YAf7btrKjg4afcGOPUyH2N9C','lid','goedgekeurd','2026-07-23 23:59:36',1,'2026-05-07 19:44:32',1,NULL,NULL,0),(52,56,'elke.van.criekingen@pandora.be','$2y$12$qM0ATvW/ZA8oKHJuWkrnxuZvRSsdAvPkcAgnrK/NwSJ3WetjnZBMe','lid','goedgekeurd','2026-07-23 23:59:36',1,'2026-05-07 20:02:18',1,NULL,NULL,0),(53,57,'anndeman80@gmail.com','$2y$12$o/jXfFoCm9f7yMXyvP0YEOgSZz6K98p6PoOtrqBbh1D9Lmjkly.b2','lid','goedgekeurd','2026-07-23 23:59:36',1,'2026-05-08 02:20:33',1,NULL,NULL,0),(54,58,'aromagueragil@gmail.com','$2y$12$4g3o88Aj.vbWmx19t8PxH.P6q1ktkhlj./HnYhEww0ojAoU6zcZ72','lid','goedgekeurd','2026-07-23 23:59:36',1,'2026-05-08 12:48:30',1,'9b6b9f3e08a6466d61f83bf60340f58c323d28854efdbce5a2ee5abefe1eb7ef','2026-05-08 14:09:38',0),(55,59,'jeroenleyssen@gmail.com','$2y$12$iqbYWtp3ssTBAedTPjDlYeulPn.fwufRsjumcFevy9Pgi6PqVEpAm','lid','goedgekeurd','2026-07-23 23:59:36',1,'2026-05-08 12:56:55',1,NULL,NULL,0),(56,60,'9480.alejandro@gmail.com','$2y$12$UyUtJ2gSB86GBTcF88EgauxIUeJBl8VBDBgWcyVx7vfG33JOXNN1S','lid','goedgekeurd','2026-07-23 23:59:36',1,'2026-05-08 13:14:02',1,NULL,NULL,0),(57,61,'wim.vangramberen@skynet.be','$2y$12$Nw4VHGmN2Ot7AuAN9mUh0uSCVa9xqfAN2wZNildhirboJT.IG4QX.','lid','goedgekeurd','2026-07-23 23:59:36',1,'2026-05-08 18:05:51',1,NULL,NULL,0),(58,62,'elene@eleja.be','$2y$12$QOA91RpWYAh.YGbXz6S2KOoHdSbueyitpo2EFFSVQT5Df489rpoh.','lid','goedgekeurd','2026-07-23 23:59:36',1,'2026-05-08 18:12:46',1,NULL,NULL,0),(59,63,'kira.meerts@gmail.com','$2y$12$eT1/ZB0/B7slKjSvFKBD4OMYN34atsyfCbWJ4xA22XUXgBtMk7zCi','lid','goedgekeurd','2026-07-23 23:59:36',1,'2026-05-09 11:19:24',1,NULL,NULL,0),(60,64,'annelies_zaman@hotmail.com','$2y$12$vhBLC5u0owoR2aWqQYJune7Rfh.8ySXlq2mPF3cxgq2C4Rd1t7IF2','lid','goedgekeurd','2026-07-23 23:59:36',1,'2026-05-10 05:31:28',1,NULL,NULL,0),(61,65,'yanacoeckelberghs@gmail.com','$2y$12$8WuLxq8eeFg71agRSLs0z.8sI6VqoSyfrQBi3Ycn9AIuDfsr1lWO6','lid','goedgekeurd','2026-07-23 23:59:36',1,'2026-05-10 07:50:38',1,NULL,NULL,0),(62,66,'jessica_vandebosch@hotmail.com','$2y$12$DmEEwCaLJAfupv6r1Tt0F.vs6ZMuC6aNHhjaN5SlxTO1ewJV2kBp2','lid','goedgekeurd','2026-07-23 23:59:36',1,'2026-05-10 14:19:50',1,NULL,NULL,0),(63,67,'celinedesmet28@Gmail.com','$2y$12$gNXk4FVAl7DIztJ5UCJ0.OnCYn2bJ1YoGRFBd5PZ.d/IEb6FJhTQ.','lid','goedgekeurd','2026-07-23 23:59:36',1,'2026-05-10 16:12:48',1,NULL,NULL,0),(64,68,'ioannisfarmakis5@gmail.com','$2y$12$KthMIQiQzybfoK58yiG8Dukxy.IyjGkXkeKKlZp8NDflqkckiLxhO','lid','goedgekeurd','2026-07-23 23:59:36',1,'2026-05-10 19:44:25',1,NULL,NULL,0),(65,69,'dirk.crauwels@skynet.be','$2y$12$1NZAbXweACwRpjsJdcTyw.WubZ9SXLRsVFs.iYsNqoT/H11UDdKuW','lid','goedgekeurd','2026-07-23 23:59:36',1,'2026-05-11 06:20:28',1,NULL,NULL,0),(66,70,'hannelore.vdleyden@tsmmechelen.net','$2y$12$qDklIMPyM3Fs6vXEsAgNz.Kfu3zHOH2E7X7y7NDloWA1jSuZttPbS','lid','goedgekeurd','2026-07-23 23:59:36',1,'2026-05-11 12:36:13',1,'bf1bc213b0cc0a273229572bcc6aa1371221bb81fed68cb79167c00fb9f614c4','2026-06-17 08:01:57',0),(67,71,'axelle.verstraeten@outlook.com','$2y$12$I2XP7VMuqFFLGrK0cQy31uDfic2PlWl66ICycIQ3eF5yCi.LPCydS','lid','goedgekeurd','2026-07-23 23:59:36',1,'2026-05-11 15:26:34',1,NULL,NULL,0),(68,72,'emmawijndaele6@gmail.com','$2y$12$oN09lwDruPGIv1dOiJh2pOH7YabRMYGOJwPDjj608wzOxQdsRFoPi','lid','goedgekeurd','2026-07-23 23:59:36',1,'2026-05-11 15:45:24',1,NULL,NULL,0),(69,73,'lousberghkevin@gmail.com','$2y$12$fL6tM80w7QSIXnd5Aqxyj.UbdyVot3TcmZpteKadVr5sCDREz.M6i','lid','goedgekeurd','2026-07-23 23:59:36',1,'2026-05-11 17:49:02',1,'4a7f5a426bb9d5330c326575b68f1a9a1202f340dac2f97eb6882f8dcb231fa1','2026-05-20 20:26:55',0),(70,74,'marc.van.den.broeck.67@telenet.be','$2y$12$D27kEjPUf8MsnjmZ5J3K8es7i35yWIA2gkeY9D5RLnQ1eAtmgk832','lid','goedgekeurd','2026-07-23 23:59:36',1,'2026-05-11 18:27:33',1,NULL,NULL,0),(71,75,'johanvranken1@gmail.com','$2y$12$uv8TrTQOdVE.V8doqG.FVu5sSF/J8sWqFygLehyNHtHKoW6ZkmfeW','lid','goedgekeurd','2026-07-23 23:59:36',1,'2026-05-11 18:52:32',1,'d31cf503fc4ce83d293b2df7b01033b29a1fb5e1f9cdc4c1501abe9c5c870dd9','2026-05-31 19:28:56',0),(72,76,'asia.soussi@hotmail.com','$2y$12$GJ3qgcWmqqECrYWOkMCxH.TLfx8u5KKOQA299zLcxy.SdK2WhX7Sy','lid','goedgekeurd','2026-07-23 23:59:36',1,'2026-05-11 18:53:56',1,NULL,NULL,0),(73,77,'001guy.dewit001@gmail.com','$2y$12$Tji6sB1QTDcg15T3nvNAHujWLMBDEHBSVmSJXJ2ev/el4ZXPlnbsa','lid','goedgekeurd','2026-07-23 23:59:36',1,'2026-05-12 16:10:08',1,NULL,NULL,0),(74,78,'Johan.leers@hotmail.com','$2y$12$Fzyqwt8rr5dJZDzKhl8Vj.VncrpylXqj3.NFG.s4luIGJq/y45uv2','lid','goedgekeurd','2026-07-23 23:59:36',1,'2026-05-12 19:10:12',1,NULL,NULL,0),(75,79,'robibjames17@gmail.com','$2y$12$Cpe3oy5MwunVhCuheaS9Oe7kNMzYxdHp21fbjOD0QRF1hhaYCmCcm','lid','goedgekeurd','2026-07-23 23:59:36',1,'2026-05-13 07:29:33',1,NULL,NULL,0),(76,80,'kristin.de.leebeeck@gmail.com','$2y$12$pjT.XKPBK2X7/Y2a2YOK.OnFv.0oUDmNXZLrNs8ylpFTjX6u/mIvy','lid','goedgekeurd','2026-07-23 23:59:36',1,'2026-05-14 19:48:42',1,NULL,NULL,0),(77,81,'vd.voorde.k99@gmail.com','$2y$12$/6Ak3Oj8Lrxhcl26Qqx7Qu4WV4w7NyNo0HWes6qj1TY9WS9i3Hqoa','lid','goedgekeurd','2026-07-23 23:59:36',1,'2026-05-15 15:55:28',1,NULL,NULL,0),(78,82,'joppe.mouton@gmail.com','$2y$12$ishIXmuEsXBLJPPt57Qlnuf4vWUXUFobCXIs63iXk3M6YxgHNYo26','lid','goedgekeurd','2026-07-23 23:59:36',1,'2026-05-18 13:42:56',1,NULL,NULL,0),(79,83,'yenno2005@gmail.com','$2y$12$pz2FBkb1LxRm1D6VEUpm8uQJNNHsSs2Y4qdaJRm7NIC/l1sXy5ROy','lid','goedgekeurd','2026-07-23 23:59:36',1,'2026-05-20 15:28:33',1,NULL,NULL,0),(80,84,'edmond.stroobants@telenet.be','$2y$12$meRmBii105lG3mlDdP6ld.DANmqrJz2c6SmVsBnLSEc2b2KMVtkBq','lid','goedgekeurd','2026-07-23 23:59:36',1,'2026-05-21 17:46:33',1,NULL,NULL,0),(81,85,'roan.stroobants@hotmail.com','$2y$12$TSi18.Y7AFeWuPEhoRNd7eA5l4GRfDyA/c5mEJ4Lk08P4YQ4KT5U2','lid','goedgekeurd','2026-07-23 23:59:36',1,'2026-05-21 17:48:39',1,NULL,NULL,0),(82,86,'kitty.vanderstraeten@hotmail.com','$2y$12$pDtsGXMAhGXCRszOhyIY3O.vER8Wp/SW5oBdm3zQUEJNdacjOX2tO','lid','goedgekeurd','2026-07-23 23:59:36',1,'2026-05-22 05:17:28',1,NULL,NULL,0),(83,87,'charlotte.dekimpe1@gmail.com','$2y$12$Q9kfJ/djSpBUfmFER.2C8uY/HYb2pDTr9gHkzGWXgAGAnJtKqEVX6','lid','goedgekeurd','2026-07-23 23:59:36',1,'2026-05-25 18:49:21',1,NULL,NULL,0),(84,88,'remineimry03@gmail.com','$2y$12$UXRzp8B9IwPEWigkOIkawewbhBmqK1woBkjxwLLGL/WYbhtF4W5sW','lid','goedgekeurd','2026-07-23 23:59:36',1,'2026-05-26 15:07:26',1,NULL,NULL,0),(85,89,'scarcezhugo@gmail.com','$2y$12$x2QQIQi2fCwWU96pZkTwzOIkAQhK0I.9dH6RyWvQed8FX7Sq./KjC','lid','goedgekeurd','2026-07-23 23:59:36',1,'2026-05-26 15:22:06',1,NULL,NULL,0),(86,90,'sander.callaert@telenet.be','$2y$12$oQ3S23SOc.mLEhAMroRckO74DKcGNri6WJBTtZEDI5zTwKdCUQZGi','lid','goedgekeurd','2026-07-23 23:59:36',1,'2026-05-26 15:32:09',1,NULL,NULL,0),(87,91,'dbniels@hotmail.com','$2y$12$m1ynAx08VZ1PvYGcdNs1/e5lnRWy0/dS6cKec1QqFWe8sdrppNr5i','lid','goedgekeurd','2026-07-23 23:59:36',1,'2026-05-26 15:38:23',1,'2d574ca6f7af2b3ad9594026e4cac65bc625a64a35bc525cfe4a9a8b6735d258','2026-05-26 16:39:35',0),(88,92,'germainbesonhe@gmail.com','$2y$12$juXjiJcrGRdHYxKwoXwakOaNxPzoxLxH1jTtGoetoa.cwQOXuGcFK','lid','goedgekeurd','2026-07-23 23:59:36',1,'2026-05-26 15:43:27',1,NULL,NULL,0),(89,93,'lana.callaert@gmail.com','$2y$12$YER6F7c1h1.m3AfGpKtTfuv3uaoQPEDakOUi12SFvr.iNFyei7dYW','lid','goedgekeurd','2026-07-23 23:59:36',1,'2026-05-26 15:50:18',1,NULL,NULL,0),(90,94,'mayaaudenaert@gmail.com','$2y$12$FFP8SwY0CV.xcLLK68Euo.0w8Pu3QxsOK1ajEc94SxsGNO/HXvxPO','lid','goedgekeurd','2026-07-23 23:59:36',1,'2026-05-26 16:45:11',1,NULL,NULL,0),(91,95,'evy.pepermans@telenet.be','$2y$12$L97dlcPEKqR306CHCj1DaeqRPAEGKd9eh77ZWZA/GgmtrBTEG9kIS','lid','goedgekeurd','2026-07-23 23:59:36',1,'2026-05-26 20:36:34',1,NULL,NULL,0),(92,96,'karadepauw@gmail.com','$2y$12$re2OIuOuDzjSGmyXMB.Ku.gjyd1qO9g5U2VqrR.cRWnWwMAX/LVt2','lid','goedgekeurd','2026-07-23 23:59:36',1,'2026-05-27 07:28:11',1,NULL,NULL,0),(93,97,'wout99@live.be','$2y$12$PAgQJZpouXBfXaPwnAogc.DhCd18RS8YWzoDttkeR3XxnHAjGQw1W','lid','goedgekeurd','2026-07-23 23:59:36',1,'2026-05-27 08:48:53',1,NULL,NULL,0),(94,98,'jeroen_vandelaer@hotmail.com','$2y$12$T9Arv9Ctk27A2iRg1dbzK.Ev4ezM650Nuh2IC7.XBw8qVmovAtpWi','lid','goedgekeurd','2026-07-23 23:59:36',1,'2026-05-27 09:58:06',1,NULL,NULL,0),(95,99,'sandyroscam83@hotmail.com','$2y$12$2eY1fNFhcEaE5UpqdopB.Om6EAaN9cRq25TV6scU2WI9/uqXBMCyq','lid','goedgekeurd','2026-07-23 23:59:36',1,'2026-05-27 19:00:12',1,NULL,NULL,0),(96,100,'klaasvandenberghe@proton.me','$2y$12$HiJVimIYQwJRPQ7qnb6IVOKkgH0CuVu3YyWu4KfDm2yjphB1vwP0q','lid','goedgekeurd','2026-07-23 23:59:36',1,'2026-05-30 18:22:57',1,NULL,NULL,0),(97,101,'blood_element@hotmail.be','$2y$12$XD.fRneDDww1KBzUQ9Vkc.dPSR3x8TM76aAKQBFGioA50ZLcs2lty','lid','goedgekeurd','2026-07-23 23:59:36',1,'2026-06-01 04:12:13',1,NULL,NULL,0),(98,102,'evanreempts@hotmail.com','$2y$12$edIfRCndNzqe9yyhCoFwOumQJbCKIgOOoxpnMdd5BFVGLXVsCfOVC','lid','goedgekeurd','2026-07-23 23:59:36',1,'2026-06-02 08:52:27',1,NULL,NULL,0),(99,103,'sander.michiels@icloud.com','$2y$12$W11wDi1aRrWB3mxeHRejTe2CBJlevBTHboiydmJa9ZI5glisfAWte','lid','goedgekeurd','2026-07-23 23:59:36',1,'2026-06-06 18:55:15',1,NULL,NULL,0),(100,104,'jaimie.vinmat@gmail.com','$2y$12$GaCj4d.Gfwi5i8ORRXHxDeaxCyTLIs7vrY.pyDp4HcdHyqHcU/Aa.','lid','goedgekeurd','2026-07-23 23:59:36',1,'2026-06-09 13:27:38',1,NULL,NULL,0),(101,105,'tresje2400@gmail.com','$2y$12$eVW7cYAMwhG9fG1HTbRKu.51vDGBQy424WH3okws7QjU8qtyk6Q96','lid','goedgekeurd','2026-07-23 23:59:36',1,'2026-06-13 14:56:32',1,NULL,NULL,0),(102,106,'aligatro.a.l.i@gmail.com','$2y$12$hD7Vfc6nf6DoBZehegJ4.ut4wuhQu0A4pFowkYgSNygPGzQEEejcm','lid','goedgekeurd','2026-07-23 23:59:36',1,'2026-06-25 16:29:41',1,NULL,NULL,0),(103,107,'sophiedeckmyn@hotmail.com','$2y$12$zvY55X3hiAblVMgHo4FxOeRTbF12XdcwgxjhqoqrOWYdrjiN2lhqG','lid','goedgekeurd','2026-07-23 23:59:36',1,'2026-06-26 07:25:41',1,NULL,NULL,0),(104,108,'Sara.Wellens@hotmail.com','$2y$12$KqThcd0yBwn7V4/08CPhCuiLRPA0suQm0Usfo6RXC1mgioU.eJ3my','lid','goedgekeurd','2026-07-23 23:59:36',1,'2026-06-26 11:18:20',1,NULL,NULL,0),(105,109,'yannickheremans@icloud.com','$2y$12$OeIlUwYDpQFzvWXUV476R.gCopMBJVIx9iSX9TcbdhZDDx4HAR4Wq','lid','goedgekeurd','2026-07-23 23:59:36',1,'2026-06-26 13:57:34',1,NULL,NULL,0),(106,110,'Maya.ghysels@telenet.be','$2y$12$1uNJGIwfAG4UYoLmIxAtnejlagZsj9RYOh5hSD8NSKaWZ02gKtWDC','lid','goedgekeurd','2026-07-23 23:59:36',1,'2026-06-26 14:19:45',1,NULL,NULL,0),(107,111,'tygo.bamps@outlook.com','$2y$12$RiMTMVs0tjDhtr2lUngHFOrVvVYGFOWPnPdOXtrpY6Tm1Y8ufairu','lid','goedgekeurd','2026-07-23 23:59:36',1,'2026-06-29 11:25:42',1,NULL,NULL,0),(108,112,'zoeschepens9@gmail.com','$2y$12$eV7FVdvtUMB4pFP9aPZ9SeyVi/YGNbeh1h5kLhjm.bc3QGcnVuHt6','lid','goedgekeurd','2026-07-23 23:59:36',1,'2026-06-29 11:42:57',1,NULL,NULL,0),(109,113,'arthuranthony2610@gmail.com','$2y$12$WFZAC1xGyq4Zm5Vei/mdr.wKvLun/CrsmImC4pA09u3zdI9wXmJqa','lid','goedgekeurd','2026-07-23 23:59:36',1,'2026-06-29 14:57:48',1,NULL,NULL,0),(110,114,'dewitnoe@gmail.com','$2y$12$NKxqJOkEm80e6OmHTTv3HuXcqZrHfDgR7XRUxbR1ApwGZGHcMXdfO','admin','goedgekeurd','2026-07-23 23:59:36',1,'2026-06-30 11:54:48',1,NULL,NULL,0),(111,116,'dimitri.peeters10@gmail.com','$2y$12$OJwM.NuAZUArvSWa/9OkquOIRQdP.tPd5eRPHlpC4oucAFqSue2MG','lid','goedgekeurd','2026-07-23 23:59:36',1,'2026-07-23 21:40:36',1,NULL,NULL,0),(112,117,'d.peeters@procertus.be','$2y$12$7zVlURh2LUZAaxayoSgs5Oc.B9TyYifxTBpCekLxAorxnS.AmNcqW','lid','goedgekeurd','2026-07-24 00:07:11',1,'2026-07-23 22:02:00',1,NULL,NULL,0);
+/*!40000 ALTER TABLE `gebruikers` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `groepen`
+--
+
+DROP TABLE IF EXISTS `groepen`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `groepen` (
   `groep_id` int NOT NULL AUTO_INCREMENT,
   `naam` varchar(100) COLLATE utf8mb4_general_ci NOT NULL,
   `beschrijving` text COLLATE utf8mb4_general_ci,
   PRIMARY KEY (`groep_id`),
   UNIQUE KEY `naam` (`naam`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
 
--- Dumpen data van tabel aefs_v2.groepen: ~1 rows (ongeveer)
-INSERT INTO `groepen` (`groep_id`, `naam`, `beschrijving`) VALUES
-	(1, 'Educa', '');
+--
+-- Dumping data for table `groepen`
+--
 
--- Structuur van  tabel aefs_v2.leden wordt geschreven
-CREATE TABLE IF NOT EXISTS `leden` (
+LOCK TABLES `groepen` WRITE;
+/*!40000 ALTER TABLE `groepen` DISABLE KEYS */;
+INSERT INTO `groepen` VALUES (1,'Educa','');
+/*!40000 ALTER TABLE `groepen` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `leden`
+--
+
+DROP TABLE IF EXISTS `leden`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `leden` (
   `lid_id` int NOT NULL AUTO_INCREMENT,
   `voornaam` varchar(100) COLLATE utf8mb4_general_ci NOT NULL,
   `achternaam` varchar(100) COLLATE utf8mb4_general_ci NOT NULL,
@@ -645,112 +300,26 @@ CREATE TABLE IF NOT EXISTS `leden` (
   PRIMARY KEY (`lid_id`),
   UNIQUE KEY `email` (`email`)
 ) ENGINE=InnoDB AUTO_INCREMENT=118 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
 
--- Dumpen data van tabel aefs_v2.leden: ~100 rows (ongeveer)
-INSERT INTO `leden` (`lid_id`, `voornaam`, `achternaam`, `email`, `actief`, `straat`, `postcode`, `gemeente`, `land`, `telefoon`, `geboortedatum`, `geslacht`, `opmerkingen`, `gdpr_consent`, `gdpr_timestamp`, `aangemaakt_op`, `bijgewerkt_op`, `rekeningnummer`, `rijksregisternummer`, `tshirtmaat`) VALUES
-	(3, 'Admin', 'VZW', 'admin@alleventsforeversure.be', 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, '2026-01-09 14:24:24', '2026-01-09 14:24:24', NULL, NULL, NULL),
-	(18, 'Kenny', 'Verhasselt', 'Kenny.verhasselt@gmail.com', 1, 'Slagveldweg 1', '3191', 'Hever', NULL, '0479202037', NULL, NULL, NULL, 0, NULL, '2026-01-10 14:00:41', '2026-01-10 14:10:53', 'BE68 0639 7395 7534', 'UXQmiC6lvLY14TdLXdBchZ7zZBXu2sxGdXrGcJG9hAk=', NULL),
-	(19, 'Dimitri', 'Peeters', 'dimitri.peeters3@telenet.be', 1, 'Wespelaarsebaan 113', '3190', 'Boortmeerbeek', 'België', '0477/852071', '1980-08-15', NULL, NULL, 0, NULL, '2026-01-10 14:01:43', '2026-07-23 20:55:36', 'enc:v1:AfjgwuglrG8FIP49wQuPZnGOTMbJBCQPqHO+goHityMKNlIiJAH87xhqINoDIu+f', 'enc:v1:TQV/Rn8fJL4jsXQxj2cvxlmXv/Tve9JkaPF4A7iRi3A=', 'XXL'),
-	(20, 'Nico', 'Laeremans', 'nico.laeremans83@gmail.com', 1, 'Wespelaarsebaan 30', '3190', 'Boortmeerbeek', NULL, '0485854504', '1983-12-15', NULL, NULL, 0, NULL, '2026-01-10 16:04:16', '2026-05-20 15:34:17', 'BE27 7340 0517 6573', 'OMGt3xHU2X52GPCH4Kc2VkG0P4YzIW3c9T16AfnOZbg=', 'XL'),
-	(21, 'Renske', 'Dauwe', 'renskedauwe@gmail.com', 1, 'Slagveldweg 1', '3191', 'Hever', NULL, '0475942671', '1997-05-22', NULL, NULL, 0, NULL, '2026-01-10 19:20:52', '2026-05-20 15:34:40', '0198298390', NULL, NULL),
-	(22, 'Chari', 'Quesada-Garcia', 'chari.garcia@telenet.be', 1, 'Markt 91b', '2440', 'Geel', NULL, '0496182838', NULL, NULL, NULL, 0, NULL, '2026-02-25 20:50:54', '2026-05-20 15:38:06', '', NULL, NULL),
-	(23, 'Chloe', 'Notenbaert', 'notenbaert.chloe2@gmail.com', 1, 'sint-elooistraat 34', '9200', 'Dendermonde', NULL, '0477428744', '2004-01-17', NULL, NULL, 0, NULL, '2026-05-07 06:52:53', '2026-05-20 15:38:33', '', NULL, NULL),
-	(24, 'Melissa', 'Gomez Sanchez', 'melissa.gomezsanchez@gmail.com', 1, 'Schoolstraat 45B', '9255', 'Buggenhout', NULL, '0477293503', '1995-10-24', NULL, NULL, 0, NULL, '2026-05-07 06:53:56', '2026-05-20 15:38:58', 'BE08973401345113', 'B91JvQlwU39b8j7GocEbMvl8JtcJaZyfUa4jkZSAwbc=', NULL),
-	(25, 'Amber', 'Vangramberen', 'amber.vangramberen@gmail.com', 1, '', '', '', NULL, '', NULL, NULL, NULL, 0, NULL, '2026-05-07 06:54:22', '2026-05-20 15:39:14', '', NULL, NULL),
-	(26, 'Sylvia', 'De Weerdt', 'sylvia.de.weerdt@gmail.com', 1, 'P/A Salvialaan 53', '2840', 'Reet', NULL, '+41787208705', '1959-04-02', NULL, NULL, 0, NULL, '2026-05-07 06:55:08', '2026-05-20 15:39:30', 'BE08736010480613', 'dFzZmi31ljw/BW3ipTiTgUFzHEv3oADxDbMAmO2tb3Q=', 'L'),
-	(27, 'Roslay', 'Cardo Vasallo', 'roslaycv@hotmail.com', 1, 'Lodewijk van Berckenlaan 371', '2140', 'Antwerpen', NULL, '0469184135', '1988-12-02', NULL, NULL, 0, NULL, '2026-05-07 07:04:14', '2026-05-20 15:39:47', 'BE62001941208961', 'thK3gOQygRQv3alN49oRu8YcGXhxkRVCvTmuOGH2gvI=', 'S'),
-	(28, 'Danny', 'Kiesekoms', 'dkieseko@its.jnj.com', 1, 'Slangengenberg', '3270', 'Schoonderbuken', NULL, '0473558457', '1969-02-20', NULL, NULL, 0, NULL, '2026-05-07 07:18:32', '2026-05-20 15:40:03', 'BE63 7855 4597 4508', 'M2Ya95V6fOrFJtbfzi87G0KfIvf8T9JkcLUwQs9hEJ8=', 'XL'),
-	(29, 'Erika', 'Verstreken', 'erika.verstreken@telenet.be', 1, 'Kruisstraat', '3120', 'Tremelo', NULL, '0468591859', '2006-04-08', NULL, NULL, 0, NULL, '2026-05-07 07:19:51', '2026-05-20 15:40:18', 'BE06 7310 5149 2322', 'I0V8yqXMcmBE7u8nPvsuPh9oDYuWZ3mGYens/g9HRfQ=', 'S'),
-	(30, 'Kaat', 'Paternoster', 'kaat.paternoster1@gmail.com', 1, 'Sint Janstraat 106 bus 1', '1785', 'Merchtem', NULL, '+32472575288', '1996-10-24', NULL, NULL, 0, NULL, '2026-05-07 07:21:54', '2026-05-20 15:40:32', 'BE48973398523827', 'U4UIgkx2HVbgJeOS6c56LToxkXCZcSM8FP0trch40Yo=', NULL),
-	(31, 'Ellen', 'Bossuyt', 'ellen.bossuyt1980@gmail.com', 1, 'Bijlstraat 103', '9120', 'Beveren-Waas', NULL, '0476530248', '1980-11-02', NULL, NULL, 0, NULL, '2026-05-07 07:22:45', '2026-05-20 15:40:50', 'BE35 9731 0243 2337', NULL, 'M'),
-	(32, 'Wesley', 'Meert', 'meertwesley@gmail.com', 1, 'Kalsbergstraat 54', '3400', 'Landen', NULL, '0470076264', NULL, NULL, NULL, 0, NULL, '2026-05-07 07:22:46', '2026-05-20 15:41:09', 'BE64 7370 4898 5952', 'FHZw0bTf+nfoeLAo+AyyyiTVz0YFWuWoDy1LQfofzFY=', NULL),
-	(33, 'Birthe', 'Pardon', 'birthepardon@gmail.com', 1, 'Vijfstraten', '3140', 'Keerbergen', NULL, '0470250178', '2006-03-24', NULL, NULL, 0, NULL, '2026-05-07 07:32:42', '2026-06-17 19:30:42', 'BE58 7506 8341 5379', 'PC7Wj1y7b3l1FK6wyyllHWq0mLLVSwYGwn/8JAeHhVo=', 'M'),
-	(34, 'Chloë', 'Vlamynck', 'chloe.vlamynck@hotmail.com', 1, 'De Wijngaard 20', '9910', 'Knesselare', NULL, '+3296345122', NULL, NULL, NULL, 0, NULL, '2026-05-07 07:32:48', '2026-05-20 15:41:47', 'BE17 7350 7064 8421', 'w6jy8TxVFJeJmA+kyhG9rFY51InX6jcsdiafnaCgFBc=', NULL),
-	(36, 'Ilse', 'Laeremans', 'ilselaeremans@hotmail.com', 1, 'Korte Dreef 20', '2820', 'Rijmenam', NULL, '0473469941', '1980-12-04', NULL, NULL, 0, NULL, '2026-05-07 07:40:37', '2026-05-20 15:42:25', 'BE27973377479473', 'wrdpYq5F5qi3ZSBdM+DWpLS+azUl9fEtJ3JwSk6KSoM=', 'M'),
-	(37, 'Loes', 'Coninx', 'coninx_loes@hotmail.com', 1, 'Donkstraat 32', '3150', 'Haacht', NULL, '0479351725', '1984-05-25', NULL, NULL, 0, NULL, '2026-05-07 08:00:07', '2026-05-20 15:42:43', 'be54 7344 1015 3997', '7nCC0JoKQRxmQzfya6lJ2IKGodXq9yJ8Y1ZJY/zavKQ=', 'M'),
-	(38, 'Eva', 'Dobbelaere', 'dobbelaere.eva05@gmail.com', 1, 'Koningin ELisabethlaan 14/2', '9100', 'Sint-Niklaas', NULL, '0495101648', '1970-11-05', NULL, NULL, 0, NULL, '2026-05-07 08:07:23', '2026-05-20 15:43:00', 'BE66736016061143', 'fPXd9r/O8Fnl9py6m+YqlOUrG54t8/nZKjJdzWtsmJk=', NULL),
-	(39, 'Simon', 'Linsenbühler', 'Simon.linsenbuehler@gmail.com', 1, 'Rue de Hollerich', '1741', 'Luxemburg', NULL, '+49 155 60407130', '1999-09-08', NULL, NULL, 0, NULL, '2026-05-07 08:11:12', '2026-05-20 15:43:18', 'DE27120300001061011837', NULL, 'L'),
-	(40, 'Julie', 'Claus', 'julieclaus06@gmail.com', 1, 'voortweg 1b', '9200', 'Grembergen', NULL, '0468142462', '2006-01-23', NULL, NULL, 0, NULL, '2026-05-07 08:28:36', '2026-05-20 15:43:38', 'BE04 7390 1689 0731', 'oBSS4PxbliDNyv3w1/Wl+T0+cacb0+dLs1AxLp1TWNs=', 'M'),
-	(41, 'Liesbeth', 'Chielens', 'Liesbethchielens@live.be', 1, 'Papenstraat 12 F', '3020', 'Veltem-Beisem', NULL, '0471109561', NULL, NULL, NULL, 0, NULL, '2026-05-07 08:32:12', '2026-05-20 15:43:57', 'BE62 3770 6332 4061', '7BkXhVdwOXMw0EkL+n8YB2nFcrTj8nYuczPtmyySBRc=', NULL),
-	(42, 'Michael', 'Brouwers', 'michbrouw@gmail.com', 1, 'Tiensestraat 73', '3271', 'Scherpenheuvel Zichem', NULL, '0032 476 33 89 62', NULL, NULL, NULL, 0, NULL, '2026-05-07 08:59:21', '2026-05-20 15:45:07', 'BE42 8538 5992 6654', 'GS5hO3+rsFe8ZYfm9ZXy4C46aeaGpGOmekKiffkcoSk=', NULL),
-	(43, 'Hannes', 'Hugaert', 'hannes.hugaert@detech.be', 1, 'Ekelbeke 93', '9220', 'Hamme', NULL, '+32476639524', '2000-07-12', NULL, NULL, 0, NULL, '2026-05-07 09:49:14', '2026-05-20 15:45:26', 'BE16103040342974', '6aeVngm4nBtZYwe/B5aYptSjO3MyMZcgpCBmRFb9Il0=', NULL),
-	(44, 'Hannes', 'Hugaert', 'hannes.hugaert@gmail.com', 1, 'Ekelbeke 93', '9220', '', NULL, '+32476639524', '2000-07-12', NULL, NULL, 0, NULL, '2026-05-07 09:52:03', '2026-05-20 15:45:39', 'BE16103040342974', 'Ye1xp+XHjIHLhSTrGR4mDeB9uBXUY8ijTH/fhlQ3Jz0=', 'M'),
-	(45, 'Karine', 'Gross', 'grosskarine01@gmail.com', 1, '54 Avenue de Lorraine', '57190', 'Florange', NULL, '+33615977846', NULL, NULL, NULL, 0, NULL, '2026-05-07 11:17:52', '2026-05-20 15:45:55', 'FR76 1027 8051 0100 0214 3420 141', NULL, NULL),
-	(46, 'Annelies', 'Haine', 'annelieshaine@hotmail.com', 1, 'hertbosweg 3A', '3210', 'lubbeek', NULL, '+32498463150', '1980-08-26', NULL, NULL, 0, NULL, '2026-05-07 11:28:43', '2026-05-20 15:46:06', 'BE59063208258126', NULL, NULL),
-	(47, 'Zoë', 'Van Rode', 'zoe.vanrode@gmail.com', 1, 'Koningin Fabiolalaan', '1830', 'Machelen', NULL, '+32470302765', NULL, NULL, NULL, 0, NULL, '2026-05-07 13:08:39', '2026-05-20 15:46:16', 'BE67001869392787', '1wTIxH5Uw8wYUFp46KyQkq0aWyRvcI1sVdxaEyGSvuY=', NULL),
-	(48, 'Bart', 'Geeraert', 'bart@vanapenstad.be', 1, 'Zonnebloemstraat 7', '2820', 'Rijmenam', NULL, '0477 35 79 64', NULL, NULL, NULL, 0, NULL, '2026-05-07 13:40:18', '2026-05-20 15:46:28', 'Be79143097992333', NULL, NULL),
-	(49, 'Marleen', 'Raus', 'marleen_34@hotmail.com', 1, 'Hooghuis 48', '3221', 'Nieuwrode', NULL, '0495586636', '1969-07-27', NULL, NULL, 0, NULL, '2026-05-07 14:15:06', '2026-05-20 15:46:39', 'BE80785553013977', 'h45kHDyJJTt7v3WJbWANrsunJiJttHv+lr77rZvFWMA=', NULL),
-	(50, 'Puk', 'Raus', 'rauspuk2007@gmail.com', 1, 'Avenue Henri martin', '75116', 'Paris', NULL, '0623053061', NULL, NULL, NULL, 0, NULL, '2026-05-07 15:06:34', '2026-05-20 15:46:51', '', NULL, NULL),
-	(51, 'Lieve', 'Loose', 'lievedeloose@hotmail.com', 1, 'Abingdonstraat, 94', '9100', 'Sint Niklaas', NULL, '0488264667', NULL, NULL, NULL, 0, NULL, '2026-05-07 15:16:34', '2026-05-20 15:47:03', 'BE92979334923423', NULL, NULL),
-	(52, 'micha', 'smets', 'michaelasmets.ms@gmail.com', 1, 'Potstraat 22', '3300', 'Tienen', NULL, '0474091706', '1991-03-27', NULL, NULL, 0, NULL, '2026-05-07 15:19:38', '2026-05-20 15:47:14', '', 'rxVH7979SVt5FfaYxYyuQMm/GzLYZYUQQ3D18sWuTgo=', 'XL'),
-	(53, 'Laura', 'Machiels', 'laura.machiels@telenet.be', 1, 'Hanswijkstraat 13/2', '3190', 'Boortmeerbeek', NULL, '0479134298', '1997-11-10', NULL, NULL, 0, NULL, '2026-05-07 16:15:15', '2026-05-20 15:50:39', '', NULL, 'M'),
-	(54, 'Jaimy', 'Van Genechten', 'jaimyvg17@outlook.com', 1, 'Weverstraat', '2531', 'Vremde', NULL, '0472564685', '2004-10-22', NULL, NULL, 0, NULL, '2026-05-07 17:37:07', '2026-05-20 15:48:10', 'BE78000466510786', 'Xj75GEZeN+TWgwrNirxBUS35BIRhvtsFM7AFMvKIGJg=', 'M'),
-	(55, 'Jolien', 'beerens', 'jolien.beerens1@gmail.com', 1, 'saffraan 7', '3150', 'Haacht', NULL, '0471124411', '1992-03-16', NULL, NULL, 0, NULL, '2026-05-07 19:44:32', '2026-05-20 15:48:23', 'BE70 1030 6161 0125', 'DehJTLw7xf5fEPLT3EWuPH+Kz7XSmT0oEX4x3BiBLR8=', 'S'),
-	(56, 'Elke', 'Van Criekingen', 'elke.van.criekingen@pandora.be', 1, 'Saffraan', '3150', 'Haacht', NULL, '0475212037', NULL, NULL, NULL, 0, NULL, '2026-05-07 20:02:18', '2026-06-18 06:29:12', 'Be29645104617464', 'QpRqx43V44bU+Zr0R3V2DmFQ5kr+pVcgJqT98q2ayCE=', 'S'),
-	(57, 'Ann', 'De Man', 'anndeman80@gmail.com', 1, 'Culostraat 22a', '3360', 'Opvelp', NULL, '0479369191', '1980-05-04', NULL, NULL, 0, NULL, '2026-05-08 02:20:33', '2026-05-20 15:48:47', 'BE87001309955694', NULL, NULL),
-	(58, 'Alejandro', 'Romaguera Gil', 'aromagueragil@gmail.com', 1, '43 rue des Trévires', '2628', 'Luxemburg', NULL, '00352621149792', '1990-05-12', NULL, NULL, 0, NULL, '2026-05-08 12:48:29', '2026-05-20 15:48:58', 'LU87 0019 7855 0057 6000', 'NeNuNQ21mqMeOrKn4Bx5xM6L7lXarbQgQANjiG7s/kI=', 'L'),
-	(59, 'Jeroen', 'Leyssen', 'jeroenleyssen@gmail.com', 1, 'ANDRE DUMONTLAAN 16 bus B3', '3665', 'As', NULL, '0468100332', '1993-11-05', NULL, NULL, 0, NULL, '2026-05-08 12:56:55', '2026-05-27 04:42:59', 'BE29 7350 2355 9264', 'mHaVeIOG7i2A0rNqAuRnQFH1FwBMTNLa0Bs8PFbd0Ss=', 'XL'),
-	(60, 'Alejandro', 'Romaguera Gil', '9480.alejandro@gmail.com', 1, '43 rue des Trévires', '2628', 'Luxembourg', 'Luxembourg', '00352621149792', NULL, 'M', NULL, 0, NULL, '2026-05-08 13:14:02', '2026-07-23 19:50:08', 'enc:v1:DFml6Lq5FDmhHTfw6xLLrb/ZyH7VDzYifBO0SjKvvQd4etfrIqjDO1o0CnsuBxB+', NULL, NULL),
-	(61, 'Wim', 'Vangramberen', 'wim.vangramberen@skynet.be', 1, 'Schrieksebaan 238B', '3140', 'Keerbergen', NULL, '+32 472354801', NULL, NULL, NULL, 0, NULL, '2026-05-08 18:05:50', '2026-05-20 15:49:47', 'Be75734351008451', 'jAWmxIDESDQu0wW+E89iM6Piv0LNdb6sQZ27Yz1R+qE=', NULL),
-	(62, 'Elene', 'Cobbaut', 'elene@eleja.be', 1, 'Wimpstraat', '2260', 'Westerlo', NULL, '0456 12 25 32', '2007-07-15', NULL, NULL, 0, NULL, '2026-05-08 18:12:45', '2026-05-20 15:49:59', 'BE88 7340 4915 3141', NULL, 'S'),
-	(63, 'Kira', 'Meerts', 'kira.meerts@gmail.com', 1, 'Tongerlostraat 114', '2260', 'Westerlo', NULL, '+32 479 32 90 89', '2007-05-03', NULL, NULL, 0, NULL, '2026-05-09 11:19:23', '2026-05-20 15:50:10', 'BE52001909746609', '3a1p32gNrJBSGA29VMwPCOZmcOBtv7D9ovGjDoP0Ric=', NULL),
-	(64, 'Annelies', 'Zaman', 'annelies_zaman@hotmail.com', 1, 'Vuntlaan 4', '3012', 'Wilsele', NULL, '0497902769', NULL, NULL, NULL, 0, NULL, '2026-05-10 05:31:27', '2026-05-20 15:50:23', 'BE91063952776976', NULL, NULL),
-	(65, 'yana', 'coeckelberghs', 'yanacoeckelberghs@gmail.com', 1, 'aardeweg', '9406', 'Outer', NULL, '0476370185', '2000-05-30', NULL, NULL, 0, NULL, '2026-05-10 07:50:38', '2026-05-20 15:50:35', 'BE37 0636 7095 8058', 'SxYg5qrg1xMoc7uZh5CFF6BiGz3vcjO/4RdeALgYn0A=', NULL),
-	(66, 'Jessica', 'Vandebosch', 'jessica_vandebosch@hotmail.com', 1, 'Hoogstraat 26a1', '3670', 'Oudsbergen', NULL, '0491 19 54 87', '1989-01-18', NULL, NULL, 0, NULL, '2026-05-10 14:19:50', '2026-05-26 16:13:06', 'BE46 9731 2951 4636', 'm/+2Ronw1rAo7+61QIskaHh5eeT5On6hkCL+nkHWPUg=', 'L'),
-	(67, 'Celine', 'De Smet', 'celinedesmet28@Gmail.com', 1, 'Brugsken 185', '9100', 'Sint-Niklaas', NULL, '0471789885', '2001-05-28', NULL, NULL, 0, NULL, '2026-05-10 16:12:48', '2026-05-30 11:51:08', 'BE81 0019 8666 9124', '9sQYyhbgM2darE4CPpUvGINuMWR1uLJAtDw63DmiSME=', 'L'),
-	(68, 'Ioannis', 'Farmakis', 'ioannisfarmakis5@gmail.com', 1, 'Auguste Charles', '1326', 'Luxembourg', NULL, '+352 661 602 112', '1999-12-21', NULL, NULL, 0, NULL, '2026-05-10 19:44:24', '2026-05-20 15:51:10', 'LT90 3250 0784 0500 4747', NULL, 'L'),
-	(69, 'Dirk', 'Crauwels', 'dirk.crauwels@skynet.be', 1, 'Dobbelbos', '2560', 'Nijlen', NULL, '0473820720', '1966-11-21', NULL, NULL, 0, NULL, '2026-05-11 06:20:28', '2026-06-20 11:37:47', 'BE84 7895 6510 6759', 'PjxuiSg2eMiF/+ThKVud3IQmMm61xwYhT/qY7GMK56g=', 'XL'),
-	(70, 'Hannelore', 'Van der Leyden', 'hannelore.vdleyden@tsmmechelen.net', 1, 'Dijleweg', '2820', 'Bonheiden', NULL, '0472445226', '1997-01-31', NULL, NULL, 0, NULL, '2026-05-11 12:36:13', '2026-06-22 15:32:03', 'BE30 1430 8420 6411', 'AhVIt+Z6oEUUdS0Wd09YGiJqCwq59zCXA02y2g2BLh8=', 'XS'),
-	(71, 'Axelle', 'Verstraeten', 'axelle.verstraeten@outlook.com', 1, 'Pastoriestraat 50', '2560', 'Nijlen', NULL, '0468477713', '2007-05-15', NULL, NULL, 0, NULL, '2026-05-11 15:26:34', '2026-05-20 15:51:59', 'BE68 7360 5757 6234', 'cMOwAuORdWr70Uio9OdZILf9PMyBR3Ivouw3E8hTBlY=', 'S'),
-	(72, 'Emma', 'Wijndaele', 'emmawijndaele6@gmail.com', 1, 'Kraaiwinkelstraat 6', '9320', 'Nieuwerkerken', NULL, '0468320590', '2006-05-14', NULL, NULL, 0, NULL, '2026-05-11 15:45:23', '2026-05-20 15:52:12', 'BE60 7370 5969 6570', 'j9gMm5ocycL3cNGZNEqm8O+i50j6N8JwFiSHPo1k4Tc=', 'M'),
-	(73, 'Kevin', 'Lousbergh', 'lousberghkevin@gmail.com', 1, 'Beverststraat 27', '3740', 'Bilzen', NULL, '0471255139', NULL, NULL, NULL, 0, NULL, '2026-05-11 17:49:02', '2026-05-20 15:52:24', '', NULL, NULL),
-	(74, 'Marc', 'Van den broeck', 'marc.van.den.broeck.67@telenet.be', 1, 'Oude Putsebaan 10', '3140', 'Keerbergen', NULL, '0474500427', '1967-01-07', NULL, NULL, 0, NULL, '2026-05-11 18:27:33', '2026-05-20 15:52:38', 'BE29330056833364', 'xA9wqvarOEnSRw+DJHuNWR2+cUGUH0oljXgNiqz0Jms=', 'L'),
-	(75, 'Johan', 'Vranken', 'johanvranken1@gmail.com', 1, 'De Merodestraat 19', '2270', 'Herenthout', NULL, '0473487736', '1976-01-24', NULL, NULL, 0, NULL, '2026-05-11 18:52:32', '2026-05-20 15:52:53', 'BE25777598587682', NULL, 'L'),
-	(76, 'Asïa', 'Soussi Zouaoui', 'asia.soussi@hotmail.com', 1, 'Putsesteenweg 237/1', '2820', 'Bonheiden', NULL, '0467727801', '1968-05-24', NULL, NULL, 0, NULL, '2026-05-11 18:53:55', '2026-05-20 18:55:06', 'BE36973112912781', 'XUJzuLJBqz168GqSat/Z/I8qGWDlUG8sV/bNwERXJIk=', 'S'),
-	(77, 'Guy', 'De Wit', '001guy.dewit001@gmail.com', 1, 'Zilverberklaan 22', '2820', 'Bonheiden', NULL, '0486-87.37.84', '1964-05-02', NULL, NULL, 0, NULL, '2026-05-12 16:10:08', '2026-05-20 15:53:21', 'BE75 9731 8493 2251', 'OScClcFYYYS7UnORaNJe7y0Um1BcZN9TrqAr6ZCr9qY=', 'L'),
-	(78, 'Johan', 'Leers', 'Johan.leers@hotmail.com', 1, 'Moorsemsestraat 312', '3130', 'Betekom', NULL, '0493454788', '1970-06-27', NULL, NULL, 0, NULL, '2026-05-12 19:10:11', '2026-05-20 15:53:32', '28063573966920', '0l2qOkOOytKmBNMYbpvDGdzIQvrBM2k1/RuWI4zLDLM=', 'XL'),
-	(79, 'Robin James', 'Enclona', 'robibjames17@gmail.com', 1, 'Vooruitzichtstraat 15', '2140', 'Borgerhout', NULL, '0478798973', '1992-09-20', NULL, NULL, 0, NULL, '2026-05-13 07:29:33', '2026-05-20 15:53:44', 'BE44739024205945', NULL, NULL),
-	(80, 'Kristin', 'De Leebeeck', 'kristin.de.leebeeck@gmail.com', 1, 'Schoolstraat 53', '3110', 'Rotselaar', NULL, '0477782625', '1970-03-25', NULL, NULL, 0, NULL, '2026-05-14 19:48:42', '2026-05-20 15:53:54', 'BE81734383064224', '/sn8q7BWsbnCvkxtdFObec7KfadeJQ/Rgbd5WHvIjz4=', 'L'),
-	(81, 'Kevin', 'Van de Voorde', 'vd.voorde.k99@gmail.com', 1, 'Hanswijkdries', '2800', 'Mechelen - 2800', NULL, '0497856886', NULL, NULL, NULL, 0, NULL, '2026-05-15 15:55:27', '2026-05-20 15:54:04', 'Be28750701519320', 'KwmIypLbgO9xKDqioD34TM7bR1TmnKgT5UL0izFclPo=', NULL),
-	(82, 'Joppe', 'Mouton', 'joppe.mouton@gmail.com', 1, 'Ringstraat 16B', '9200', 'grembergen', NULL, '+32 467 03 72 44', '2007-08-14', NULL, NULL, 0, NULL, '2026-05-18 13:42:55', '2026-05-21 07:39:25', 'BE22 0018 9098 0947', 'MHcJzi809Ae3CDI2ASrH0yUHuO903JmDIunmr9bbOHY=', 'XL'),
-	(83, 'Yenno', 'Van Gansen', 'yenno2005@gmail.com', 1, 'Heibaan 93', '2235', 'Hulshout', NULL, '0493996091', '2005-09-11', NULL, NULL, 0, NULL, '2026-05-20 15:28:32', '2026-05-20 15:54:30', 'BE87 7340 4884 8094', 'jlCwD1yEsn8tXsEXsaeEKJHkN9hxh3fgoBJ5N1x4Ckw=', 'M'),
-	(84, 'Eddy', 'Stroobants', 'edmond.stroobants@telenet.be', 1, 'Woeringstraat 63', '3150', 'Tildonk', NULL, '0477786891', NULL, NULL, NULL, 0, NULL, '2026-05-21 17:46:33', '2026-05-21 17:46:33', 'BE83 9792 5617 8015', 'SCVOJdWjIgRMa/8dXiSlrM6lHE/POomZYirlZeJ2byU=', NULL),
-	(85, 'Roan', 'Stroobants', 'roan.stroobants@hotmail.com', 1, 'Woeringstraat 63', '3150', 'Tildonk', NULL, '0478663763', NULL, NULL, NULL, 0, NULL, '2026-05-21 17:48:39', '2026-05-28 07:40:38', 'BE45 9730 2485 6989', '9qOFzeT2TwEwh69YS7BN87e8cJpPZG2mmmsk2MI/KPc=', 'M'),
-	(86, 'Kitty', 'Vanderstraeten', 'kitty.vanderstraeten@hotmail.com', 1, 'Keiberg 9', '3700', 'Tongeren', NULL, '0397709973', NULL, NULL, NULL, 0, NULL, '2026-05-22 05:17:28', '2026-05-22 05:17:28', 'Be81750640739524', 'dWdbN3vt55UjfY41vculgMg48+Zwjtq+AXKwO8GhJps=', NULL),
-	(87, 'Charlotte', 'De Kimpe', 'charlotte.dekimpe1@gmail.com', 1, 'Rozengaard, 24', '2550', 'Kontich', NULL, '0473237917', NULL, NULL, NULL, 0, NULL, '2026-05-25 18:49:21', '2026-05-25 18:49:21', 'BE73738041539260', NULL, NULL),
-	(88, 'Rémi', 'Neimry', 'remineimry03@gmail.com', 1, 'Rue de Sart', '1457', 'Walhain', NULL, '0479991212', '2003-11-05', NULL, NULL, 0, NULL, '2026-05-26 15:07:25', '2026-05-26 20:39:59', 'BE73 7320 6253 6860', 'B8ukxYxUNsOLKwpr3qRgGZbuNfC+AcOpOSU60lDINFA=', 'L'),
-	(89, 'Hugo', 'Scarcez', 'scarcezhugo@gmail.com', 1, 'Hour', '5563', 'Houyet', NULL, '0477/57.10.62', '2004-03-30', NULL, NULL, 0, NULL, '2026-05-26 15:22:06', '2026-05-26 20:54:47', 'BE05363168996975', 'jtP3QaAqGrBWBzIhTOLpqO7IZUYaelfFppj+xJSVz0s=', 'L'),
-	(90, 'Sander', 'Callaert', 'sander.callaert@telenet.be', 1, 'Stijn Streuvelsstraat', '1831', 'Diegem', NULL, '0474614535', NULL, NULL, NULL, 0, NULL, '2026-05-26 15:32:09', '2026-05-26 15:32:09', 'BE52 0636 7352 6609', NULL, NULL),
-	(91, 'Niels', 'De Baerdemaeker', 'dbniels@hotmail.com', 1, 'Sint-Martinusstraat 25', '1700', 'Sint-Martens-Bodegem', NULL, '0473206386', NULL, NULL, NULL, 0, NULL, '2026-05-26 15:38:23', '2026-05-26 15:38:23', 'BE52063645474209', NULL, NULL),
-	(92, 'Germain', 'Besonhé', 'germainbesonhe@gmail.com', 1, 'Rue du Hameau', '5575', 'Gedinne', NULL, '0474286917', '2002-06-05', NULL, NULL, 0, NULL, '2026-05-26 15:43:27', '2026-05-27 14:49:59', 'BE30001792483511', 'n+QtyASckc/fzZWepNOZ7qLT3xCfDD/v0MJP+jn40Mk=', 'M'),
-	(93, 'Lana', 'Callaert', 'lana.callaert@gmail.com', 1, 'Lange Nieuwstraat 113 bus 2', '2800', 'Mechelen', NULL, '0476739968', '2000-09-13', NULL, NULL, 0, NULL, '2026-05-26 15:50:18', '2026-05-26 20:33:10', 'BE54 0635 9772 0297', 'G1Wpk1wCSeH0d7vRFwmog70720hIgHexTnK3mPZ+wUQ=', 'M'),
-	(94, 'Maya', 'Audenaert', 'mayaaudenaert@gmail.com', 1, 'Reynoutstraat 36', '9200', 'Dendermonde', NULL, '0479172940', '2006-05-25', NULL, NULL, 0, NULL, '2026-05-26 16:45:11', '2026-05-26 16:45:11', '', NULL, NULL),
-	(95, 'Evy', 'Pepermans', 'evy.pepermans@telenet.be', 1, 'Lindestraat', '2800', 'Mechelen', NULL, '0486227374', NULL, NULL, NULL, 0, NULL, '2026-05-26 20:36:33', '2026-05-26 20:36:33', 'Be 34 0018 1840 0190', NULL, NULL),
-	(96, 'Kara', 'De Pauw', 'karadepauw@gmail.com', 1, 'Pillendijk 2B', '9130', 'Kieldrecht', NULL, '0495720550', '2000-05-18', NULL, NULL, 0, NULL, '2026-05-27 07:28:11', '2026-05-27 14:23:19', 'BE93736046279067', 'oEALF9oJcPKTPLXA6LmmNTpHI8+GcsmXD+oGUCHfWwE=', 'XXL'),
-	(97, 'Wout', 'Schellemans', 'wout99@live.be', 1, 'Oude Broekstraat 11', '2830', 'Heindonk', NULL, '0494250165', '1999-07-03', NULL, NULL, 0, NULL, '2026-05-27 08:48:52', '2026-05-27 08:48:52', 'BE20363162913156', NULL, NULL),
-	(98, 'Jeroen', 'Van De Laer', 'jeroen_vandelaer@hotmail.com', 1, 'Zallakenstraat 62', '3110', 'Rotselaar', NULL, '+32495856455', '1995-06-29', NULL, NULL, 0, NULL, '2026-05-27 09:58:06', '2026-05-28 05:45:09', 'BE78063744412286', '/26arMQT2mcSOibzmnIoRu6B5HbBytLkKGB881/YeCc=', 'M'),
-	(99, 'Sandy', 'Roscam', 'sandyroscam83@hotmail.com', 1, 'Stationsstraat 11', '3191', 'Hever', NULL, '0468/23.7175', '1983-07-27', NULL, NULL, 0, NULL, '2026-05-27 19:00:11', '2026-05-27 19:00:11', 'BE96408807936105', NULL, NULL),
-	(100, 'Klaas', 'Van den berghe', 'klaasvandenberghe@proton.me', 1, 'Brusselbaan 352a', '1790', 'Affligem', NULL, '0497386054', NULL, NULL, NULL, 0, NULL, '2026-05-30 18:22:56', '2026-05-30 18:22:56', 'Be98979533256693', '9fdrRCT0ZHbnzdYjDCYhHRqKaF2SRh8mZbiKXFSZjx8=', NULL),
-	(101, 'Wesley', 'Braeckmans', 'blood_element@hotmail.be', 1, 'Tongerlostraat 12', '2040', 'Berendrecht (antwerpen)', NULL, '0476452538', '1982-04-17', NULL, NULL, 0, NULL, '2026-06-01 04:12:13', '2026-06-13 06:15:21', 'Be08973102342613', '8LxPkXXR+9Y9OvHbByVOFZYbZ3J30FCDyPO57LTk+dg=', 'XXL'),
-	(102, 'Ellen', 'Van Reempts', 'evanreempts@hotmail.com', 1, 'Aarschotsesteenweg 133 A bus 4', '3111', 'Wezemaal', NULL, '0474343996', '1982-10-30', NULL, NULL, 0, NULL, '2026-06-02 08:52:26', '2026-06-05 12:28:39', 'BE58001364671879', 'IjUEz6hYWOAi8jSi6bVvjq00P1VSWjidGDeM55Zm3I0=', 'M'),
-	(103, 'Sander', 'Michiels', 'sander.michiels@icloud.com', 1, 'Meierij 27', '2260', 'Westerlo', NULL, '0493448912', NULL, NULL, NULL, 0, NULL, '2026-06-06 18:55:14', '2026-06-06 18:55:14', 'BE31 7360 6849 0855', 'QfWqbrGJn+pvydKYCGMbhZewEOyQ6W5a/2aJxEhEevg=', NULL),
-	(104, 'Jaimie', 'Vandevoort', 'jaimie.vinmat@gmail.com', 1, 'Kleinaartstraat 9', '3832', 'Wellen', NULL, '0478719124', NULL, NULL, NULL, 0, NULL, '2026-06-09 13:27:38', '2026-06-09 13:27:38', 'BE02 9795 2554 9540', 'R4kP5yasDtjqz94MFQ2lz8s3LGwsIiBX2YWt9AIRwQQ=', NULL),
-	(105, 'Tresje', 'Bruggeman', 'tresje2400@gmail.com', 1, 'Molenstraat 327', '2490', 'Balen', NULL, '0467099323', NULL, NULL, NULL, 0, NULL, '2026-06-13 14:56:31', '2026-06-13 14:56:31', '', 'AxIYUtXGDyH+SGrZqXr4t9zzcCtjozr/RNiJPA18gA0=', NULL),
-	(106, 'Ali', 'Jabbar', 'aligatro.a.l.i@gmail.com', 0, 'Edouard Kufferathlaan', '1020', 'Brussel', 'België', '0486728120', NULL, NULL, NULL, 0, NULL, '2026-06-25 16:29:41', '2026-07-23 20:58:48', 'enc:v1:AWiSogGG9RnBjyM0GC6jmD+lqDeBRML6rMeP5MarDma5XINqF+Od7ocWqXRbE470', NULL, NULL),
-	(107, 'Sophie', 'Deckmyn', 'sophiedeckmyn@hotmail.com', 1, 'Dries', '1785', 'Merchtem', NULL, '0492399511', NULL, NULL, NULL, 0, NULL, '2026-06-26 07:25:41', '2026-06-26 07:25:41', 'BE09001833810157', 'pSMq6OZZEf9l8vsUbFWnj2VoyDCyrhqLbOfcNpDFBx0=', NULL),
-	(108, 'Sara', 'Wellens', 'Sara.Wellens@hotmail.com', 1, 'Wolfsdonksesteenweg 137', '2230', 'Herselt', NULL, '0570357053', NULL, NULL, NULL, 0, NULL, '2026-06-26 11:18:20', '2026-06-26 11:18:20', '', NULL, NULL),
-	(109, 'Yannick', 'Heremans', 'yannickheremans@icloud.com', 1, 'Bosstraat 49 bus 4', '2861', 'Onze-Lieve-Vrouw-Waver', NULL, '0484532815', '2003-05-08', NULL, NULL, 0, NULL, '2026-06-26 13:57:33', '2026-06-29 11:21:08', 'BE49 0635 8154 7771', 'MLLtZ9ez72WyYNbNQtQcW2JYqJrP9Rx/lPrr5ADHPC8=', 'L'),
-	(110, 'Maya', 'Ghysels', 'Maya.ghysels@telenet.be', 1, 'Haaksdonkweg 31', '1880', 'Kapelle-op-den-Bos', NULL, '0468312499', '2004-07-27', NULL, NULL, 0, NULL, '2026-06-26 14:19:44', '2026-06-29 11:30:02', 'BE86736059255950', 'hAB6kOyCviP1tdNzCZBWm6iz6HMTgoJ2T2ZV9gAyxMI=', 'XL'),
-	(111, 'Tygo', 'Bamps', 'tygo.bamps@outlook.com', 1, 'Heidekenstraat 60', '1083', 'Ganshoren', NULL, '0483692250', NULL, NULL, NULL, 0, NULL, '2026-06-29 11:25:41', '2026-06-29 11:25:41', 'BE93 7350 6933 3867', 'Q8BTnOocJPlZHTKEzaRHXGiXCwdde0kxI8DODScc7RY=', NULL),
-	(112, 'Zoë', 'Schepens', 'zoeschepens9@gmail.com', 1, 'Slameuterstraat 25', '2580', 'Putte', NULL, '+32 468 34 77 71', '2006-11-17', NULL, NULL, 0, NULL, '2026-06-29 11:42:57', '2026-06-29 14:09:18', 'BE82132554512968', NULL, 'M'),
-	(113, 'Arthur', 'Anthony', 'arthuranthony2610@gmail.com', 1, 'Wilsonweg 282', '2610', 'Wilrijk', NULL, '0494116824', '2007-02-03', NULL, NULL, 0, NULL, '2026-06-29 14:57:48', '2026-06-29 15:21:38', 'BE95 7380 5275 2258', 'cSHhlPj6DVSzx/CQ1kTBUE/TRUztQW3CFGz6+bREHew=', 'S'),
-	(114, 'Noe', 'Dewit', 'dewitnoe@gmail.com', 1, 'Oude Beggaardenstraat 2', '2800', 'Mechelen', NULL, '0492452651', '1998-12-29', NULL, NULL, 0, NULL, '2026-06-30 11:54:48', '2026-06-30 11:54:48', '', NULL, NULL),
-	(115, 'TESTER', 'TEST', 'tester@test.com', 1, 'TESTER', '3190', 'TTEST', 'België', '0477852071', '1980-08-15', 'M', NULL, 0, NULL, '2026-07-23 19:59:20', '2026-07-23 19:59:20', 'enc:v1:WE8Iw6COF0n1LcYeg5WToTyGIlkrAMovP7n+GmC9Z1EWxKJOvr+PCVuQSxODlUlY', 'enc:v1:uEvCIPPTEghgL2/4wkAPG0rnEHk8yGHCUL1ponWfKvQ=', 'XXL'),
-	(116, 'tester', 'test', 'dimitri.peeters10@gmail.com', 1, 'testerstraat', '3190', 'boortmeerbeek', 'België', '0477852071', '1980-08-15', 'M', NULL, 1, '2026-07-23 21:40:35', '2026-07-23 21:40:35', '2026-07-23 21:41:48', 'enc:v1:EKBklCbOVf/ftSDD36Lf6fzVKB/iLj/oQ9kPj022gwoe3yHWAYQQU/nI7Gp8ZIiM', 'enc:v1:3elYklkj2vK62C3aT2fYHhoOz7oC8nCxy8ooagRRpB8=', 'XXL'),
-	(117, 'Dimi', 'Peeters', 'd.peeters@procertus.be', 1, 'test', '3190', 'tester', 'België', '0477852071', '1980-08-15', 'M', NULL, 1, '2026-07-23 22:02:00', '2026-07-23 22:02:00', '2026-07-23 22:07:31', 'enc:v1:ESjRGCENfKyw+/MjvRH+AfoEdBwgQfPEZ85Z6+XqmCqCV/sfiG6vR0xR7FlSxEU0', 'enc:v1:fJ/z0n1K3PCy6M0cBvjUOV+rqXw9vaqqh+kg/Djrjlk=', 'XXL');
+--
+-- Dumping data for table `leden`
+--
 
--- Structuur van  tabel aefs_v2.leden_groepen wordt geschreven
-CREATE TABLE IF NOT EXISTS `leden_groepen` (
+LOCK TABLES `leden` WRITE;
+/*!40000 ALTER TABLE `leden` DISABLE KEYS */;
+INSERT INTO `leden` VALUES (3,'Admin','VZW','admin@alleventsforeversure.be',1,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,'2026-01-09 14:24:24','2026-01-09 14:24:24',NULL,NULL,NULL),(18,'Kenny','Verhasselt','Kenny.verhasselt@gmail.com',1,'Slagveldweg 1','3191','Hever',NULL,'0479202037',NULL,NULL,NULL,0,NULL,'2026-01-10 14:00:41','2026-01-10 14:10:53','BE68 0639 7395 7534','UXQmiC6lvLY14TdLXdBchZ7zZBXu2sxGdXrGcJG9hAk=',NULL),(19,'Dimitri','Peeters','dimitri.peeters3@telenet.be',1,'Wespelaarsebaan 113','3190','Boortmeerbeek','België','0477/852071','1980-08-15',NULL,NULL,0,NULL,'2026-01-10 14:01:43','2026-07-23 20:55:36','enc:v1:AfjgwuglrG8FIP49wQuPZnGOTMbJBCQPqHO+goHityMKNlIiJAH87xhqINoDIu+f','enc:v1:TQV/Rn8fJL4jsXQxj2cvxlmXv/Tve9JkaPF4A7iRi3A=','XXL'),(20,'Nico','Laeremans','nico.laeremans83@gmail.com',1,'Wespelaarsebaan 30','3190','Boortmeerbeek',NULL,'0485854504','1983-12-15',NULL,NULL,0,NULL,'2026-01-10 16:04:16','2026-05-20 15:34:17','BE27 7340 0517 6573','OMGt3xHU2X52GPCH4Kc2VkG0P4YzIW3c9T16AfnOZbg=','XL'),(21,'Renske','Dauwe','renskedauwe@gmail.com',1,'Slagveldweg 1','3191','Hever',NULL,'0475942671','1997-05-22',NULL,NULL,0,NULL,'2026-01-10 19:20:52','2026-05-20 15:34:40','0198298390',NULL,NULL),(22,'Chari','Quesada-Garcia','chari.garcia@telenet.be',1,'Markt 91b','2440','Geel',NULL,'0496182838',NULL,NULL,NULL,0,NULL,'2026-02-25 20:50:54','2026-05-20 15:38:06','',NULL,NULL),(23,'Chloe','Notenbaert','notenbaert.chloe2@gmail.com',1,'sint-elooistraat 34','9200','Dendermonde',NULL,'0477428744','2004-01-17',NULL,NULL,0,NULL,'2026-05-07 06:52:53','2026-05-20 15:38:33','',NULL,NULL),(24,'Melissa','Gomez Sanchez','melissa.gomezsanchez@gmail.com',1,'Schoolstraat 45B','9255','Buggenhout',NULL,'0477293503','1995-10-24',NULL,NULL,0,NULL,'2026-05-07 06:53:56','2026-05-20 15:38:58','BE08973401345113','B91JvQlwU39b8j7GocEbMvl8JtcJaZyfUa4jkZSAwbc=',NULL),(25,'Amber','Vangramberen','amber.vangramberen@gmail.com',1,'','','',NULL,'',NULL,NULL,NULL,0,NULL,'2026-05-07 06:54:22','2026-05-20 15:39:14','',NULL,NULL),(26,'Sylvia','De Weerdt','sylvia.de.weerdt@gmail.com',1,'P/A Salvialaan 53','2840','Reet',NULL,'+41787208705','1959-04-02',NULL,NULL,0,NULL,'2026-05-07 06:55:08','2026-05-20 15:39:30','BE08736010480613','dFzZmi31ljw/BW3ipTiTgUFzHEv3oADxDbMAmO2tb3Q=','L'),(27,'Roslay','Cardo Vasallo','roslaycv@hotmail.com',1,'Lodewijk van Berckenlaan 371','2140','Antwerpen',NULL,'0469184135','1988-12-02',NULL,NULL,0,NULL,'2026-05-07 07:04:14','2026-05-20 15:39:47','BE62001941208961','thK3gOQygRQv3alN49oRu8YcGXhxkRVCvTmuOGH2gvI=','S'),(28,'Danny','Kiesekoms','dkieseko@its.jnj.com',1,'Slangengenberg','3270','Schoonderbuken',NULL,'0473558457','1969-02-20',NULL,NULL,0,NULL,'2026-05-07 07:18:32','2026-05-20 15:40:03','BE63 7855 4597 4508','M2Ya95V6fOrFJtbfzi87G0KfIvf8T9JkcLUwQs9hEJ8=','XL'),(29,'Erika','Verstreken','erika.verstreken@telenet.be',1,'Kruisstraat','3120','Tremelo',NULL,'0468591859','2006-04-08',NULL,NULL,0,NULL,'2026-05-07 07:19:51','2026-05-20 15:40:18','BE06 7310 5149 2322','I0V8yqXMcmBE7u8nPvsuPh9oDYuWZ3mGYens/g9HRfQ=','S'),(30,'Kaat','Paternoster','kaat.paternoster1@gmail.com',1,'Sint Janstraat 106 bus 1','1785','Merchtem',NULL,'+32472575288','1996-10-24',NULL,NULL,0,NULL,'2026-05-07 07:21:54','2026-05-20 15:40:32','BE48973398523827','U4UIgkx2HVbgJeOS6c56LToxkXCZcSM8FP0trch40Yo=',NULL),(31,'Ellen','Bossuyt','ellen.bossuyt1980@gmail.com',1,'Bijlstraat 103','9120','Beveren-Waas',NULL,'0476530248','1980-11-02',NULL,NULL,0,NULL,'2026-05-07 07:22:45','2026-05-20 15:40:50','BE35 9731 0243 2337',NULL,'M'),(32,'Wesley','Meert','meertwesley@gmail.com',1,'Kalsbergstraat 54','3400','Landen',NULL,'0470076264',NULL,NULL,NULL,0,NULL,'2026-05-07 07:22:46','2026-05-20 15:41:09','BE64 7370 4898 5952','FHZw0bTf+nfoeLAo+AyyyiTVz0YFWuWoDy1LQfofzFY=',NULL),(33,'Birthe','Pardon','birthepardon@gmail.com',1,'Vijfstraten','3140','Keerbergen',NULL,'0470250178','2006-03-24',NULL,NULL,0,NULL,'2026-05-07 07:32:42','2026-06-17 19:30:42','BE58 7506 8341 5379','PC7Wj1y7b3l1FK6wyyllHWq0mLLVSwYGwn/8JAeHhVo=','M'),(34,'Chloë','Vlamynck','chloe.vlamynck@hotmail.com',1,'De Wijngaard 20','9910','Knesselare',NULL,'+3296345122',NULL,NULL,NULL,0,NULL,'2026-05-07 07:32:48','2026-05-20 15:41:47','BE17 7350 7064 8421','w6jy8TxVFJeJmA+kyhG9rFY51InX6jcsdiafnaCgFBc=',NULL),(36,'Ilse','Laeremans','ilselaeremans@hotmail.com',1,'Korte Dreef 20','2820','Rijmenam',NULL,'0473469941','1980-12-04',NULL,NULL,0,NULL,'2026-05-07 07:40:37','2026-05-20 15:42:25','BE27973377479473','wrdpYq5F5qi3ZSBdM+DWpLS+azUl9fEtJ3JwSk6KSoM=','M'),(37,'Loes','Coninx','coninx_loes@hotmail.com',1,'Donkstraat 32','3150','Haacht',NULL,'0479351725','1984-05-25',NULL,NULL,0,NULL,'2026-05-07 08:00:07','2026-05-20 15:42:43','be54 7344 1015 3997','7nCC0JoKQRxmQzfya6lJ2IKGodXq9yJ8Y1ZJY/zavKQ=','M'),(38,'Eva','Dobbelaere','dobbelaere.eva05@gmail.com',1,'Koningin ELisabethlaan 14/2','9100','Sint-Niklaas',NULL,'0495101648','1970-11-05',NULL,NULL,0,NULL,'2026-05-07 08:07:23','2026-05-20 15:43:00','BE66736016061143','fPXd9r/O8Fnl9py6m+YqlOUrG54t8/nZKjJdzWtsmJk=',NULL),(39,'Simon','Linsenbühler','Simon.linsenbuehler@gmail.com',1,'Rue de Hollerich','1741','Luxemburg',NULL,'+49 155 60407130','1999-09-08',NULL,NULL,0,NULL,'2026-05-07 08:11:12','2026-05-20 15:43:18','DE27120300001061011837',NULL,'L'),(40,'Julie','Claus','julieclaus06@gmail.com',1,'voortweg 1b','9200','Grembergen',NULL,'0468142462','2006-01-23',NULL,NULL,0,NULL,'2026-05-07 08:28:36','2026-05-20 15:43:38','BE04 7390 1689 0731','oBSS4PxbliDNyv3w1/Wl+T0+cacb0+dLs1AxLp1TWNs=','M'),(41,'Liesbeth','Chielens','Liesbethchielens@live.be',1,'Papenstraat 12 F','3020','Veltem-Beisem',NULL,'0471109561',NULL,NULL,NULL,0,NULL,'2026-05-07 08:32:12','2026-05-20 15:43:57','BE62 3770 6332 4061','7BkXhVdwOXMw0EkL+n8YB2nFcrTj8nYuczPtmyySBRc=',NULL),(42,'Michael','Brouwers','michbrouw@gmail.com',1,'Tiensestraat 73','3271','Scherpenheuvel Zichem',NULL,'0032 476 33 89 62',NULL,NULL,NULL,0,NULL,'2026-05-07 08:59:21','2026-05-20 15:45:07','BE42 8538 5992 6654','GS5hO3+rsFe8ZYfm9ZXy4C46aeaGpGOmekKiffkcoSk=',NULL),(43,'Hannes','Hugaert','hannes.hugaert@detech.be',1,'Ekelbeke 93','9220','Hamme',NULL,'+32476639524','2000-07-12',NULL,NULL,0,NULL,'2026-05-07 09:49:14','2026-05-20 15:45:26','BE16103040342974','6aeVngm4nBtZYwe/B5aYptSjO3MyMZcgpCBmRFb9Il0=',NULL),(44,'Hannes','Hugaert','hannes.hugaert@gmail.com',1,'Ekelbeke 93','9220','',NULL,'+32476639524','2000-07-12',NULL,NULL,0,NULL,'2026-05-07 09:52:03','2026-05-20 15:45:39','BE16103040342974','Ye1xp+XHjIHLhSTrGR4mDeB9uBXUY8ijTH/fhlQ3Jz0=','M'),(45,'Karine','Gross','grosskarine01@gmail.com',1,'54 Avenue de Lorraine','57190','Florange',NULL,'+33615977846',NULL,NULL,NULL,0,NULL,'2026-05-07 11:17:52','2026-05-20 15:45:55','FR76 1027 8051 0100 0214 3420 141',NULL,NULL),(46,'Annelies','Haine','annelieshaine@hotmail.com',1,'hertbosweg 3A','3210','lubbeek',NULL,'+32498463150','1980-08-26',NULL,NULL,0,NULL,'2026-05-07 11:28:43','2026-05-20 15:46:06','BE59063208258126',NULL,NULL),(47,'Zoë','Van Rode','zoe.vanrode@gmail.com',1,'Koningin Fabiolalaan','1830','Machelen',NULL,'+32470302765',NULL,NULL,NULL,0,NULL,'2026-05-07 13:08:39','2026-05-20 15:46:16','BE67001869392787','1wTIxH5Uw8wYUFp46KyQkq0aWyRvcI1sVdxaEyGSvuY=',NULL),(48,'Bart','Geeraert','bart@vanapenstad.be',1,'Zonnebloemstraat 7','2820','Rijmenam',NULL,'0477 35 79 64',NULL,NULL,NULL,0,NULL,'2026-05-07 13:40:18','2026-05-20 15:46:28','Be79143097992333',NULL,NULL),(49,'Marleen','Raus','marleen_34@hotmail.com',1,'Hooghuis 48','3221','Nieuwrode',NULL,'0495586636','1969-07-27',NULL,NULL,0,NULL,'2026-05-07 14:15:06','2026-05-20 15:46:39','BE80785553013977','h45kHDyJJTt7v3WJbWANrsunJiJttHv+lr77rZvFWMA=',NULL),(50,'Puk','Raus','rauspuk2007@gmail.com',1,'Avenue Henri martin','75116','Paris',NULL,'0623053061',NULL,NULL,NULL,0,NULL,'2026-05-07 15:06:34','2026-05-20 15:46:51','',NULL,NULL),(51,'Lieve','Loose','lievedeloose@hotmail.com',1,'Abingdonstraat, 94','9100','Sint Niklaas',NULL,'0488264667',NULL,NULL,NULL,0,NULL,'2026-05-07 15:16:34','2026-05-20 15:47:03','BE92979334923423',NULL,NULL),(52,'micha','smets','michaelasmets.ms@gmail.com',1,'Potstraat 22','3300','Tienen',NULL,'0474091706','1991-03-27',NULL,NULL,0,NULL,'2026-05-07 15:19:38','2026-05-20 15:47:14','','rxVH7979SVt5FfaYxYyuQMm/GzLYZYUQQ3D18sWuTgo=','XL'),(53,'Laura','Machiels','laura.machiels@telenet.be',1,'Hanswijkstraat 13/2','3190','Boortmeerbeek',NULL,'0479134298','1997-11-10',NULL,NULL,0,NULL,'2026-05-07 16:15:15','2026-05-20 15:50:39','',NULL,'M'),(54,'Jaimy','Van Genechten','jaimyvg17@outlook.com',1,'Weverstraat','2531','Vremde',NULL,'0472564685','2004-10-22',NULL,NULL,0,NULL,'2026-05-07 17:37:07','2026-05-20 15:48:10','BE78000466510786','Xj75GEZeN+TWgwrNirxBUS35BIRhvtsFM7AFMvKIGJg=','M'),(55,'Jolien','beerens','jolien.beerens1@gmail.com',1,'saffraan 7','3150','Haacht',NULL,'0471124411','1992-03-16',NULL,NULL,0,NULL,'2026-05-07 19:44:32','2026-05-20 15:48:23','BE70 1030 6161 0125','DehJTLw7xf5fEPLT3EWuPH+Kz7XSmT0oEX4x3BiBLR8=','S'),(56,'Elke','Van Criekingen','elke.van.criekingen@pandora.be',1,'Saffraan','3150','Haacht',NULL,'0475212037',NULL,NULL,NULL,0,NULL,'2026-05-07 20:02:18','2026-06-18 06:29:12','Be29645104617464','QpRqx43V44bU+Zr0R3V2DmFQ5kr+pVcgJqT98q2ayCE=','S'),(57,'Ann','De Man','anndeman80@gmail.com',1,'Culostraat 22a','3360','Opvelp',NULL,'0479369191','1980-05-04',NULL,NULL,0,NULL,'2026-05-08 02:20:33','2026-05-20 15:48:47','BE87001309955694',NULL,NULL),(58,'Alejandro','Romaguera Gil','aromagueragil@gmail.com',1,'43 rue des Trévires','2628','Luxemburg',NULL,'00352621149792','1990-05-12',NULL,NULL,0,NULL,'2026-05-08 12:48:29','2026-05-20 15:48:58','LU87 0019 7855 0057 6000','NeNuNQ21mqMeOrKn4Bx5xM6L7lXarbQgQANjiG7s/kI=','L'),(59,'Jeroen','Leyssen','jeroenleyssen@gmail.com',1,'ANDRE DUMONTLAAN 16 bus B3','3665','As',NULL,'0468100332','1993-11-05',NULL,NULL,0,NULL,'2026-05-08 12:56:55','2026-05-27 04:42:59','BE29 7350 2355 9264','mHaVeIOG7i2A0rNqAuRnQFH1FwBMTNLa0Bs8PFbd0Ss=','XL'),(60,'Alejandro','Romaguera Gil','9480.alejandro@gmail.com',1,'43 rue des Trévires','2628','Luxembourg','Luxembourg','00352621149792',NULL,'M',NULL,0,NULL,'2026-05-08 13:14:02','2026-07-23 19:50:08','enc:v1:DFml6Lq5FDmhHTfw6xLLrb/ZyH7VDzYifBO0SjKvvQd4etfrIqjDO1o0CnsuBxB+',NULL,NULL),(61,'Wim','Vangramberen','wim.vangramberen@skynet.be',1,'Schrieksebaan 238B','3140','Keerbergen',NULL,'+32 472354801',NULL,NULL,NULL,0,NULL,'2026-05-08 18:05:50','2026-05-20 15:49:47','Be75734351008451','jAWmxIDESDQu0wW+E89iM6Piv0LNdb6sQZ27Yz1R+qE=',NULL),(62,'Elene','Cobbaut','elene@eleja.be',1,'Wimpstraat','2260','Westerlo',NULL,'0456 12 25 32','2007-07-15',NULL,NULL,0,NULL,'2026-05-08 18:12:45','2026-05-20 15:49:59','BE88 7340 4915 3141',NULL,'S'),(63,'Kira','Meerts','kira.meerts@gmail.com',1,'Tongerlostraat 114','2260','Westerlo',NULL,'+32 479 32 90 89','2007-05-03',NULL,NULL,0,NULL,'2026-05-09 11:19:23','2026-05-20 15:50:10','BE52001909746609','3a1p32gNrJBSGA29VMwPCOZmcOBtv7D9ovGjDoP0Ric=',NULL),(64,'Annelies','Zaman','annelies_zaman@hotmail.com',1,'Vuntlaan 4','3012','Wilsele',NULL,'0497902769',NULL,NULL,NULL,0,NULL,'2026-05-10 05:31:27','2026-05-20 15:50:23','BE91063952776976',NULL,NULL),(65,'yana','coeckelberghs','yanacoeckelberghs@gmail.com',1,'aardeweg','9406','Outer',NULL,'0476370185','2000-05-30',NULL,NULL,0,NULL,'2026-05-10 07:50:38','2026-05-20 15:50:35','BE37 0636 7095 8058','SxYg5qrg1xMoc7uZh5CFF6BiGz3vcjO/4RdeALgYn0A=',NULL),(66,'Jessica','Vandebosch','jessica_vandebosch@hotmail.com',1,'Hoogstraat 26a1','3670','Oudsbergen',NULL,'0491 19 54 87','1989-01-18',NULL,NULL,0,NULL,'2026-05-10 14:19:50','2026-05-26 16:13:06','BE46 9731 2951 4636','m/+2Ronw1rAo7+61QIskaHh5eeT5On6hkCL+nkHWPUg=','L'),(67,'Celine','De Smet','celinedesmet28@Gmail.com',1,'Brugsken 185','9100','Sint-Niklaas',NULL,'0471789885','2001-05-28',NULL,NULL,0,NULL,'2026-05-10 16:12:48','2026-05-30 11:51:08','BE81 0019 8666 9124','9sQYyhbgM2darE4CPpUvGINuMWR1uLJAtDw63DmiSME=','L'),(68,'Ioannis','Farmakis','ioannisfarmakis5@gmail.com',1,'Auguste Charles','1326','Luxembourg',NULL,'+352 661 602 112','1999-12-21',NULL,NULL,0,NULL,'2026-05-10 19:44:24','2026-05-20 15:51:10','LT90 3250 0784 0500 4747',NULL,'L'),(69,'Dirk','Crauwels','dirk.crauwels@skynet.be',1,'Dobbelbos','2560','Nijlen',NULL,'0473820720','1966-11-21',NULL,NULL,0,NULL,'2026-05-11 06:20:28','2026-06-20 11:37:47','BE84 7895 6510 6759','PjxuiSg2eMiF/+ThKVud3IQmMm61xwYhT/qY7GMK56g=','XL'),(70,'Hannelore','Van der Leyden','hannelore.vdleyden@tsmmechelen.net',1,'Dijleweg','2820','Bonheiden',NULL,'0472445226','1997-01-31',NULL,NULL,0,NULL,'2026-05-11 12:36:13','2026-06-22 15:32:03','BE30 1430 8420 6411','AhVIt+Z6oEUUdS0Wd09YGiJqCwq59zCXA02y2g2BLh8=','XS'),(71,'Axelle','Verstraeten','axelle.verstraeten@outlook.com',1,'Pastoriestraat 50','2560','Nijlen',NULL,'0468477713','2007-05-15',NULL,NULL,0,NULL,'2026-05-11 15:26:34','2026-05-20 15:51:59','BE68 7360 5757 6234','cMOwAuORdWr70Uio9OdZILf9PMyBR3Ivouw3E8hTBlY=','S'),(72,'Emma','Wijndaele','emmawijndaele6@gmail.com',1,'Kraaiwinkelstraat 6','9320','Nieuwerkerken',NULL,'0468320590','2006-05-14',NULL,NULL,0,NULL,'2026-05-11 15:45:23','2026-05-20 15:52:12','BE60 7370 5969 6570','j9gMm5ocycL3cNGZNEqm8O+i50j6N8JwFiSHPo1k4Tc=','M'),(73,'Kevin','Lousbergh','lousberghkevin@gmail.com',1,'Beverststraat 27','3740','Bilzen',NULL,'0471255139',NULL,NULL,NULL,0,NULL,'2026-05-11 17:49:02','2026-05-20 15:52:24','',NULL,NULL),(74,'Marc','Van den broeck','marc.van.den.broeck.67@telenet.be',1,'Oude Putsebaan 10','3140','Keerbergen',NULL,'0474500427','1967-01-07',NULL,NULL,0,NULL,'2026-05-11 18:27:33','2026-05-20 15:52:38','BE29330056833364','xA9wqvarOEnSRw+DJHuNWR2+cUGUH0oljXgNiqz0Jms=','L'),(75,'Johan','Vranken','johanvranken1@gmail.com',1,'De Merodestraat 19','2270','Herenthout',NULL,'0473487736','1976-01-24',NULL,NULL,0,NULL,'2026-05-11 18:52:32','2026-05-20 15:52:53','BE25777598587682',NULL,'L'),(76,'Asïa','Soussi Zouaoui','asia.soussi@hotmail.com',1,'Putsesteenweg 237/1','2820','Bonheiden',NULL,'0467727801','1968-05-24',NULL,NULL,0,NULL,'2026-05-11 18:53:55','2026-05-20 18:55:06','BE36973112912781','XUJzuLJBqz168GqSat/Z/I8qGWDlUG8sV/bNwERXJIk=','S'),(77,'Guy','De Wit','001guy.dewit001@gmail.com',1,'Zilverberklaan 22','2820','Bonheiden',NULL,'0486-87.37.84','1964-05-02',NULL,NULL,0,NULL,'2026-05-12 16:10:08','2026-05-20 15:53:21','BE75 9731 8493 2251','OScClcFYYYS7UnORaNJe7y0Um1BcZN9TrqAr6ZCr9qY=','L'),(78,'Johan','Leers','Johan.leers@hotmail.com',1,'Moorsemsestraat 312','3130','Betekom',NULL,'0493454788','1970-06-27',NULL,NULL,0,NULL,'2026-05-12 19:10:11','2026-05-20 15:53:32','28063573966920','0l2qOkOOytKmBNMYbpvDGdzIQvrBM2k1/RuWI4zLDLM=','XL'),(79,'Robin James','Enclona','robibjames17@gmail.com',1,'Vooruitzichtstraat 15','2140','Borgerhout',NULL,'0478798973','1992-09-20',NULL,NULL,0,NULL,'2026-05-13 07:29:33','2026-05-20 15:53:44','BE44739024205945',NULL,NULL),(80,'Kristin','De Leebeeck','kristin.de.leebeeck@gmail.com',1,'Schoolstraat 53','3110','Rotselaar',NULL,'0477782625','1970-03-25',NULL,NULL,0,NULL,'2026-05-14 19:48:42','2026-05-20 15:53:54','BE81734383064224','/sn8q7BWsbnCvkxtdFObec7KfadeJQ/Rgbd5WHvIjz4=','L'),(81,'Kevin','Van de Voorde','vd.voorde.k99@gmail.com',1,'Hanswijkdries','2800','Mechelen - 2800',NULL,'0497856886',NULL,NULL,NULL,0,NULL,'2026-05-15 15:55:27','2026-05-20 15:54:04','Be28750701519320','KwmIypLbgO9xKDqioD34TM7bR1TmnKgT5UL0izFclPo=',NULL),(82,'Joppe','Mouton','joppe.mouton@gmail.com',1,'Ringstraat 16B','9200','grembergen',NULL,'+32 467 03 72 44','2007-08-14',NULL,NULL,0,NULL,'2026-05-18 13:42:55','2026-05-21 07:39:25','BE22 0018 9098 0947','MHcJzi809Ae3CDI2ASrH0yUHuO903JmDIunmr9bbOHY=','XL'),(83,'Yenno','Van Gansen','yenno2005@gmail.com',1,'Heibaan 93','2235','Hulshout',NULL,'0493996091','2005-09-11',NULL,NULL,0,NULL,'2026-05-20 15:28:32','2026-05-20 15:54:30','BE87 7340 4884 8094','jlCwD1yEsn8tXsEXsaeEKJHkN9hxh3fgoBJ5N1x4Ckw=','M'),(84,'Eddy','Stroobants','edmond.stroobants@telenet.be',1,'Woeringstraat 63','3150','Tildonk',NULL,'0477786891',NULL,NULL,NULL,0,NULL,'2026-05-21 17:46:33','2026-05-21 17:46:33','BE83 9792 5617 8015','SCVOJdWjIgRMa/8dXiSlrM6lHE/POomZYirlZeJ2byU=',NULL),(85,'Roan','Stroobants','roan.stroobants@hotmail.com',1,'Woeringstraat 63','3150','Tildonk',NULL,'0478663763',NULL,NULL,NULL,0,NULL,'2026-05-21 17:48:39','2026-05-28 07:40:38','BE45 9730 2485 6989','9qOFzeT2TwEwh69YS7BN87e8cJpPZG2mmmsk2MI/KPc=','M'),(86,'Kitty','Vanderstraeten','kitty.vanderstraeten@hotmail.com',1,'Keiberg 9','3700','Tongeren',NULL,'0397709973',NULL,NULL,NULL,0,NULL,'2026-05-22 05:17:28','2026-05-22 05:17:28','Be81750640739524','dWdbN3vt55UjfY41vculgMg48+Zwjtq+AXKwO8GhJps=',NULL),(87,'Charlotte','De Kimpe','charlotte.dekimpe1@gmail.com',1,'Rozengaard, 24','2550','Kontich',NULL,'0473237917',NULL,NULL,NULL,0,NULL,'2026-05-25 18:49:21','2026-05-25 18:49:21','BE73738041539260',NULL,NULL),(88,'Rémi','Neimry','remineimry03@gmail.com',1,'Rue de Sart','1457','Walhain',NULL,'0479991212','2003-11-05',NULL,NULL,0,NULL,'2026-05-26 15:07:25','2026-05-26 20:39:59','BE73 7320 6253 6860','B8ukxYxUNsOLKwpr3qRgGZbuNfC+AcOpOSU60lDINFA=','L'),(89,'Hugo','Scarcez','scarcezhugo@gmail.com',1,'Hour','5563','Houyet',NULL,'0477/57.10.62','2004-03-30',NULL,NULL,0,NULL,'2026-05-26 15:22:06','2026-05-26 20:54:47','BE05363168996975','jtP3QaAqGrBWBzIhTOLpqO7IZUYaelfFppj+xJSVz0s=','L'),(90,'Sander','Callaert','sander.callaert@telenet.be',1,'Stijn Streuvelsstraat','1831','Diegem',NULL,'0474614535',NULL,NULL,NULL,0,NULL,'2026-05-26 15:32:09','2026-05-26 15:32:09','BE52 0636 7352 6609',NULL,NULL),(91,'Niels','De Baerdemaeker','dbniels@hotmail.com',1,'Sint-Martinusstraat 25','1700','Sint-Martens-Bodegem',NULL,'0473206386',NULL,NULL,NULL,0,NULL,'2026-05-26 15:38:23','2026-05-26 15:38:23','BE52063645474209',NULL,NULL),(92,'Germain','Besonhé','germainbesonhe@gmail.com',1,'Rue du Hameau','5575','Gedinne',NULL,'0474286917','2002-06-05',NULL,NULL,0,NULL,'2026-05-26 15:43:27','2026-05-27 14:49:59','BE30001792483511','n+QtyASckc/fzZWepNOZ7qLT3xCfDD/v0MJP+jn40Mk=','M'),(93,'Lana','Callaert','lana.callaert@gmail.com',1,'Lange Nieuwstraat 113 bus 2','2800','Mechelen',NULL,'0476739968','2000-09-13',NULL,NULL,0,NULL,'2026-05-26 15:50:18','2026-05-26 20:33:10','BE54 0635 9772 0297','G1Wpk1wCSeH0d7vRFwmog70720hIgHexTnK3mPZ+wUQ=','M'),(94,'Maya','Audenaert','mayaaudenaert@gmail.com',1,'Reynoutstraat 36','9200','Dendermonde',NULL,'0479172940','2006-05-25',NULL,NULL,0,NULL,'2026-05-26 16:45:11','2026-05-26 16:45:11','',NULL,NULL),(95,'Evy','Pepermans','evy.pepermans@telenet.be',1,'Lindestraat','2800','Mechelen',NULL,'0486227374',NULL,NULL,NULL,0,NULL,'2026-05-26 20:36:33','2026-05-26 20:36:33','Be 34 0018 1840 0190',NULL,NULL),(96,'Kara','De Pauw','karadepauw@gmail.com',1,'Pillendijk 2B','9130','Kieldrecht',NULL,'0495720550','2000-05-18',NULL,NULL,0,NULL,'2026-05-27 07:28:11','2026-05-27 14:23:19','BE93736046279067','oEALF9oJcPKTPLXA6LmmNTpHI8+GcsmXD+oGUCHfWwE=','XXL'),(97,'Wout','Schellemans','wout99@live.be',1,'Oude Broekstraat 11','2830','Heindonk',NULL,'0494250165','1999-07-03',NULL,NULL,0,NULL,'2026-05-27 08:48:52','2026-05-27 08:48:52','BE20363162913156',NULL,NULL),(98,'Jeroen','Van De Laer','jeroen_vandelaer@hotmail.com',1,'Zallakenstraat 62','3110','Rotselaar',NULL,'+32495856455','1995-06-29',NULL,NULL,0,NULL,'2026-05-27 09:58:06','2026-05-28 05:45:09','BE78063744412286','/26arMQT2mcSOibzmnIoRu6B5HbBytLkKGB881/YeCc=','M'),(99,'Sandy','Roscam','sandyroscam83@hotmail.com',1,'Stationsstraat 11','3191','Hever',NULL,'0468/23.7175','1983-07-27',NULL,NULL,0,NULL,'2026-05-27 19:00:11','2026-05-27 19:00:11','BE96408807936105',NULL,NULL),(100,'Klaas','Van den berghe','klaasvandenberghe@proton.me',1,'Brusselbaan 352a','1790','Affligem',NULL,'0497386054',NULL,NULL,NULL,0,NULL,'2026-05-30 18:22:56','2026-05-30 18:22:56','Be98979533256693','9fdrRCT0ZHbnzdYjDCYhHRqKaF2SRh8mZbiKXFSZjx8=',NULL),(101,'Wesley','Braeckmans','blood_element@hotmail.be',1,'Tongerlostraat 12','2040','Berendrecht (antwerpen)',NULL,'0476452538','1982-04-17',NULL,NULL,0,NULL,'2026-06-01 04:12:13','2026-06-13 06:15:21','Be08973102342613','8LxPkXXR+9Y9OvHbByVOFZYbZ3J30FCDyPO57LTk+dg=','XXL'),(102,'Ellen','Van Reempts','evanreempts@hotmail.com',1,'Aarschotsesteenweg 133 A bus 4','3111','Wezemaal',NULL,'0474343996','1982-10-30',NULL,NULL,0,NULL,'2026-06-02 08:52:26','2026-06-05 12:28:39','BE58001364671879','IjUEz6hYWOAi8jSi6bVvjq00P1VSWjidGDeM55Zm3I0=','M'),(103,'Sander','Michiels','sander.michiels@icloud.com',1,'Meierij 27','2260','Westerlo',NULL,'0493448912',NULL,NULL,NULL,0,NULL,'2026-06-06 18:55:14','2026-06-06 18:55:14','BE31 7360 6849 0855','QfWqbrGJn+pvydKYCGMbhZewEOyQ6W5a/2aJxEhEevg=',NULL),(104,'Jaimie','Vandevoort','jaimie.vinmat@gmail.com',1,'Kleinaartstraat 9','3832','Wellen',NULL,'0478719124',NULL,NULL,NULL,0,NULL,'2026-06-09 13:27:38','2026-06-09 13:27:38','BE02 9795 2554 9540','R4kP5yasDtjqz94MFQ2lz8s3LGwsIiBX2YWt9AIRwQQ=',NULL),(105,'Tresje','Bruggeman','tresje2400@gmail.com',1,'Molenstraat 327','2490','Balen',NULL,'0467099323',NULL,NULL,NULL,0,NULL,'2026-06-13 14:56:31','2026-06-13 14:56:31','','AxIYUtXGDyH+SGrZqXr4t9zzcCtjozr/RNiJPA18gA0=',NULL),(106,'Ali','Jabbar','aligatro.a.l.i@gmail.com',0,'Edouard Kufferathlaan','1020','Brussel','België','0486728120',NULL,NULL,NULL,0,NULL,'2026-06-25 16:29:41','2026-07-23 20:58:48','enc:v1:AWiSogGG9RnBjyM0GC6jmD+lqDeBRML6rMeP5MarDma5XINqF+Od7ocWqXRbE470',NULL,NULL),(107,'Sophie','Deckmyn','sophiedeckmyn@hotmail.com',1,'Dries','1785','Merchtem',NULL,'0492399511',NULL,NULL,NULL,0,NULL,'2026-06-26 07:25:41','2026-06-26 07:25:41','BE09001833810157','pSMq6OZZEf9l8vsUbFWnj2VoyDCyrhqLbOfcNpDFBx0=',NULL),(108,'Sara','Wellens','Sara.Wellens@hotmail.com',1,'Wolfsdonksesteenweg 137','2230','Herselt',NULL,'0570357053',NULL,NULL,NULL,0,NULL,'2026-06-26 11:18:20','2026-06-26 11:18:20','',NULL,NULL),(109,'Yannick','Heremans','yannickheremans@icloud.com',1,'Bosstraat 49 bus 4','2861','Onze-Lieve-Vrouw-Waver',NULL,'0484532815','2003-05-08',NULL,NULL,0,NULL,'2026-06-26 13:57:33','2026-06-29 11:21:08','BE49 0635 8154 7771','MLLtZ9ez72WyYNbNQtQcW2JYqJrP9Rx/lPrr5ADHPC8=','L'),(110,'Maya','Ghysels','Maya.ghysels@telenet.be',1,'Haaksdonkweg 31','1880','Kapelle-op-den-Bos',NULL,'0468312499','2004-07-27',NULL,NULL,0,NULL,'2026-06-26 14:19:44','2026-06-29 11:30:02','BE86736059255950','hAB6kOyCviP1tdNzCZBWm6iz6HMTgoJ2T2ZV9gAyxMI=','XL'),(111,'Tygo','Bamps','tygo.bamps@outlook.com',1,'Heidekenstraat 60','1083','Ganshoren',NULL,'0483692250',NULL,NULL,NULL,0,NULL,'2026-06-29 11:25:41','2026-06-29 11:25:41','BE93 7350 6933 3867','Q8BTnOocJPlZHTKEzaRHXGiXCwdde0kxI8DODScc7RY=',NULL),(112,'Zoë','Schepens','zoeschepens9@gmail.com',1,'Slameuterstraat 25','2580','Putte',NULL,'+32 468 34 77 71','2006-11-17',NULL,NULL,0,NULL,'2026-06-29 11:42:57','2026-06-29 14:09:18','BE82132554512968',NULL,'M'),(113,'Arthur','Anthony','arthuranthony2610@gmail.com',1,'Wilsonweg 282','2610','Wilrijk',NULL,'0494116824','2007-02-03',NULL,NULL,0,NULL,'2026-06-29 14:57:48','2026-06-29 15:21:38','BE95 7380 5275 2258','cSHhlPj6DVSzx/CQ1kTBUE/TRUztQW3CFGz6+bREHew=','S'),(114,'Noe','Dewit','dewitnoe@gmail.com',1,'Oude Beggaardenstraat 2','2800','Mechelen',NULL,'0492452651','1998-12-29',NULL,NULL,0,NULL,'2026-06-30 11:54:48','2026-06-30 11:54:48','',NULL,NULL),(115,'TESTER','TEST','tester@test.com',1,'TESTER','3190','TTEST','België','0477852071','1980-08-15','M',NULL,0,NULL,'2026-07-23 19:59:20','2026-07-23 19:59:20','enc:v1:WE8Iw6COF0n1LcYeg5WToTyGIlkrAMovP7n+GmC9Z1EWxKJOvr+PCVuQSxODlUlY','enc:v1:uEvCIPPTEghgL2/4wkAPG0rnEHk8yGHCUL1ponWfKvQ=','XXL'),(116,'tester','test','dimitri.peeters10@gmail.com',1,'testerstraat','3190','boortmeerbeek','België','0477852071','1980-08-15','M',NULL,1,'2026-07-23 21:40:35','2026-07-23 21:40:35','2026-07-23 21:41:48','enc:v1:EKBklCbOVf/ftSDD36Lf6fzVKB/iLj/oQ9kPj022gwoe3yHWAYQQU/nI7Gp8ZIiM','enc:v1:3elYklkj2vK62C3aT2fYHhoOz7oC8nCxy8ooagRRpB8=','XXL'),(117,'Dimi','Peeters','d.peeters@procertus.be',1,'test','3190','tester','België','0477852071','1980-08-15','M',NULL,1,'2026-07-23 22:02:00','2026-07-23 22:02:00','2026-07-23 22:07:31','enc:v1:ESjRGCENfKyw+/MjvRH+AfoEdBwgQfPEZ85Z6+XqmCqCV/sfiG6vR0xR7FlSxEU0','enc:v1:fJ/z0n1K3PCy6M0cBvjUOV+rqXw9vaqqh+kg/Djrjlk=','XXL');
+/*!40000 ALTER TABLE `leden` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `leden_groepen`
+--
+
+DROP TABLE IF EXISTS `leden_groepen`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `leden_groepen` (
   `lid_id` int NOT NULL,
   `groep_id` int NOT NULL,
   PRIMARY KEY (`lid_id`,`groep_id`),
@@ -758,11 +327,25 @@ CREATE TABLE IF NOT EXISTS `leden_groepen` (
   CONSTRAINT `leden_groepen_ibfk_1` FOREIGN KEY (`lid_id`) REFERENCES `leden` (`lid_id`) ON DELETE CASCADE,
   CONSTRAINT `leden_groepen_ibfk_2` FOREIGN KEY (`groep_id`) REFERENCES `groepen` (`groep_id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
 
--- Dumpen data van tabel aefs_v2.leden_groepen: ~0 rows (ongeveer)
+--
+-- Dumping data for table `leden_groepen`
+--
 
--- Structuur van  tabel aefs_v2.lidmaatschappen wordt geschreven
-CREATE TABLE IF NOT EXISTS `lidmaatschappen` (
+LOCK TABLES `leden_groepen` WRITE;
+/*!40000 ALTER TABLE `leden_groepen` DISABLE KEYS */;
+/*!40000 ALTER TABLE `leden_groepen` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `lidmaatschappen`
+--
+
+DROP TABLE IF EXISTS `lidmaatschappen`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `lidmaatschappen` (
   `lidmaatschap_id` int NOT NULL AUTO_INCREMENT,
   `lid_id` int NOT NULL,
   `lidtype_id` int NOT NULL,
@@ -774,24 +357,50 @@ CREATE TABLE IF NOT EXISTS `lidmaatschappen` (
   CONSTRAINT `fk_lidmaatschap_lid` FOREIGN KEY (`lid_id`) REFERENCES `leden` (`lid_id`) ON DELETE CASCADE,
   CONSTRAINT `fk_lidmaatschap_type` FOREIGN KEY (`lidtype_id`) REFERENCES `lidtypes` (`lidtype_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
 
--- Dumpen data van tabel aefs_v2.lidmaatschappen: ~0 rows (ongeveer)
+--
+-- Dumping data for table `lidmaatschappen`
+--
 
--- Structuur van  tabel aefs_v2.lidtypes wordt geschreven
-CREATE TABLE IF NOT EXISTS `lidtypes` (
+LOCK TABLES `lidmaatschappen` WRITE;
+/*!40000 ALTER TABLE `lidmaatschappen` DISABLE KEYS */;
+/*!40000 ALTER TABLE `lidmaatschappen` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `lidtypes`
+--
+
+DROP TABLE IF EXISTS `lidtypes`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `lidtypes` (
   `lidtype_id` int NOT NULL AUTO_INCREMENT,
   `naam` varchar(100) COLLATE utf8mb4_general_ci NOT NULL,
   `bedrag` decimal(10,2) NOT NULL,
   PRIMARY KEY (`lidtype_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
 
--- Dumpen data van tabel aefs_v2.lidtypes: ~2 rows (ongeveer)
-INSERT INTO `lidtypes` (`lidtype_id`, `naam`, `bedrag`) VALUES
-	(1, 'Effectief lid', 25.00),
-	(2, 'Steunend lid', 50.00);
+--
+-- Dumping data for table `lidtypes`
+--
 
--- Structuur van  tabel aefs_v2.mail_logs wordt geschreven
-CREATE TABLE IF NOT EXISTS `mail_logs` (
+LOCK TABLES `lidtypes` WRITE;
+/*!40000 ALTER TABLE `lidtypes` DISABLE KEYS */;
+INSERT INTO `lidtypes` VALUES (1,'Effectief lid',25.00),(2,'Steunend lid',50.00);
+/*!40000 ALTER TABLE `lidtypes` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `mail_logs`
+--
+
+DROP TABLE IF EXISTS `mail_logs`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `mail_logs` (
   `mail_id` int NOT NULL AUTO_INCREMENT,
   `event_id` int NOT NULL,
   `lid_id` int NOT NULL,
@@ -802,16 +411,26 @@ CREATE TABLE IF NOT EXISTS `mail_logs` (
   `verzonden_op` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`mail_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
 
--- Dumpen data van tabel aefs_v2.mail_logs: ~4 rows (ongeveer)
-INSERT INTO `mail_logs` (`mail_id`, `event_id`, `lid_id`, `email`, `onderwerp`, `status`, `foutmelding`, `verzonden_op`) VALUES
-	(1, 7, 19, 'dimitri.peeters3@telenet.be', 'Uw planning voor event: Tomorrowland 2026 WE1', 'fout', 'SMTP Error: Could not connect to SMTP host. Failed to connect to server SMTP server error: Failed to connect to server SMTP code: 110 Additional SMTP info: Connection timed out', '2026-05-30 13:30:49'),
-	(2, 7, 106, 'aligatro.a.l.i@gmail.com', 'Uw shiftplanning voor Tomorrowland 2026 WE1', 'fout', 'SMTP Error: Could not connect to SMTP host. Failed to connect to server SMTP server error: Failed to connect to server SMTP code: 110 Additional SMTP info: Connection timed out', '2026-06-30 17:22:03'),
-	(3, 7, 106, 'aligatro.a.l.i@gmail.com', 'Uw shiftplanning voor Tomorrowland 2026 WE1', 'fout', 'SMTP Error: Could not connect to SMTP host. Failed to connect to server SMTP server error: Failed to connect to server SMTP code: 110 Additional SMTP info: Connection timed out', '2026-06-30 17:31:06'),
-	(4, 7, 106, 'aligatro.a.l.i@gmail.com', 'Uw shiftplanning voor Tomorrowland 2026 WE1', 'fout', 'SMTP Error: Could not connect to SMTP host. Failed to connect to server SMTP server error: Failed to connect to server SMTP code: 110 Additional SMTP info: Connection timed out', '2026-06-30 17:38:54');
+--
+-- Dumping data for table `mail_logs`
+--
 
--- Structuur van  tabel aefs_v2.meldingen wordt geschreven
-CREATE TABLE IF NOT EXISTS `meldingen` (
+LOCK TABLES `mail_logs` WRITE;
+/*!40000 ALTER TABLE `mail_logs` DISABLE KEYS */;
+INSERT INTO `mail_logs` VALUES (1,7,19,'dimitri.peeters3@telenet.be','Uw planning voor event: Tomorrowland 2026 WE1','fout','SMTP Error: Could not connect to SMTP host. Failed to connect to server SMTP server error: Failed to connect to server SMTP code: 110 Additional SMTP info: Connection timed out','2026-05-30 13:30:49'),(2,7,106,'aligatro.a.l.i@gmail.com','Uw shiftplanning voor Tomorrowland 2026 WE1','fout','SMTP Error: Could not connect to SMTP host. Failed to connect to server SMTP server error: Failed to connect to server SMTP code: 110 Additional SMTP info: Connection timed out','2026-06-30 17:22:03'),(3,7,106,'aligatro.a.l.i@gmail.com','Uw shiftplanning voor Tomorrowland 2026 WE1','fout','SMTP Error: Could not connect to SMTP host. Failed to connect to server SMTP server error: Failed to connect to server SMTP code: 110 Additional SMTP info: Connection timed out','2026-06-30 17:31:06'),(4,7,106,'aligatro.a.l.i@gmail.com','Uw shiftplanning voor Tomorrowland 2026 WE1','fout','SMTP Error: Could not connect to SMTP host. Failed to connect to server SMTP server error: Failed to connect to server SMTP code: 110 Additional SMTP info: Connection timed out','2026-06-30 17:38:54');
+/*!40000 ALTER TABLE `mail_logs` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `meldingen`
+--
+
+DROP TABLE IF EXISTS `meldingen`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `meldingen` (
   `melding_id` int NOT NULL AUTO_INCREMENT,
   `type` varchar(50) COLLATE utf8mb4_general_ci NOT NULL,
   `titel` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
@@ -820,181 +439,71 @@ CREATE TABLE IF NOT EXISTS `meldingen` (
   `aangemaakt_op` datetime DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`melding_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
 
--- Dumpen data van tabel aefs_v2.meldingen: ~4 rows (ongeveer)
-INSERT INTO `meldingen` (`melding_id`, `type`, `titel`, `bericht`, `gelezen`, `aangemaakt_op`) VALUES
-	(1, 'uitschrijving_event', 'Lid uitgeschreven voor event', 'Lid: Hugo Scarcez\n\nEvent: Tomorrowland 2026 WE2\n\nReden van uitschrijving:\nIk ben op die data elders aan het werk.', 0, '2026-06-26 17:05:44'),
-	(2, 'uitschrijving_event', 'Lid uitgeschreven voor event', 'Lid: Hugo Scarcez\n\nEvent: Tomorrowland 2026 WE2\n\nReden van uitschrijving:\nIk ben op die data elders aan het werk.', 0, '2026-06-26 17:06:35'),
-	(3, 'uitschrijving_event', 'Lid uitgeschreven voor event', 'Lid: Hugo Scarcez\n\nEvent: Tomorrowland 2026 WE2\n\nReden van uitschrijving:\nIk ben op die data elders aan het werk.', 0, '2026-06-26 17:06:49'),
-	(4, 'uitschrijving_event', 'Lid uitgeschreven voor event', 'Lid: Hugo Scarcez\n\nEvent: Tomorrowland 2026 WE2\n\nReden van uitschrijving:\nIk ben op die data elders aan het werk.', 0, '2026-06-26 17:07:27');
+--
+-- Dumping data for table `meldingen`
+--
 
--- Structuur van  tabel aefs_v2.shift_inschrijvingen wordt geschreven
-CREATE TABLE IF NOT EXISTS `shift_inschrijvingen` (
-  `id` int NOT NULL AUTO_INCREMENT,
+LOCK TABLES `meldingen` WRITE;
+/*!40000 ALTER TABLE `meldingen` DISABLE KEYS */;
+INSERT INTO `meldingen` VALUES (1,'uitschrijving_event','Lid uitgeschreven voor event','Lid: Hugo Scarcez\n\nEvent: Tomorrowland 2026 WE2\n\nReden van uitschrijving:\nIk ben op die data elders aan het werk.',0,'2026-06-26 17:05:44'),(2,'uitschrijving_event','Lid uitgeschreven voor event','Lid: Hugo Scarcez\n\nEvent: Tomorrowland 2026 WE2\n\nReden van uitschrijving:\nIk ben op die data elders aan het werk.',0,'2026-06-26 17:06:35'),(3,'uitschrijving_event','Lid uitgeschreven voor event','Lid: Hugo Scarcez\n\nEvent: Tomorrowland 2026 WE2\n\nReden van uitschrijving:\nIk ben op die data elders aan het werk.',0,'2026-06-26 17:06:49'),(4,'uitschrijving_event','Lid uitgeschreven voor event','Lid: Hugo Scarcez\n\nEvent: Tomorrowland 2026 WE2\n\nReden van uitschrijving:\nIk ben op die data elders aan het werk.',0,'2026-06-26 17:07:27');
+/*!40000 ALTER TABLE `meldingen` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `shift_inschrijvingen`
+--
+
+DROP TABLE IF EXISTS `shift_inschrijvingen`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `shift_inschrijvingen` (
+  `inschrijving_id` int NOT NULL AUTO_INCREMENT,
   `shift_id` int NOT NULL,
   `lid_id` int NOT NULL,
-  `aangemaakt_op` datetime DEFAULT CURRENT_TIMESTAMP,
+  `status` enum('wachtend','bevestigd','reserve','geweigerd','geannuleerd') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'wachtend',
+  `opmerking_lid` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
+  `goedgekeurd_door` int DEFAULT NULL,
+  `goedgekeurd_op` datetime DEFAULT NULL,
+  `geannuleerd_door` int DEFAULT NULL,
+  `geannuleerd_op` datetime DEFAULT NULL,
+  `annulatie_reden` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
   `aanwezig` tinyint(1) NOT NULL DEFAULT '0',
   `aanwezig_afgevinkt_op` datetime DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `shift_id` (`shift_id`,`lid_id`),
-  KEY `lid_id` (`lid_id`),
-  CONSTRAINT `shift_inschrijvingen_ibfk_1` FOREIGN KEY (`shift_id`) REFERENCES `event_shifts` (`shift_id`) ON DELETE CASCADE,
-  CONSTRAINT `shift_inschrijvingen_ibfk_2` FOREIGN KEY (`lid_id`) REFERENCES `leden` (`lid_id`) ON DELETE CASCADE
+  `aangemaakt_op` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `bijgewerkt_op` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`inschrijving_id`),
+  UNIQUE KEY `uq_shift_inschrijvingen_shift_lid` (`shift_id`,`lid_id`),
+  KEY `idx_shift_inschrijvingen_lid` (`lid_id`),
+  KEY `idx_shift_inschrijvingen_status` (`status`),
+  KEY `idx_shift_inschrijvingen_goedgekeurd_door` (`goedgekeurd_door`),
+  KEY `idx_shift_inschrijvingen_geannuleerd_door` (`geannuleerd_door`),
+  CONSTRAINT `fk_shift_inschrijvingen_geannuleerd_door` FOREIGN KEY (`geannuleerd_door`) REFERENCES `gebruikers` (`gebruiker_id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_shift_inschrijvingen_goedgekeurd_door` FOREIGN KEY (`goedgekeurd_door`) REFERENCES `gebruikers` (`gebruiker_id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_shift_inschrijvingen_lid` FOREIGN KEY (`lid_id`) REFERENCES `leden` (`lid_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_shift_inschrijvingen_shift` FOREIGN KEY (`shift_id`) REFERENCES `shifts` (`shift_id`) ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=2376 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
 
--- Dumpen data van tabel aefs_v2.shift_inschrijvingen: ~132 rows (ongeveer)
-INSERT INTO `shift_inschrijvingen` (`id`, `shift_id`, `lid_id`, `aangemaakt_op`, `aanwezig`, `aanwezig_afgevinkt_op`) VALUES
-	(1377, 15, 41, '2026-05-30 11:53:22', 0, NULL),
-	(1378, 16, 41, '2026-05-30 11:53:22', 0, NULL),
-	(1379, 19, 41, '2026-05-30 11:53:22', 0, NULL),
-	(1380, 14, 71, '2026-05-30 11:53:22', 0, NULL),
-	(1381, 17, 71, '2026-05-30 11:53:22', 0, NULL),
-	(1382, 18, 71, '2026-05-30 11:53:22', 0, NULL),
-	(2250, 7, 106, '2026-06-30 17:11:06', 0, NULL),
-	(2251, 10, 106, '2026-06-30 17:11:06', 0, NULL),
-	(2252, 11, 106, '2026-06-30 17:11:06', 0, NULL),
-	(2253, 8, 25, '2026-06-30 17:11:06', 0, NULL),
-	(2254, 9, 25, '2026-06-30 17:11:06', 0, NULL),
-	(2255, 12, 25, '2026-06-30 17:11:06', 0, NULL),
-	(2256, 7, 113, '2026-06-30 17:11:06', 0, NULL),
-	(2257, 10, 113, '2026-06-30 17:11:06', 0, NULL),
-	(2258, 11, 113, '2026-06-30 17:11:06', 0, NULL),
-	(2259, 8, 71, '2026-06-30 17:11:06', 0, NULL),
-	(2260, 9, 71, '2026-06-30 17:11:06', 0, NULL),
-	(2261, 12, 71, '2026-06-30 17:11:06', 0, NULL),
-	(2262, 8, 33, '2026-06-30 17:11:06', 0, NULL),
-	(2263, 9, 33, '2026-06-30 17:11:06', 0, NULL),
-	(2264, 12, 33, '2026-06-30 17:11:06', 0, NULL),
-	(2265, 7, 67, '2026-06-30 17:11:06', 0, NULL),
-	(2266, 10, 67, '2026-06-30 17:11:06', 0, NULL),
-	(2267, 11, 67, '2026-06-30 17:11:06', 0, NULL),
-	(2268, 7, 34, '2026-06-30 17:11:06', 0, NULL),
-	(2269, 10, 34, '2026-06-30 17:11:06', 0, NULL),
-	(2270, 11, 34, '2026-06-30 17:11:06', 0, NULL),
-	(2271, 7, 19, '2026-06-30 17:11:06', 0, NULL),
-	(2272, 10, 19, '2026-06-30 17:11:06', 0, NULL),
-	(2273, 11, 19, '2026-06-30 17:11:06', 0, NULL),
-	(2274, 8, 69, '2026-06-30 17:11:06', 0, NULL),
-	(2275, 9, 69, '2026-06-30 17:11:06', 0, NULL),
-	(2276, 12, 69, '2026-06-30 17:11:06', 0, NULL),
-	(2277, 7, 84, '2026-06-30 17:11:06', 0, NULL),
-	(2278, 10, 84, '2026-06-30 17:11:06', 0, NULL),
-	(2279, 11, 84, '2026-06-30 17:11:06', 0, NULL),
-	(2280, 7, 56, '2026-06-30 17:11:06', 0, NULL),
-	(2281, 10, 56, '2026-06-30 17:11:06', 0, NULL),
-	(2282, 11, 56, '2026-06-30 17:11:06', 0, NULL),
-	(2283, 8, 31, '2026-06-30 17:11:06', 0, NULL),
-	(2284, 9, 31, '2026-06-30 17:11:06', 0, NULL),
-	(2285, 12, 31, '2026-06-30 17:11:06', 0, NULL),
-	(2286, 8, 29, '2026-06-30 17:11:06', 0, NULL),
-	(2287, 9, 29, '2026-06-30 17:11:06', 0, NULL),
-	(2288, 12, 29, '2026-06-30 17:11:06', 0, NULL),
-	(2289, 8, 38, '2026-06-30 17:11:06', 0, NULL),
-	(2290, 9, 38, '2026-06-30 17:11:06', 0, NULL),
-	(2291, 12, 38, '2026-06-30 17:11:06', 0, NULL),
-	(2292, 8, 92, '2026-06-30 17:11:06', 0, NULL),
-	(2293, 9, 92, '2026-06-30 17:11:06', 0, NULL),
-	(2294, 12, 92, '2026-06-30 17:11:06', 0, NULL),
-	(2295, 7, 70, '2026-06-30 17:11:06', 0, NULL),
-	(2296, 10, 70, '2026-06-30 17:11:06', 0, NULL),
-	(2297, 11, 70, '2026-06-30 17:11:06', 0, NULL),
-	(2298, 7, 44, '2026-06-30 17:11:06', 0, NULL),
-	(2299, 10, 44, '2026-06-30 17:11:06', 0, NULL),
-	(2300, 11, 44, '2026-06-30 17:11:06', 0, NULL),
-	(2301, 8, 89, '2026-06-30 17:11:06', 0, NULL),
-	(2302, 9, 89, '2026-06-30 17:11:06', 0, NULL),
-	(2303, 12, 89, '2026-06-30 17:11:06', 0, NULL),
-	(2304, 8, 36, '2026-06-30 17:11:06', 0, NULL),
-	(2305, 9, 36, '2026-06-30 17:11:06', 0, NULL),
-	(2306, 12, 36, '2026-06-30 17:11:06', 0, NULL),
-	(2307, 7, 104, '2026-06-30 17:11:06', 0, NULL),
-	(2308, 10, 104, '2026-06-30 17:11:06', 0, NULL),
-	(2309, 11, 104, '2026-06-30 17:11:06', 0, NULL),
-	(2310, 7, 54, '2026-06-30 17:11:06', 0, NULL),
-	(2311, 10, 54, '2026-06-30 17:11:06', 0, NULL),
-	(2312, 11, 54, '2026-06-30 17:11:06', 0, NULL),
-	(2313, 8, 59, '2026-06-30 17:11:06', 0, NULL),
-	(2314, 9, 59, '2026-06-30 17:11:06', 0, NULL),
-	(2315, 12, 59, '2026-06-30 17:11:06', 0, NULL),
-	(2316, 8, 66, '2026-06-30 17:11:06', 0, NULL),
-	(2317, 9, 66, '2026-06-30 17:11:06', 0, NULL),
-	(2318, 12, 66, '2026-06-30 17:11:06', 0, NULL),
-	(2319, 8, 75, '2026-06-30 17:11:06', 0, NULL),
-	(2320, 9, 75, '2026-06-30 17:11:06', 0, NULL),
-	(2321, 12, 75, '2026-06-30 17:11:06', 0, NULL),
-	(2322, 7, 55, '2026-06-30 17:11:06', 0, NULL),
-	(2323, 10, 55, '2026-06-30 17:11:06', 0, NULL),
-	(2324, 11, 55, '2026-06-30 17:11:06', 0, NULL),
-	(2325, 7, 81, '2026-06-30 17:11:06', 0, NULL),
-	(2326, 10, 81, '2026-06-30 17:11:06', 0, NULL),
-	(2327, 11, 81, '2026-06-30 17:11:06', 0, NULL),
-	(2328, 7, 80, '2026-06-30 17:11:06', 0, NULL),
-	(2329, 10, 80, '2026-06-30 17:11:06', 0, NULL),
-	(2330, 11, 80, '2026-06-30 17:11:06', 0, NULL),
-	(2331, 7, 53, '2026-06-30 17:11:06', 0, NULL),
-	(2332, 10, 53, '2026-06-30 17:11:06', 0, NULL),
-	(2333, 11, 53, '2026-06-30 17:11:06', 0, NULL),
-	(2334, 7, 49, '2026-06-30 17:11:06', 0, NULL),
-	(2335, 10, 49, '2026-06-30 17:11:06', 0, NULL),
-	(2336, 11, 49, '2026-06-30 17:11:06', 0, NULL),
-	(2337, 8, 110, '2026-06-30 17:11:06', 0, NULL),
-	(2338, 9, 110, '2026-06-30 17:11:06', 0, NULL),
-	(2339, 12, 110, '2026-06-30 17:11:06', 0, NULL),
-	(2340, 7, 52, '2026-06-30 17:11:06', 0, NULL),
-	(2341, 10, 52, '2026-06-30 17:11:06', 0, NULL),
-	(2342, 11, 52, '2026-06-30 17:11:06', 0, NULL),
-	(2343, 8, 20, '2026-06-30 17:11:06', 0, NULL),
-	(2344, 9, 20, '2026-06-30 17:11:06', 0, NULL),
-	(2345, 12, 20, '2026-06-30 17:11:06', 0, NULL),
-	(2346, 8, 88, '2026-06-30 17:11:06', 0, NULL),
-	(2347, 9, 88, '2026-06-30 17:11:06', 0, NULL),
-	(2348, 12, 88, '2026-06-30 17:11:06', 0, NULL),
-	(2349, 7, 85, '2026-06-30 17:11:06', 0, NULL),
-	(2350, 10, 85, '2026-06-30 17:11:06', 0, NULL),
-	(2351, 11, 85, '2026-06-30 17:11:06', 0, NULL),
-	(2352, 7, 107, '2026-06-30 17:11:06', 0, NULL),
-	(2353, 10, 107, '2026-06-30 17:11:06', 0, NULL),
-	(2354, 11, 107, '2026-06-30 17:11:06', 0, NULL),
-	(2355, 8, 111, '2026-06-30 17:11:06', 0, NULL),
-	(2356, 9, 111, '2026-06-30 17:11:06', 0, NULL),
-	(2357, 12, 111, '2026-06-30 17:11:06', 0, NULL),
-	(2358, 8, 101, '2026-06-30 17:11:06', 0, NULL),
-	(2359, 9, 101, '2026-06-30 17:11:06', 0, NULL),
-	(2360, 12, 101, '2026-06-30 17:11:06', 0, NULL),
-	(2361, 8, 32, '2026-06-30 17:11:06', 0, NULL),
-	(2362, 9, 32, '2026-06-30 17:11:06', 0, NULL),
-	(2363, 12, 32, '2026-06-30 17:11:06', 0, NULL),
-	(2364, 8, 61, '2026-06-30 17:11:06', 0, NULL),
-	(2365, 9, 61, '2026-06-30 17:11:06', 0, NULL),
-	(2366, 12, 61, '2026-06-30 17:11:06', 0, NULL),
-	(2367, 8, 109, '2026-06-30 17:11:06', 0, NULL),
-	(2368, 9, 109, '2026-06-30 17:11:06', 0, NULL),
-	(2369, 12, 109, '2026-06-30 17:11:06', 0, NULL),
-	(2370, 7, 83, '2026-06-30 17:11:06', 0, NULL),
-	(2371, 10, 83, '2026-06-30 17:11:06', 0, NULL),
-	(2372, 11, 83, '2026-06-30 17:11:06', 0, NULL),
-	(2373, 7, 112, '2026-06-30 17:11:06', 0, NULL),
-	(2374, 10, 112, '2026-06-30 17:11:06', 0, NULL),
-	(2375, 11, 112, '2026-06-30 17:11:06', 0, NULL);
+--
+-- Dumping data for table `shift_inschrijvingen`
+--
 
--- Structuur van  tabel aefs_v2.shift_toewijzingen wordt geschreven
-CREATE TABLE IF NOT EXISTS `shift_toewijzingen` (
-  `toewijzing_id` int NOT NULL AUTO_INCREMENT,
-  `shift_id` int NOT NULL,
-  `inschrijving_id` int NOT NULL,
-  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`toewijzing_id`),
-  KEY `shift_id` (`shift_id`),
-  KEY `inschrijving_id` (`inschrijving_id`),
-  CONSTRAINT `shift_toewijzingen_ibfk_1` FOREIGN KEY (`shift_id`) REFERENCES `event_shifts` (`shift_id`) ON DELETE CASCADE,
-  CONSTRAINT `shift_toewijzingen_ibfk_2` FOREIGN KEY (`inschrijving_id`) REFERENCES `event_inschrijvingen` (`inschrijving_id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+LOCK TABLES `shift_inschrijvingen` WRITE;
+/*!40000 ALTER TABLE `shift_inschrijvingen` DISABLE KEYS */;
+INSERT INTO `shift_inschrijvingen` VALUES (1377,15,41,'bevestigd',NULL,NULL,'2026-05-30 11:53:22',NULL,NULL,NULL,0,NULL,'2026-05-30 11:53:22',NULL),(1378,16,41,'bevestigd',NULL,NULL,'2026-05-30 11:53:22',NULL,NULL,NULL,0,NULL,'2026-05-30 11:53:22',NULL),(1379,19,41,'bevestigd',NULL,NULL,'2026-05-30 11:53:22',NULL,NULL,NULL,0,NULL,'2026-05-30 11:53:22',NULL),(1380,14,71,'bevestigd',NULL,NULL,'2026-05-30 11:53:22',NULL,NULL,NULL,0,NULL,'2026-05-30 11:53:22',NULL),(1381,17,71,'bevestigd',NULL,NULL,'2026-05-30 11:53:22',NULL,NULL,NULL,0,NULL,'2026-05-30 11:53:22',NULL),(1382,18,71,'bevestigd',NULL,NULL,'2026-05-30 11:53:22',NULL,NULL,NULL,0,NULL,'2026-05-30 11:53:22',NULL),(2250,7,106,'geannuleerd',NULL,NULL,'2026-06-30 17:11:06',15,'2026-07-28 19:46:08','Geannuleerd door een administrator.',0,NULL,'2026-06-30 17:11:06','2026-07-28 19:46:08'),(2251,10,106,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2252,11,106,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2253,8,25,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2254,9,25,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2255,12,25,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2256,7,113,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,1,'2026-07-28 19:47:40','2026-06-30 17:11:06','2026-07-28 19:47:40'),(2257,10,113,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2258,11,113,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2259,8,71,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2260,9,71,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2261,12,71,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2262,8,33,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2263,9,33,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2264,12,33,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2265,7,67,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,1,'2026-07-28 19:47:44','2026-06-30 17:11:06','2026-07-28 19:47:44'),(2266,10,67,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2267,11,67,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2268,7,34,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,1,'2026-07-28 19:47:50','2026-06-30 17:11:06','2026-07-28 19:47:50'),(2269,10,34,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2270,11,34,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2271,7,19,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,1,'2026-07-28 19:47:54','2026-06-30 17:11:06','2026-07-28 19:47:54'),(2272,10,19,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2273,11,19,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2274,8,69,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2275,9,69,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2276,12,69,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2277,7,84,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,1,'2026-07-28 19:57:49','2026-06-30 17:11:06','2026-07-28 19:57:49'),(2278,10,84,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2279,11,84,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2280,7,56,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2281,10,56,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2282,11,56,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2283,8,31,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2284,9,31,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2285,12,31,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2286,8,29,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2287,9,29,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2288,12,29,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2289,8,38,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2290,9,38,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2291,12,38,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2292,8,92,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2293,9,92,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2294,12,92,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2295,7,70,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2296,10,70,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2297,11,70,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2298,7,44,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2299,10,44,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2300,11,44,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2301,8,89,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2302,9,89,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2303,12,89,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2304,8,36,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2305,9,36,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2306,12,36,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2307,7,104,'geannuleerd',NULL,NULL,'2026-06-30 17:11:06',15,'2026-07-28 19:46:20','Geannuleerd door een administrator.',0,NULL,'2026-06-30 17:11:06','2026-07-28 19:46:20'),(2308,10,104,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2309,11,104,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2310,7,54,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2311,10,54,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2312,11,54,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2313,8,59,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2314,9,59,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2315,12,59,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2316,8,66,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2317,9,66,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2318,12,66,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2319,8,75,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2320,9,75,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2321,12,75,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2322,7,55,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2323,10,55,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2324,11,55,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2325,7,81,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2326,10,81,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2327,11,81,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2328,7,80,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2329,10,80,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2330,11,80,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2331,7,53,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2332,10,53,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2333,11,53,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2334,7,49,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2335,10,49,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2336,11,49,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2337,8,110,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2338,9,110,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2339,12,110,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2340,7,52,'geannuleerd',NULL,NULL,'2026-06-30 17:11:06',15,'2026-07-28 19:46:29','Geannuleerd door een administrator.',0,NULL,'2026-06-30 17:11:06','2026-07-28 19:46:29'),(2341,10,52,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2342,11,52,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2343,8,20,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2344,9,20,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2345,12,20,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2346,8,88,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2347,9,88,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2348,12,88,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2349,7,85,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2350,10,85,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2351,11,85,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2352,7,107,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2353,10,107,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2354,11,107,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2355,8,111,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2356,9,111,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2357,12,111,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2358,8,101,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2359,9,101,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2360,12,101,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2361,8,32,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2362,9,32,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2363,12,32,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2364,8,61,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2365,9,61,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2366,12,61,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2367,8,109,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2368,9,109,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2369,12,109,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2370,7,83,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2371,10,83,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2372,11,83,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2373,7,112,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2374,10,112,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL),(2375,11,112,'bevestigd',NULL,NULL,'2026-06-30 17:11:06',NULL,NULL,NULL,0,NULL,'2026-06-30 17:11:06',NULL);
+/*!40000 ALTER TABLE `shift_inschrijvingen` ENABLE KEYS */;
+UNLOCK TABLES;
 
--- Dumpen data van tabel aefs_v2.shift_toewijzingen: ~0 rows (ongeveer)
+--
+-- Table structure for table `shift_types`
+--
 
--- Structuur van  tabel aefs_v2.shift_types wordt geschreven
-CREATE TABLE IF NOT EXISTS `shift_types` (
+DROP TABLE IF EXISTS `shift_types`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `shift_types` (
   `type_id` int unsigned NOT NULL AUTO_INCREMENT,
   `naam` varchar(100) COLLATE utf8mb4_general_ci NOT NULL,
   `kleur` varchar(20) COLLATE utf8mb4_general_ci NOT NULL DEFAULT '#1E3A8A',
@@ -1007,21 +516,73 @@ CREATE TABLE IF NOT EXISTS `shift_types` (
   UNIQUE KEY `uq_shift_types_naam` (`naam`),
   KEY `idx_shift_types_actief` (`actief`)
 ) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
 
--- Dumpen data van tabel aefs_v2.shift_types: ~9 rows (ongeveer)
-INSERT INTO `shift_types` (`type_id`, `naam`, `kleur`, `icoon`, `omschrijving`, `actief`, `aangemaakt_op`, `bijgewerkt_op`) VALUES
-	(1, 'Algemeen', '#1E3A8A', 'calendar', 'Algemene shift', 1, '2026-07-03 20:59:57', NULL),
-	(2, 'Opbouw', '#2563EB', 'tools', 'Opbouw en voorbereiding', 1, '2026-07-03 20:59:57', NULL),
-	(3, 'Afbraak', '#7C3AED', 'tools', 'Afbraak en opruim', 1, '2026-07-03 20:59:57', NULL),
-	(4, 'Inkom', '#059669', 'users', 'Onthaal en inkom', 1, '2026-07-03 20:59:57', NULL),
-	(5, 'Parking', '#F59E0B', 'car', 'Parking en verkeer', 1, '2026-07-03 20:59:57', NULL),
-	(6, 'Bar', '#DC2626', 'glass', 'Bar en drank', 1, '2026-07-03 20:59:57', NULL),
-	(7, 'Keuken', '#EA580C', 'chef', 'Keuken en catering', 1, '2026-07-03 20:59:57', NULL),
-	(8, 'EHBO', '#BE123C', 'heart', 'EHBO en veiligheid', 1, '2026-07-03 20:59:57', NULL),
-	(9, 'Steward', '#1E3A8A', 'users', NULL, 1, '2026-07-03 23:13:01', NULL);
+--
+-- Dumping data for table `shift_types`
+--
 
-/*!40103 SET TIME_ZONE=IFNULL(@OLD_TIME_ZONE, 'system') */;
-/*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;
-/*!40014 SET FOREIGN_KEY_CHECKS=IFNULL(@OLD_FOREIGN_KEY_CHECKS, 1) */;
+LOCK TABLES `shift_types` WRITE;
+/*!40000 ALTER TABLE `shift_types` DISABLE KEYS */;
+INSERT INTO `shift_types` VALUES (1,'Algemeen','#1E3A8A','calendar','Algemene shift',1,'2026-07-03 20:59:57',NULL),(2,'Opbouw','#2563EB','tools','Opbouw en voorbereiding',1,'2026-07-03 20:59:57',NULL),(3,'Afbraak','#7C3AED','tools','Afbraak en opruim',1,'2026-07-03 20:59:57',NULL),(4,'Inkom','#059669','users','Onthaal en inkom',1,'2026-07-03 20:59:57',NULL),(5,'Parking','#F59E0B','car','Parking en verkeer',1,'2026-07-03 20:59:57',NULL),(6,'Bar','#DC2626','glass','Bar en drank',1,'2026-07-03 20:59:57',NULL),(7,'Keuken','#EA580C','chef','Keuken en catering',1,'2026-07-03 20:59:57',NULL),(8,'EHBO','#BE123C','heart','EHBO en veiligheid',1,'2026-07-03 20:59:57',NULL),(9,'Steward','#1E3A8A','users',NULL,1,'2026-07-03 23:13:01',NULL);
+/*!40000 ALTER TABLE `shift_types` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `shifts`
+--
+
+DROP TABLE IF EXISTS `shifts`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `shifts` (
+  `shift_id` int NOT NULL AUTO_INCREMENT,
+  `event_id` int NOT NULL,
+  `type_id` int unsigned NOT NULL,
+  `naam` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `start_op` datetime NOT NULL,
+  `eind_op` datetime NOT NULL,
+  `max_personen` int unsigned NOT NULL DEFAULT '1',
+  `status` enum('actief','geannuleerd') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'actief',
+  `aangemaakt_op` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `bijgewerkt_op` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`shift_id`),
+  KEY `idx_shifts_event` (`event_id`),
+  KEY `idx_shifts_type` (`type_id`),
+  KEY `idx_shifts_start` (`start_op`),
+  KEY `idx_shifts_status` (`status`),
+  CONSTRAINT `fk_shifts_event` FOREIGN KEY (`event_id`) REFERENCES `evenementen` (`event_id`) ON DELETE RESTRICT ON UPDATE CASCADE,
+  CONSTRAINT `fk_shifts_type` FOREIGN KEY (`type_id`) REFERENCES `shift_types` (`type_id`) ON DELETE RESTRICT ON UPDATE CASCADE,
+  CONSTRAINT `chk_shifts_capacity` CHECK ((`max_personen` > 0)),
+  CONSTRAINT `chk_shifts_period` CHECK ((`eind_op` > `start_op`))
+) ENGINE=InnoDB AUTO_INCREMENT=20 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `shifts`
+--
+
+LOCK TABLES `shifts` WRITE;
+/*!40000 ALTER TABLE `shifts` DISABLE KEYS */;
+INSERT INTO `shifts` VALUES (7,7,9,'Vroege','2026-07-17 11:30:00','2026-07-17 18:30:00',23,'actief','2026-07-24 01:25:49','2026-07-28 19:50:02'),(8,7,9,'Late','2026-07-17 18:30:00','2026-07-18 01:00:00',21,'actief','2026-07-24 01:25:49',NULL),(9,7,9,'Vroege','2026-07-18 11:30:00','2026-07-18 18:30:00',21,'actief','2026-07-24 01:25:49',NULL),(10,7,9,'Late','2026-07-18 18:30:00','2026-07-19 01:00:00',21,'actief','2026-07-24 01:25:49',NULL),(11,7,9,'Vroege','2026-07-19 11:30:00','2026-07-19 18:30:00',21,'actief','2026-07-24 01:25:49',NULL),(12,7,9,'Late','2026-07-19 18:30:00','2026-07-20 01:00:00',21,'actief','2026-07-24 01:25:49',NULL),(14,8,9,'Vroege','2026-07-24 11:30:00','2026-07-24 18:30:00',21,'actief','2026-07-24 01:25:49',NULL),(15,8,9,'Late','2026-07-24 18:30:00','2026-07-25 01:00:00',21,'actief','2026-07-24 01:25:49',NULL),(16,8,9,'Vroege','2026-07-25 11:30:00','2026-07-25 18:30:00',21,'actief','2026-07-24 01:25:49',NULL),(17,8,9,'Late','2026-07-25 18:30:00','2026-07-26 01:00:00',21,'actief','2026-07-24 01:25:49',NULL),(18,8,9,'Vroege','2026-07-26 11:30:00','2026-07-26 18:30:00',21,'actief','2026-07-24 01:25:49',NULL),(19,8,9,'Late','2026-07-26 18:30:00','2026-07-27 01:00:00',21,'actief','2026-07-24 01:25:49',NULL);
+/*!40000 ALTER TABLE `shifts` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Dumping events for database 'aefs_v2'
+--
+
+--
+-- Dumping routines for database 'aefs_v2'
+--
+/*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
+
+/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
+/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
+/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
-/*!40111 SET SQL_NOTES=IFNULL(@OLD_SQL_NOTES, 1) */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
+
+-- Dump completed on 2026-08-11 15:57:34

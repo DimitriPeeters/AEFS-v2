@@ -202,10 +202,46 @@ final class ShiftRegistrationRepository
         );
     }
 
-    public function submit(
+    /**
+     * @return ShiftRegistration[]
+     */
+    public function findActiveByEventAndMember(
+        int $eventId,
+        int $memberId
+    ): array {
+        $statement = $this->database->prepare(
+            self::SELECT_REGISTRATION
+            . PHP_EOL
+            . <<<'SQL'
+                WHERE s.event_id = :event_id
+                  AND si.lid_id = :lid_id
+                  AND si.status IN (
+                      :waiting_status,
+                      :confirmed_status,
+                      :reserve_status
+                  )
+                ORDER BY s.start_op ASC, si.inschrijving_id ASC
+                SQL
+        );
+
+        $statement->execute([
+            'event_id' => $eventId,
+            'lid_id' => $memberId,
+            'waiting_status' => ShiftRegistration::STATUS_WACHTEND,
+            'confirmed_status' => ShiftRegistration::STATUS_BEVESTIGD,
+            'reserve_status' => ShiftRegistration::STATUS_RESERVE,
+        ]);
+
+        return $this->mapRows(
+            $statement->fetchAll(PDO::FETCH_ASSOC)
+        );
+    }
+
+    public function assign(
         int $shiftId,
         int $memberId,
-        ?string $comment
+        string $status,
+        int $approvedBy
     ): int {
         $statement = $this->database->prepare(<<<'SQL'
             INSERT INTO shift_inschrijvingen
@@ -229,9 +265,9 @@ final class ShiftRegistrationRepository
                 :shift_id,
                 :lid_id,
                 :status,
-                :opmerking_lid,
                 NULL,
-                NULL,
+                :goedgekeurd_door,
+                NOW(),
                 NULL,
                 NULL,
                 NULL,
@@ -242,9 +278,9 @@ final class ShiftRegistrationRepository
             )
             ON DUPLICATE KEY UPDATE
                 status = VALUES(status),
-                opmerking_lid = VALUES(opmerking_lid),
-                goedgekeurd_door = NULL,
-                goedgekeurd_op = NULL,
+                opmerking_lid = NULL,
+                goedgekeurd_door = VALUES(goedgekeurd_door),
+                goedgekeurd_op = NOW(),
                 geannuleerd_door = NULL,
                 geannuleerd_op = NULL,
                 annulatie_reden = NULL,
@@ -258,8 +294,8 @@ final class ShiftRegistrationRepository
         $statement->execute([
             'shift_id' => $shiftId,
             'lid_id' => $memberId,
-            'status' => ShiftRegistration::STATUS_WACHTEND,
-            'opmerking_lid' => $comment,
+            'status' => $status,
+            'goedgekeurd_door' => $approvedBy,
         ]);
 
         return $this->database->lastInsertId();
@@ -406,27 +442,6 @@ final class ShiftRegistrationRepository
             ],
             'si.aangemaakt_op ASC, si.inschrijving_id ASC'
         );
-    }
-
-    public function memberHasEventRegistration(
-        int $eventId,
-        int $memberId
-    ): bool {
-        $statement = $this->database->prepare(<<<'SQL'
-            SELECT COUNT(*)
-            FROM event_inschrijvingen
-            WHERE event_id = :event_id
-              AND lid_id = :lid_id
-              AND uitgeschreven_op IS NULL
-              AND status <> 'geweigerd'
-            SQL);
-
-        $statement->execute([
-            'event_id' => $eventId,
-            'lid_id' => $memberId,
-        ]);
-
-        return (int) $statement->fetchColumn() > 0;
     }
 
     /**

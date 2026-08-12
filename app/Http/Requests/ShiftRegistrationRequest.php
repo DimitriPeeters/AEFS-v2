@@ -16,6 +16,8 @@ final class ShiftRegistrationRequest
 
     /**
      * @return array{
+     *     lid_id: int,
+     *     status: string,
      *     opmerking_lid: ?string,
      *     annulatie_reden: ?string,
      *     aanwezig: bool
@@ -24,6 +26,10 @@ final class ShiftRegistrationRequest
     public function all(): array
     {
         return [
+            'lid_id' => (int) ($this->input['lid_id'] ?? 0),
+            'status' => trim(
+                (string) ($this->input['status'] ?? '')
+            ),
             'opmerking_lid' => $this->nullableString(
                 $this->input['opmerking_lid'] ?? null
             ),

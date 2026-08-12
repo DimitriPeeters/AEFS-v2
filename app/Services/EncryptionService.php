@@ -136,6 +136,21 @@ final class EncryptionService
         );
     }
 
+    public function isUndecryptableLegacyValue(?string $value): bool
+    {
+        $value = $this->normalizeValue($value);
+
+        if (
+            $value === null
+            || str_starts_with($value, self::PREFIX)
+            || !$this->looksLikeBase64($value)
+        ) {
+            return false;
+        }
+
+        return $this->decryptLegacyValue($value) === null;
+    }
+
     /**
      * @param array<string, mixed> $data
      * @param string[] $velden

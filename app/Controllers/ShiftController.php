@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use AEFS\Core\Auth;
+use AEFS\Core\Http\JsonResponse;
 use AEFS\Core\Http\Request;
 use AEFS\Core\Http\Response;
 use AEFS\Core\Session;
@@ -14,6 +15,8 @@ use App\Http\Requests\ShiftRegistrationRequest;
 use App\Http\Requests\ShiftRequest;
 use App\Repositories\EventRepository;
 use App\Services\ShiftService;
+use DomainException;
+use InvalidArgumentException;
 use RuntimeException;
 use Throwable;
 
@@ -47,7 +50,7 @@ final class ShiftController extends BaseController
                     : [],
                 'shifts' => $isAdmin
                     ? $this->service->allForAdministration()
-                    : $this->service->visibleToMembers(),
+                    : [],
                 'memberRegistrations' => $memberId !== null
                     ? $this->service->registrationsForMember(
                         $memberId
@@ -88,20 +91,25 @@ final class ShiftController extends BaseController
     {
         $shiftId = $this->routeId();
         $isAdmin = Auth::isAdmin();
+        $memberId = Auth::memberId();
+        $memberRegistration = !$isAdmin && $memberId !== null
+            ? $this->service->findMemberRegistration(
+                $shiftId,
+                $memberId
+            )
+            : null;
 
         $shift = $isAdmin
             ? $this->service->find($shiftId)
-            : $this->service->findVisibleToMembers(
-                $shiftId
-            );
+            : ($memberRegistration !== null
+                ? $this->service->find($shiftId)
+                : null);
 
         if ($shift === null) {
             return $this->notFound(
                 'Shift niet gevonden.'
             );
         }
-
-        $memberId = Auth::memberId();
 
         return $this->view(
             'shifts.show',
@@ -114,12 +122,11 @@ final class ShiftController extends BaseController
                         $shiftId
                     )
                     : [],
-                'memberRegistration' => $memberId !== null
-                    ? $this->service->findMemberRegistration(
-                        $shiftId,
-                        $memberId
-                    )
-                    : null,
+                'memberRegistration' => $memberRegistration,
+                'eligibleEventRegistrations' => $isAdmin
+                    ? $this->service
+                        ->eligibleEventRegistrationsForShift($shiftId)
+                    : [],
             ]
         );
     }
@@ -301,7 +308,7 @@ final class ShiftController extends BaseController
         }
     }
 
-    public function register(): Response
+    public function assign(): Response
     {
         $shiftId = $this->routeId();
         $input = $this->request()->request->all();
@@ -309,22 +316,20 @@ final class ShiftController extends BaseController
         try {
             $this->validateCsrf($input);
 
-            $memberId = $this->requireMemberId();
-
             $request = new ShiftRegistrationRequest(
                 $input
             );
 
             $data = $request->all();
 
-            $this->service->register(
+            $this->service->assignByAdmin(
                 shiftId: $shiftId,
-                memberId: $memberId,
-                comment: $data['opmerking_lid']
+                memberId: $data['lid_id'],
+                status: $data['status']
             );
 
             $this->success(
-                'Je inschrijving werd geregistreerd en wacht op goedkeuring.'
+                'De vrijwilliger werd aan de shift toegewezen.'
             );
         } catch (Throwable $throwable) {
             $this->error(
@@ -410,18 +415,10 @@ final class ShiftController extends BaseController
 
             $data = $request->all();
 
-            if (Auth::isAdmin()) {
-                $this->service->cancelByAdmin(
-                    $registrationId,
-                    $data['annulatie_reden']
-                );
-            } else {
-                $this->service->cancelByVolunteer(
-                    $registrationId,
-                    $this->requireMemberId(),
-                    $data['annulatie_reden']
-                );
-            }
+            $this->service->cancelByAdmin(
+                $registrationId,
+                $data['annulatie_reden']
+            );
 
             $this->success(
                 'De shiftinschrijving werd geannuleerd.'
@@ -439,6 +436,9 @@ final class ShiftController extends BaseController
 
     public function presence(): Response
     {
+        $expectsJson = $this->request()->isAjax()
+            || $this->request()->acceptsJson();
+
         $registrationId = $this->routeId(
             'registrationId'
         );
@@ -449,6 +449,17 @@ final class ShiftController extends BaseController
             );
 
         if ($registration === null) {
+            if ($expectsJson) {
+                return new JsonResponse(
+                    [
+                        'success' => false,
+                        'present' => false,
+                        'message' => 'Shiftinschrijving niet gevonden.',
+                    ],
+                    404
+                );
+            }
+
             return $this->notFound(
                 'Shiftinschrijving niet gevonden.'
             );
@@ -458,7 +469,28 @@ final class ShiftController extends BaseController
 
         try {
             $this->validateCsrf($input);
+        } catch (Throwable $throwable) {
+            if ($expectsJson) {
+                return new JsonResponse(
+                    [
+                        'success' => false,
+                        'present' => $registration->aanwezig,
+                        'message' => $throwable->getMessage(),
+                    ],
+                    419
+                );
+            }
 
+            $this->error(
+                $throwable->getMessage()
+            );
+
+            return $this->redirect(
+                '/shifts/' . $registration->shiftId
+            );
+        }
+
+        try {
             $request = new ShiftRegistrationRequest(
                 $input
             );
@@ -470,12 +502,40 @@ final class ShiftController extends BaseController
                 $data['aanwezig']
             );
 
-            $this->success(
-                $data['aanwezig']
-                    ? 'De vrijwilliger werd als aanwezig gemarkeerd.'
-                    : 'De aanwezigheidsmarkering werd verwijderd.'
-            );
+            $message = $data['aanwezig']
+                ? 'De vrijwilliger werd als aanwezig gemarkeerd.'
+                : 'De aanwezigheidsmarkering werd verwijderd.';
+
+            if ($expectsJson) {
+                return new JsonResponse(
+                    [
+                        'success' => true,
+                        'present' => $data['aanwezig'],
+                        'message' => $message,
+                    ]
+                );
+            }
+
+            $this->success($message);
         } catch (Throwable $throwable) {
+            if ($expectsJson) {
+                $isExpectedFailure = $throwable instanceof DomainException
+                    || $throwable instanceof InvalidArgumentException;
+
+                return new JsonResponse(
+                    [
+                        'success' => false,
+                        'present' => $registration->aanwezig,
+                        'message' => $isExpectedFailure
+                            ? $throwable->getMessage()
+                            : 'De aanwezigheidsstatus kon niet worden bijgewerkt.',
+                    ],
+                    $throwable instanceof InvalidArgumentException
+                        ? 404
+                        : ($isExpectedFailure ? 422 : 500)
+                );
+            }
+
             $this->error(
                 $throwable->getMessage()
             );
@@ -572,22 +632,6 @@ final class ShiftController extends BaseController
         );
 
         $this->error($flashMessage);
-    }
-
-    private function requireMemberId(): int
-    {
-        $memberId = Auth::memberId();
-
-        if (
-            $memberId === null
-            || $memberId <= 0
-        ) {
-            throw new RuntimeException(
-                'Aan dit gebruikersaccount is geen geldig lid gekoppeld.'
-            );
-        }
-
-        return $memberId;
     }
 
     private function routeId(

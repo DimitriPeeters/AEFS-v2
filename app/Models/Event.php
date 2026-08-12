@@ -26,7 +26,8 @@ final class Event
         public readonly string $aangemaaktOp,
         public readonly ?string $bijgewerktOp,
         public readonly int $aantalInschrijvingen = 0,
-        public readonly int $aantalBevestigd = 0
+        public readonly int $aantalBevestigd = 0,
+        public readonly int $aantalAnnulatieverzoeken = 0
     ) {
     }
 
@@ -70,6 +71,25 @@ final class Event
         );
 
         return $start->diff($end)->days + 1;
+    }
+
+    /**
+     * @return string[]
+     */
+    public function dates(): array
+    {
+        $current = new DateTimeImmutable($this->startDatum);
+        $end = new DateTimeImmutable(
+            $this->eindDatum ?? $this->startDatum
+        );
+        $dates = [];
+
+        while ($current <= $end) {
+            $dates[] = $current->format('Y-m-d');
+            $current = $current->modify('+1 day');
+        }
+
+        return $dates;
     }
 
     public function isPast(): bool
@@ -199,6 +219,11 @@ final class Event
     {
         return $this->maxDeelnemers !== null
             && $this->aantalBevestigd >= $this->maxDeelnemers;
+    }
+
+    public function hasPendingCancellationRequests(): bool
+    {
+        return $this->aantalAnnulatieverzoeken > 0;
     }
 
     public function capacityLabel(): string

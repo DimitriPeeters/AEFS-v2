@@ -475,7 +475,8 @@ A normal member:
 - must not receive user-management access;
 - may access permitted member-facing functionality;
 - may view/edit their own profile where implemented;
-- may register for eligible events/shifts;
+- may register for eligible published events;
+- must never assign themselves to a shift;
 - may manage only their own registration where allowed.
 
 ## Middleware
@@ -728,9 +729,12 @@ leden
 gebruikers
 evenementen
 event_inschrijvingen
+event_inschrijving_dagen
 shifts
 shift_inschrijvingen
 shift_types
+groepen
+leden_groepen
 ```
 
 Do not casually rename Dutch database concepts to English tables without an explicit migration decision.
@@ -782,6 +786,62 @@ Shift logic must integrate with event logic rather than duplicate it.
 
 A shift belongs to an event.
 
+## Event creation and publication
+
+An administrator creates and maintains events.
+
+During event creation or editing, an administrator may immediately add shifts
+for that event. This is one transactional application workflow coordinated by
+the current event and shift services; do not introduce a second shift concept
+inside the event module.
+
+Members may only see and register for events that the current event lifecycle
+exposes to them. A member registration starts as:
+
+```text
+wachtend
+```
+
+An administrator decides whether an event registration becomes:
+
+```text
+bevestigd
+reserve
+geweigerd
+```
+
+For a multi-day event, the member may select one or more separate event dates.
+Selecting all dates represents availability for the complete event. Persist
+the selected dates through the current `event_inschrijving_dagen` relation.
+
+A previously cancelled/withdrawn event registration may be submitted again
+through the normal member flow. Reuse/reactivate the existing logical
+`(event_id, lid_id)` registration and return it to `wachtend`; do not create a
+duplicate row.
+
+Publishing an event is the future mail trigger for informing eligible members.
+The mail transport is not implemented yet. Do not fake delivery or set a
+"sent" marker until the mail subsystem actually confirms the intended
+workflow.
+
+## Event-registration cancellation
+
+A member may cancel their own active registration for a future event.
+
+- Without an active shift assignment, the event registration is withdrawn
+  immediately.
+- With one or more active shift assignments, the cancellation remains pending
+  until an administrator verifies it.
+- On administrator confirmation, all active shift assignments for that member
+  and event are cancelled in the same coherent workflow, while historical rows
+  remain available.
+- Pending cancellation requests for past events must not be shown as actionable
+  dashboard work.
+
+The future mail subsystem must notify administration when verification is
+required. That notification requirement must not be implemented as ad-hoc mail
+code inside controllers.
+
 Before changing an event in a way that affects shifts:
 
 - inspect related shifts;
@@ -790,11 +850,21 @@ Before changing an event in a way that affects shifts:
 
 Do not silently cascade-delete shift history.
 
+An event without registration history may be hard-deleted. Empty shifts that
+also have no registration history may be deleted with it through the current
+service workflow. If the event or any shift contains registration history,
+preserve that history and use cancellation instead of destructive deletion.
+
+The later event-cancellation mail flow must notify affected event registrants
+and confirmed shift volunteers before the corresponding active registrations
+are transitioned. Do not implement destructive cleanup ahead of that workflow.
+
 ---
 
 # 17. Shift module — definitive domain contract
 
-Shift management is the current active development area.
+Shift management is an established module. Future changes must preserve the
+administrative-assignment flow documented below.
 
 ## Definitive tables
 
@@ -878,29 +948,28 @@ geannuleerd
 
 Do not invent synonyms or a second status system.
 
-## Self-registration
+## Administrative assignment
 
-Members register themselves for shifts.
+Members never register themselves for shifts.
 
-A new self-registration starts as:
-
-```text
-wachtend
-```
-
-It must not automatically become confirmed merely because capacity is available.
-
-An administrator decides whether the member becomes:
+Only an administrator may assign a member to a shift. The member must have a
+confirmed, active event registration that covers the calendar date of the
+shift. An administrative assignment starts as either:
 
 ```text
 bevestigd
 reserve
-geweigerd
 ```
+
+The existing decision actions for historical/waiting shift registrations may
+still transition to `bevestigd`, `reserve`, or `geweigerd`, but no member-facing
+route or service method may create a shift registration.
 
 ## Event registration prerequisite
 
-Where current service logic requires it, a member must have a valid event registration before selecting a shift for that event.
+An administrator may only select members with a confirmed, active event
+registration for that event and date. A pending event cancellation blocks new
+shift assignment.
 
 Do not remove that rule accidentally when changing UI flow.
 
@@ -908,26 +977,19 @@ Do not remove that rule accidentally when changing UI flow.
 
 There must be at most one logical member/shift registration row under the current unique-key strategy.
 
-A previously cancelled registration may be reactivated/reused through the established repository/service workflow rather than inserting an invalid duplicate.
+A previously cancelled shift assignment may be reactivated/reused through the
+established repository/service workflow rather than inserting an invalid
+duplicate.
 
-Do not break re-registration after cancellation.
+Do not break re-assignment after cancellation.
 
-## Cancellation by member
+## Cancellation initiated by a member
 
-A member may cancel their own active shift registration until:
+A member cancels event participation, not an individual shift assignment.
 
-```text
-14 days before the EVENT start date
-```
-
-The rule is based on the event start, not the shift start.
-
-Within the final 14 days:
-
-- a member may not self-cancel;
-- an administrator must perform the cancellation.
-
-Do not weaken this restriction in frontend code.
+If the member already has an active shift assignment, the event cancellation
+requires administrator verification as documented in the event module
+contract. Do not add a member-facing shift cancellation route.
 
 ## Cancellation by administrator
 
@@ -1053,6 +1115,53 @@ Important rules:
 - a normal member only accesses their own profile through the member-facing flow;
 - sensitive member data must remain protected;
 - existing audit behavior must remain intact.
+
+## National identification number
+
+The member field historically named `rijksregisternummer` is the national
+identification-number field. It accepts both Belgian and foreign national
+identifiers; do not enforce a Belgian-only format.
+
+The value is sensitive and must be stored using the current `enc:v1:`
+encryption format. An authorized administrator must be able to see the
+decrypted value in member administration. Ordinary members may only see their
+own value through the permitted profile flow.
+
+Never expose plaintext national identifiers in logs, audit payloads, exception
+messages, URLs, or repository output. The application `app_key` used by the
+current encryption service must remain stable across database migrations and
+deployments. The legacy encryption key from the old project must never be
+committed to this repository.
+
+Legacy national identifiers were migrated with:
+
+```text
+database/migrations/20260812_000003_reencrypt_legacy_member_identifiers.php
+```
+
+The historical ciphertext backup is retained in:
+
+```text
+leden_identificatie_legacy_backup_20260812
+```
+
+Active application code must not read that backup table.
+
+## Member groups
+
+Member groups are optional classifications for mailing selection and later
+reporting. Administrators may create groups and assign members to them; members
+must not manage their own group membership.
+
+Use the current tables:
+
+```text
+groepen
+leden_groepen
+```
+
+Do not introduce `groepen_leden` as a competing active relation. Group changes
+must remain auditable and must not modify or delete the member records.
 
 Do not redesign the module as part of another feature.
 
@@ -1359,15 +1468,22 @@ Public registration
 Registration approval flow
 User management
 Event management
+Event registrations and cancellation verification
+Shift management and administrative shift assignment
+Member groups
+Sensitive member-data migration
 ```
 
-Shift management and shift registrations are currently being completed/tested.
+The next planned development area is:
 
-Future modules may include:
+```text
+Mailings and notification delivery
+```
+
+Later modules may include:
 
 ```text
 Payments
-Mailings
 Documents
 Reports
 ```
@@ -1639,19 +1755,27 @@ Do not create duplicate business logic for AJAX.
 
 Use explicit datetime semantics for domain rules.
 
+All user-facing dates use the Belgian format:
+
+```text
+DD/mm/YYYY
+```
+
+All user-facing times use 24-hour notation:
+
+```text
+HH:mm
+```
+
+The application helper `App\Support\BelgianDateTime` is the shared convention
+for formatting and normalizing these values. Browser-native date/time controls
+may render according to the browser locale, but labels, summaries, tables,
+audit output, and server-rendered text must follow the Belgian convention.
+
+Persist dates and full datetimes in the database's current ISO-compatible
+formats. Display formatting must not alter persistence semantics.
+
 Do not rely on lexical `HH:mm` comparisons when a shift may cross midnight.
-
-For shift cancellation rules, use:
-
-```text
-event start date - 14 days
-```
-
-not:
-
-```text
-shift start - 14 days
-```
 
 Use immutable date objects where that is already the module convention.
 
@@ -1661,15 +1785,18 @@ Use immutable date objects where that is already the module convention.
 
 State transitions must be explicit.
 
-For shift registrations, valid business transitions depend on current service rules.
+For event and shift registrations, valid business transitions depend on current
+service rules.
 
 Never allow an arbitrary form value to directly set a protected state.
 
 Examples:
 
-- member self-registration → `wachtend`;
-- admin decision → `bevestigd`, `reserve`, or `geweigerd`;
-- cancellation → `geannuleerd`.
+- member event registration -> `wachtend`;
+- admin event-registration decision -> `bevestigd`, `reserve`, or `geweigerd`;
+- admin shift assignment -> `bevestigd` or `reserve`;
+- shift-registration cancellation -> `geannuleerd`;
+- event withdrawal -> `uitgeschreven_op` plus the existing cancellation metadata.
 
 Do not let an edit form bypass dedicated transition methods.
 
@@ -1697,6 +1824,28 @@ Never add cascade deletes that silently destroy business history without explici
 
 Do not invent a new mail/notification subsystem during unrelated work.
 
+No definitive mail transport/provider is active yet. Before implementing the
+mail subsystem, inspect the current repository and configuration, then make an
+explicit design decision for transport, templates, delivery state, retries,
+batching, and failure handling within the AEFS architecture.
+
+The agreed notification intents currently include:
+
+- notify eligible members when an administrator publishes an event;
+- notify administration when a member with active shift assignments requests
+  cancellation of event participation;
+- in a later event-cancellation workflow, notify affected event registrants and
+  confirmed shift volunteers before their related registrations are cancelled;
+- allow member groups to be used as a mailing audience where applicable;
+- support later planning/shift communication without duplicating event or shift
+  business rules in the mail layer.
+
+Mail delivery must be triggered from successful domain workflows, remain
+auditable, and must not cause a committed domain mutation to be reported as
+failed solely because transport delivery is temporarily unavailable. The exact
+reliability mechanism must be designed as part of the mail-module task, not
+guessed in advance.
+
 If a task requires notifications:
 
 1. inspect existing mail/logging infrastructure;
@@ -1704,7 +1853,7 @@ If a task requires notifications:
 3. keep delivery limits and batching in mind;
 4. separate domain event/intent from transport where the existing architecture supports it.
 
-For shift cancellation notifications, preserve the previously agreed business requirement that administration must be informed when a member cancels, but implement it only through the actual current notification/mail architecture after inspection.
+Do not send mail from views, repositories, or ad-hoc controller code.
 
 ---
 
@@ -1839,10 +1988,12 @@ For shift work specifically, also verify as relevant:
 - overnight shifts remain valid;
 - capacity uses confirmed registrations;
 - no overbooking through approval race;
-- member self-registration starts waiting;
+- members cannot create or cancel individual shift registrations;
+- administrative assignment requires a confirmed event registration covering
+  the shift date;
 - existing registration is not duplicated;
-- re-registration after cancellation works;
-- member cancellation cutoff uses event start minus 14 days;
+- re-assignment after cancellation reuses the logical registration;
+- event cancellation with active shift assignments requires admin verification;
 - admin can still cancel;
 - historical rows remain;
 - cancelled shifts do not keep active registrations;

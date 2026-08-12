@@ -78,6 +78,12 @@ final class MemberService
         $data = $this->sanitize($data);
         $data['gdpr_timestamp'] = $member->gdprTimestamp;
 
+        $preserveNationalIdentificationNumber =
+            $member->nationaalIdentificatienummerOnleesbaar
+            && trim(
+                (string) ($data['rijksregisternummer'] ?? '')
+            ) === '';
+
         $account = $this->users->findByMemberId($id);
         $email = strtolower(
             trim((string) ($data['email'] ?? ''))
@@ -114,10 +120,17 @@ final class MemberService
         }
 
         $this->database->transaction(
-            function () use ($id, $data, $account, $email): void {
+            function () use (
+                $id,
+                $data,
+                $account,
+                $email,
+                $preserveNationalIdentificationNumber
+            ): void {
                 $this->members->update(
                     $id,
-                    $data
+                    $data,
+                    $preserveNationalIdentificationNumber
                 );
 
                 if ($account !== null) {

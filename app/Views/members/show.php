@@ -2,13 +2,17 @@
 
 use AEFS\Core\View\Helper\ViewHelpers;
 use App\Models\Member;
+use App\Models\MemberGroup;
+use App\Support\BelgianDateTime;
 
 /** @var ViewHelpers $helpers */
 /** @var Member $lid */
+/** @var MemberGroup[] $groepen */
 /** @var array<int, array<string, mixed>> $logs */
 /** @var string|null $title */
 
 $logs ??= [];
+$groepen ??= [];
 
 $memberUrl = $helpers->url->to(
     '/members/' . $lid->lidId
@@ -30,15 +34,9 @@ $displayValue = static function (mixed $value): string {
     return $value === '' ? '—' : $value;
 };
 
-$birthDate = '—';
-
-if ($lid->geboortedatum !== null) {
-    $timestamp = strtotime($lid->geboortedatum);
-
-    if ($timestamp !== false) {
-        $birthDate = date('d/m/Y', $timestamp);
-    }
-}
+$birthDate = BelgianDateTime::formatDate(
+    $lid->geboortedatum
+);
 
 $this->extend(
     'layouts.app',
@@ -167,6 +165,36 @@ $this->extend(
     .member-status--neutral {
         color: #475569;
         background: #e2e8f0;
+    }
+
+    .member-groups {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.4rem;
+    }
+
+    .member-group {
+        display: inline-flex;
+        align-items: center;
+        min-height: 26px;
+        padding: 0.2rem 0.6rem;
+        border-radius: 999px;
+        color: #7f1d1d;
+        background: #fee2e2;
+        font-size: 0.78rem;
+        font-weight: 700;
+        text-decoration: none;
+    }
+
+    .member-group:hover {
+        color: #7f1d1d;
+        background: #fecaca;
+        text-decoration: none;
+    }
+
+    .member-sensitive-warning {
+        color: #92400e;
+        font-weight: 600;
     }
 
     .member-notes {
@@ -449,10 +477,37 @@ $this->extend(
                     </tr>
 
                     <tr>
+                        <th scope="row">Groepen</th>
+                        <td>
+                            <?php if ($groepen === []): ?>
+                                —
+                            <?php else: ?>
+                                <div class="member-groups">
+                                    <?php foreach ($groepen as $groep): ?>
+                                        <a
+                                            class="member-group"
+                                            href="<?= $this->escape(
+                                                $helpers->url->to(
+                                                    '/members/groups?groep='
+                                                    . $groep->groepId
+                                                )
+                                            ) ?>"
+                                        >
+                                            <?= $this->escape($groep->naam) ?>
+                                        </a>
+                                    <?php endforeach; ?>
+                                </div>
+                            <?php endif; ?>
+                        </td>
+                    </tr>
+
+                    <tr>
                         <th scope="row">GDPR-datum</th>
                         <td>
                             <?= $this->escape(
-                                $displayValue($lid->gdprTimestamp)
+                                BelgianDateTime::formatDateTime(
+                                    $lid->gdprTimestamp
+                                )
                             ) ?>
                         </td>
                     </tr>
@@ -490,11 +545,19 @@ $this->extend(
                     </tr>
 
                     <tr>
-                        <th scope="row">Rijksregisternummer</th>
+                        <th scope="row">Nationaal identificatienummer</th>
                         <td>
-                            <?= $this->escape(
-                                $displayValue($lid->rijksregisternummer)
-                            ) ?>
+                            <?php if ($lid->nationaalIdentificatienummerOnleesbaar): ?>
+                                <span class="member-sensitive-warning">
+                                    De bestaande legacywaarde kan niet worden
+                                    ontsleuteld. Voer het nummer opnieuw in via
+                                    Wijzigen.
+                                </span>
+                            <?php else: ?>
+                                <?= $this->escape(
+                                    $displayValue($lid->rijksregisternummer)
+                                ) ?>
+                            <?php endif; ?>
                         </td>
                     </tr>
 
@@ -502,7 +565,9 @@ $this->extend(
                         <th scope="row">Aangemaakt</th>
                         <td>
                             <?= $this->escape(
-                                $displayValue($lid->aangemaaktOp)
+                                BelgianDateTime::formatDateTime(
+                                    $lid->aangemaaktOp
+                                )
                             ) ?>
                         </td>
                     </tr>
@@ -511,7 +576,9 @@ $this->extend(
                         <th scope="row">Laatst gewijzigd</th>
                         <td>
                             <?= $this->escape(
-                                $displayValue($lid->bijgewerktOp)
+                                BelgianDateTime::formatDateTime(
+                                    $lid->bijgewerktOp
+                                )
                             ) ?>
                         </td>
                     </tr>

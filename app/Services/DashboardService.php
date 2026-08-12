@@ -39,6 +39,8 @@ final class DashboardService
                 ->openShifts(),
             'latestMembers' => [],
             'pendingRegistrations' => [],
+            'pendingEventCancellations' => [],
+            'pendingEventRegistrations' => [],
         ];
 
         if (!$isAdmin) {
@@ -54,11 +56,25 @@ final class DashboardService
         $data['statistics']['users'] = $this->dashboardRepository
             ->countActiveUsers();
 
+        $data['statistics']['eventCancellations'] = $this
+            ->dashboardRepository
+            ->countPendingEventCancellations();
+
+        $data['statistics']['eventRegistrations'] = $this
+            ->dashboardRepository
+            ->countPendingEventRegistrations();
+
         $data['latestMembers'] = $this->dashboardRepository
             ->latestApprovedMembers();
 
         $data['pendingRegistrations'] = $this->dashboardRepository
             ->pendingRegistrations();
+
+        $data['pendingEventCancellations'] = $this->dashboardRepository
+            ->pendingEventCancellations();
+
+        $data['pendingEventRegistrations'] = $this->dashboardRepository
+            ->pendingEventRegistrations();
 
         return $data;
     }

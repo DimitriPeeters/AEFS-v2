@@ -26,12 +26,6 @@ $this->extend(
     ]
 );
 
-$registrationsByShift = [];
-
-foreach ($memberRegistrations as $registration) {
-    $registrationsByShift[$registration->shiftId] = $registration;
-}
-
 $shiftCountByEvent = [];
 
 foreach ($shifts as $shift) {
@@ -46,14 +40,12 @@ $activeShifts = count(
         static fn(Shift $shift): bool => $shift->isActief()
     )
 );
-
 $confirmedTotal = array_sum(
     array_map(
         static fn(Shift $shift): int => $shift->aantalBevestigd,
         $shifts
     )
 );
-
 $reserveTotal = array_sum(
     array_map(
         static fn(Shift $shift): int => $shift->aantalReserve,
@@ -61,14 +53,12 @@ $reserveTotal = array_sum(
     )
 );
 
-$actions = '';
-
-if ($isAdmin) {
-    $actions = sprintf(
+$actions = $isAdmin
+    ? sprintf(
         '<a href="%s" class="btn btn-primary">Nieuwe shift</a>',
         $this->escape($helpers->url->to('/shifts/create'))
-    );
-}
+    )
+    : '';
 ?>
 
 <?php $this->startSection('content'); ?>
@@ -78,8 +68,8 @@ if ($isAdmin) {
         [
             'title' => 'Shiftplanning',
             'subtitle' => $isAdmin
-                ? 'Beheer shifts, bezetting en inschrijvingsbeslissingen.'
-                : 'Kies je shifts en volg de status van je inschrijvingen.',
+                ? 'Beheer shifts en wijs bevestigde evenementdeelnemers toe.'
+                : 'Bekijk de shifts die een administrator aan jou heeft toegewezen.',
             'actions' => $actions,
         ]
     ) ?>
@@ -90,17 +80,14 @@ if ($isAdmin) {
                 <span>Actieve shifts</span>
                 <strong><?= $activeShifts ?></strong>
             </div>
-
             <div class="shift-summary-card">
-                <span>Wachtende aanvragen</span>
+                <span>Historisch wachtend</span>
                 <strong><?= count($pendingRegistrations) ?></strong>
             </div>
-
             <div class="shift-summary-card">
-                <span>Bevestigde plaatsen</span>
+                <span>Bevestigd toegewezen</span>
                 <strong><?= $confirmedTotal ?></strong>
             </div>
-
             <div class="shift-summary-card">
                 <span>Reserve</span>
                 <strong><?= $reserveTotal ?></strong>
@@ -135,15 +122,12 @@ if ($isAdmin) {
                                 ) ?>"
                                 class="shift-event-card"
                             >
-                                <span class="shift-event-card__status badge <?= $this->escape($event->statusCssClass()) ?>">
+                                <span class="badge <?= $this->escape($event->statusCssClass()) ?>">
                                     <?= $this->escape($event->statusLabel()) ?>
                                 </span>
-
                                 <strong><?= $this->escape($event->titel) ?></strong>
                                 <span><?= $this->escape($event->displayDate()) ?></span>
-                                <small>
-                                    <?= $shiftCountByEvent[$event->eventId] ?? 0 ?> shift(s)
-                                </small>
+                                <small><?= $shiftCountByEvent[$event->eventId] ?? 0 ?> shift(s)</small>
                             </a>
                         <?php endforeach; ?>
                     </div>
@@ -154,9 +138,8 @@ if ($isAdmin) {
         <?php if ($pendingRegistrations !== []): ?>
             <section class="card">
                 <header class="card__header">
-                    <h2 class="card__title">Wachtende shiftinschrijvingen</h2>
+                    <h2 class="card__title">Historische wachtende shiftinschrijvingen</h2>
                 </header>
-
                 <div class="card__body shift-table-body">
                     <div class="table-responsive">
                         <table class="table">
@@ -165,32 +148,23 @@ if ($isAdmin) {
                                     <th>Vrijwilliger</th>
                                     <th>Evenement</th>
                                     <th>Shift</th>
-                                    <th>Aangevraagd</th>
                                     <th>Actie</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <?php foreach ($pendingRegistrations as $registration): ?>
+                                <?php foreach ($pendingRegistrations as $pending): ?>
                                     <tr>
-                                        <td>
-                                            <strong><?= $this->escape($registration->lidNaam()) ?></strong>
-                                            <small class="shift-cell-muted">
-                                                <?= $this->escape($registration->lidEmail ?? '-') ?>
-                                            </small>
-                                        </td>
-                                        <td><?= $this->escape($registration->eventTitel ?? '-') ?></td>
-                                        <td><?= $this->escape($registration->displayShiftPeriode()) ?></td>
-                                        <td><?= $this->escape($registration->displayAangemaaktOp()) ?></td>
+                                        <td><?= $this->escape($pending->lidNaam()) ?></td>
+                                        <td><?= $this->escape($pending->eventTitel ?? '-') ?></td>
+                                        <td><?= $this->escape($pending->displayShiftPeriode()) ?></td>
                                         <td>
                                             <a
                                                 href="<?= $this->escape(
-                                                    $helpers->url->to(
-                                                        '/shifts/' . $registration->shiftId
-                                                    )
+                                                    $helpers->url->to('/shifts/' . $pending->shiftId)
                                                 ) ?>"
                                                 class="btn btn-secondary shift-small-button"
                                             >
-                                                Beoordelen
+                                                Beheren
                                             </a>
                                         </td>
                                     </tr>
@@ -201,103 +175,141 @@ if ($isAdmin) {
                 </div>
             </section>
         <?php endif; ?>
-    <?php endif; ?>
 
-    <section class="card">
-        <header class="card__header shift-card-header">
-            <div>
-                <h2 class="card__title">
-                    <?= $isAdmin ? 'Alle shifts' : 'Beschikbare shifts' ?>
-                </h2>
-                <p>
-                    <?= $isAdmin
-                        ? 'Overzicht van alle ingeplande functies.'
-                        : 'Elke aanvraag wordt eerst door een administrator beoordeeld.' ?>
-                </p>
-            </div>
-        </header>
+        <section class="card">
+            <header class="card__header shift-card-header">
+                <div>
+                    <h2 class="card__title">Alle shifts</h2>
+                    <p>Overzicht van alle ingeplande functies en hun bezetting.</p>
+                </div>
+            </header>
 
-        <div class="card__body shift-table-body">
-            <?php if ($shifts === []): ?>
-                <?= $this->component(
-                    'empty-state',
-                    [
-                        'title' => 'Geen shifts gevonden',
-                        'text' => $isAdmin
-                            ? 'Maak een eerste shift aan voor een evenement.'
-                            : 'Er staan momenteel geen shifts open voor inschrijving.',
-                    ]
-                ) ?>
-            <?php else: ?>
-                <div class="table-responsive">
-                    <table class="table shift-table">
-                        <thead>
-                            <tr>
-                                <th>Evenement en functie</th>
-                                <th>Datum en tijd</th>
-                                <th>Bezetting</th>
-                                <th>Status</th>
-                                <th>Actie</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($shifts as $shift): ?>
-                                <?php
-                                $memberRegistration = $registrationsByShift[$shift->shiftId]
-                                    ?? null;
-                                ?>
+            <div class="card__body shift-table-body">
+                <?php if ($shifts === []): ?>
+                    <?= $this->component(
+                        'empty-state',
+                        [
+                            'title' => 'Geen shifts gevonden',
+                            'text' => 'Maak een eerste shift aan voor een evenement.',
+                        ]
+                    ) ?>
+                <?php else: ?>
+                    <div class="table-responsive">
+                        <table class="table shift-table">
+                            <thead>
                                 <tr>
-                                    <td>
-                                        <span
-                                            class="shift-type-dot"
-                                            style="--shift-color: <?= $this->escape(
-                                                $shift->typeKleur ?? '#1E3A8A'
-                                            ) ?>"
-                                            aria-hidden="true"
-                                        ></span>
-                                        <strong><?= $this->escape($shift->displayNaam()) ?></strong>
-                                        <small class="shift-cell-muted">
-                                            <?= $this->escape($shift->eventTitel ?? '-') ?>
-                                        </small>
-                                    </td>
-                                    <td><?= $this->escape($shift->displayPeriode()) ?></td>
-                                    <td>
-                                        <strong>
-                                            <?= $shift->aantalBevestigd ?> / <?= $shift->maxPersonen ?>
-                                        </strong>
-                                        <small class="shift-cell-muted">
-                                            <?= $shift->beschikbarePlaatsen() ?> plaats(en) vrij
-                                        </small>
-                                    </td>
-                                    <td>
-                                        <?php if ($memberRegistration !== null && !$isAdmin): ?>
-                                            <span class="badge <?= $this->escape($memberRegistration->statusCssClass()) ?>">
-                                                <?= $this->escape($memberRegistration->statusLabel()) ?>
-                                            </span>
-                                        <?php else: ?>
+                                    <th>Evenement en functie</th>
+                                    <th>Datum en tijd</th>
+                                    <th>Bezetting</th>
+                                    <th>Status</th>
+                                    <th>Actie</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($shifts as $shift): ?>
+                                    <tr>
+                                        <td>
+                                            <span
+                                                class="shift-type-dot"
+                                                style="--shift-color: <?= $this->escape(
+                                                    $shift->typeKleur ?? '#1E3A8A'
+                                                ) ?>"
+                                                aria-hidden="true"
+                                            ></span>
+                                            <strong><?= $this->escape($shift->displayNaam()) ?></strong>
+                                            <small class="shift-cell-muted">
+                                                <?= $this->escape($shift->eventTitel ?? '-') ?>
+                                            </small>
+                                        </td>
+                                        <td><?= $this->escape($shift->displayPeriode()) ?></td>
+                                        <td><?= $shift->aantalBevestigd ?> / <?= $shift->maxPersonen ?></td>
+                                        <td>
                                             <span class="badge <?= $this->escape($shift->statusCssClass()) ?>">
                                                 <?= $this->escape($shift->statusLabel()) ?>
                                             </span>
-                                        <?php endif; ?>
-                                    </td>
-                                    <td>
-                                        <a
-                                            href="<?= $this->escape(
-                                                $helpers->url->to('/shifts/' . $shift->shiftId)
-                                            ) ?>"
-                                            class="btn btn-secondary shift-small-button"
-                                        >
-                                            <?= $isAdmin ? 'Beheren' : 'Bekijken' ?>
-                                        </a>
-                                    </td>
-                                </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
+                                        </td>
+                                        <td>
+                                            <a
+                                                href="<?= $this->escape(
+                                                    $helpers->url->to('/shifts/' . $shift->shiftId)
+                                                ) ?>"
+                                                class="btn btn-secondary shift-small-button"
+                                            >
+                                                Beheren
+                                            </a>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                <?php endif; ?>
+            </div>
+        </section>
+    <?php else: ?>
+        <section class="card">
+            <header class="card__header shift-card-header">
+                <div>
+                    <h2 class="card__title">Mijn toegewezen shifts</h2>
+                    <p>Je kan hier geen shift kiezen; de planning wordt door een administrator beheerd.</p>
                 </div>
-            <?php endif; ?>
-        </div>
-    </section>
+            </header>
+
+            <div class="card__body shift-table-body">
+                <?php if ($memberRegistrations === []): ?>
+                    <?= $this->component(
+                        'empty-state',
+                        [
+                            'title' => 'Nog geen shifts toegewezen',
+                            'text' => 'Zodra de planning een shift aan jou koppelt, verschijnt die hier.',
+                        ]
+                    ) ?>
+                <?php else: ?>
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Evenement</th>
+                                    <th>Functie</th>
+                                    <th>Datum en tijd</th>
+                                    <th>Status</th>
+                                    <th>Actie</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($memberRegistrations as $assigned): ?>
+                                    <tr>
+                                        <td><?= $this->escape($assigned->eventTitel ?? '-') ?></td>
+                                        <td><?= $this->escape(
+                                            $assigned->shiftNaam
+                                            ?? $assigned->typeNaam
+                                            ?? '-'
+                                        ) ?></td>
+                                        <td><?= $this->escape($assigned->displayShiftPeriode()) ?></td>
+                                        <td>
+                                            <span class="badge <?= $this->escape($assigned->statusCssClass()) ?>">
+                                                <?= $this->escape($assigned->statusLabel()) ?>
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <a
+                                                href="<?= $this->escape(
+                                                    $helpers->url->to('/shifts/' . $assigned->shiftId)
+                                                ) ?>"
+                                                class="btn btn-secondary shift-small-button"
+                                            >
+                                                Bekijken
+                                            </a>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                <?php endif; ?>
+            </div>
+        </section>
+    <?php endif; ?>
 </div>
 <?php $this->endSection(); ?>
 
@@ -355,33 +367,23 @@ if ($isAdmin) {
     }
 
     .shift-event-card {
-        position: relative;
         display: grid;
         gap: 0.35rem;
-        min-height: 145px;
+        min-height: 140px;
         padding: 1.1rem;
         color: var(--color-text);
         text-decoration: none;
         background: #f8fafc;
         border: 1px solid var(--color-border);
         border-radius: var(--radius-medium);
-        transition: border-color 0.15s ease, transform 0.15s ease;
     }
 
     .shift-event-card:hover {
-        color: var(--color-text);
         border-color: var(--color-primary);
-        text-decoration: none;
-        transform: translateY(-2px);
     }
 
-    .shift-event-card__status {
+    .shift-event-card .badge {
         width: max-content;
-        margin-bottom: 0.25rem;
-    }
-
-    .shift-event-card strong {
-        font-size: 1rem;
     }
 
     .shift-event-card span:not(.badge),
@@ -390,15 +392,10 @@ if ($isAdmin) {
         display: block;
         color: var(--color-text-muted);
         font-size: 0.82rem;
-        line-height: 1.4;
     }
 
     .shift-table-body {
         padding-top: 0;
-    }
-
-    .shift-table td:first-child {
-        min-width: 230px;
     }
 
     .shift-type-dot {
@@ -417,10 +414,7 @@ if ($isAdmin) {
     }
 
     @media (max-width: 1100px) {
-        .shift-summary-grid {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-        }
-
+        .shift-summary-grid,
         .shift-event-grid {
             grid-template-columns: repeat(2, minmax(0, 1fr));
         }

@@ -134,16 +134,17 @@ $router
 
 $router
     ->post(
-        '/shifts/{id}/register',
+        '/shifts/{id}/assign',
         [
             ShiftController::class,
-            'register',
+            'assign',
         ]
     )
     ->middleware(
-        AuthMiddleware::class
+        AuthMiddleware::class,
+        AdminMiddleware::class
     )
-    ->name('shifts.register');
+    ->name('shifts.assign');
 
 $router
     ->post(
@@ -196,7 +197,8 @@ $router
         ]
     )
     ->middleware(
-        AuthMiddleware::class
+        AuthMiddleware::class,
+        AdminMiddleware::class
     )
     ->name('shift-registrations.cancel');
 

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use App\Support\BelgianDateTime;
+
 final class EventRequest
 {
     /**
@@ -23,8 +25,8 @@ final class EventRequest
             (string) ($this->input['max_deelnemers'] ?? '')
         );
 
-        $einddatum = trim(
-            (string) ($this->input['einddatum'] ?? '')
+        $einddatum = BelgianDateTime::normalizeDateInput(
+            $this->input['einddatum'] ?? ''
         );
 
         $beschrijving = trim(
@@ -48,8 +50,8 @@ final class EventRequest
             'max_deelnemers' => $maxDeelnemers !== ''
                 ? (int) $maxDeelnemers
                 : null,
-            'startdatum' => trim(
-                (string) ($this->input['startdatum'] ?? '')
+            'startdatum' => BelgianDateTime::normalizeDateInput(
+                $this->input['startdatum'] ?? ''
             ),
             'einddatum' => $einddatum !== ''
                 ? $einddatum
@@ -58,5 +60,52 @@ final class EventRequest
                 (string) ($this->input['status'] ?? 'concept')
             ),
         ];
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    public function shifts(): array
+    {
+        $rows = $this->input['shifts'] ?? [];
+
+        if (!is_array($rows)) {
+            return [];
+        }
+
+        $shifts = [];
+
+        foreach ($rows as $row) {
+            if (!is_array($row) || !$this->hasShiftInput($row)) {
+                continue;
+            }
+
+            $shifts[] = (new ShiftRequest($row))->all();
+        }
+
+        return $shifts;
+    }
+
+    /**
+     * @param array<string, mixed> $row
+     */
+    private function hasShiftInput(array $row): bool
+    {
+        foreach (
+            [
+                'type_id',
+                'naam',
+                'shift_datum',
+                'starttijd',
+                'eindtijd',
+                'max_personen',
+            ] as $key
+        ) {
+            if (trim((string) ($row[$key] ?? '')) !== '') {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

@@ -124,6 +124,51 @@ final class MemberRepository
         return (int) $statement->fetchColumn();
     }
 
+    /**
+     * @param int[] $ids
+     *
+     * @return int[]
+     */
+    public function existingIds(array $ids): array
+    {
+        $ids = array_values(
+            array_unique(
+                array_filter(
+                    array_map(
+                        static fn (mixed $id): int => (int) $id,
+                        $ids
+                    ),
+                    static fn (int $id): bool => $id > 0
+                )
+            )
+        );
+
+        if ($ids === []) {
+            return [];
+        }
+
+        sort($ids);
+
+        $placeholders = implode(
+            ', ',
+            array_fill(0, count($ids), '?')
+        );
+
+        $statement = $this->database->prepare(
+            'SELECT lid_id
+            FROM leden
+            WHERE lid_id IN (' . $placeholders . ')
+            ORDER BY lid_id ASC'
+        );
+
+        $statement->execute($ids);
+
+        return array_map(
+            static fn (mixed $value): int => (int) $value,
+            $statement->fetchAll(PDO::FETCH_COLUMN)
+        );
+    }
+
     public function find(int $id): ?Member
     {
         if ($id <= 0) {
@@ -244,10 +289,20 @@ final class MemberRepository
      */
     public function update(
         int $id,
-        array $data
+        array $data,
+        bool $preserveNationalIdentificationNumber = false
     ): void {
         $data = $this->mapper->toDatabase($data);
         $data['lid_id'] = $id;
+
+        $nationalIdentificationNumberUpdate = '';
+
+        if ($preserveNationalIdentificationNumber) {
+            unset($data['rijksregisternummer']);
+        } else {
+            $nationalIdentificationNumberUpdate =
+                'rijksregisternummer = :rijksregisternummer,';
+        }
 
         $statement = $this->database->prepare(
             '
@@ -264,7 +319,7 @@ final class MemberRepository
                 geslacht = :geslacht,
                 geboortedatum = :geboortedatum,
                 rekeningnummer = :rekeningnummer,
-                rijksregisternummer = :rijksregisternummer,
+                ' . $nationalIdentificationNumberUpdate . '
                 tshirtmaat = :tshirtmaat,
                 opmerkingen = :opmerkingen,
                 actief = :actief,

@@ -1,8 +1,72 @@
 <?php
 
+use App\Support\BelgianDateTime;
+
 /** @var array<int, array<string, mixed>> $logs */
 
 $logs ??= [];
+
+$formatAuditValue = static function (
+    string $field,
+    mixed $value
+): string {
+    if ($value === null) {
+        return '—';
+    }
+
+    if (!is_scalar($value)) {
+        return (string) json_encode(
+            $value,
+            JSON_UNESCAPED_UNICODE
+            | JSON_UNESCAPED_SLASHES
+        );
+    }
+
+    $display = (string) $value;
+
+    if (
+        in_array(
+            $field,
+            [
+                'geboortedatum',
+                'startdatum',
+                'einddatum',
+            ],
+            true
+        )
+    ) {
+        return BelgianDateTime::formatDate(
+            $display,
+            $display
+        );
+    }
+
+    if (
+        in_array(
+            $field,
+            [
+                'start_op',
+                'eind_op',
+                'planning_verstuurd',
+                'goedgekeurd_op',
+                'geannuleerd_op',
+                'aanwezig_afgevinkt_op',
+                'aangemaakt_op',
+                'bijgewerkt_op',
+                'created_at',
+                'updated_at',
+            ],
+            true
+        )
+    ) {
+        return BelgianDateTime::formatDateTime(
+            $display,
+            $display
+        );
+    }
+
+    return $display;
+};
 ?>
 
 <div class="card">
@@ -57,16 +121,15 @@ $logs ??= [];
 
                         $action = (string) ($log['action'] ?? '');
                         $createdAt = (string) ($log['created_at'] ?? '');
-                        $timestamp = strtotime($createdAt);
                         ?>
 
                         <tr>
                             <td>
-                                <?= $timestamp !== false
-                                    ? $this->escape(
-                                        date('d/m/Y H:i', $timestamp)
+                                <?= $this->escape(
+                                    BelgianDateTime::formatDateTime(
+                                        $createdAt
                                     )
-                                    : '—' ?>
+                                ) ?>
                             </td>
 
                             <td>
@@ -125,23 +188,15 @@ $logs ??= [];
                                             <tbody>
                                             <?php foreach ($changes as $field => $change): ?>
                                                 <?php
-                                                $oldDisplay = is_scalar($change['old'])
-                                                    || $change['old'] === null
-                                                    ? (string) ($change['old'] ?? '—')
-                                                    : (string) json_encode(
-                                                        $change['old'],
-                                                        JSON_UNESCAPED_UNICODE
-                                                        | JSON_UNESCAPED_SLASHES
-                                                    );
+                                                $oldDisplay = $formatAuditValue(
+                                                    (string) $field,
+                                                    $change['old']
+                                                );
 
-                                                $newDisplay = is_scalar($change['new'])
-                                                    || $change['new'] === null
-                                                    ? (string) ($change['new'] ?? '—')
-                                                    : (string) json_encode(
-                                                        $change['new'],
-                                                        JSON_UNESCAPED_UNICODE
-                                                        | JSON_UNESCAPED_SLASHES
-                                                    );
+                                                $newDisplay = $formatAuditValue(
+                                                    (string) $field,
+                                                    $change['new']
+                                                );
                                                 ?>
 
                                                 <tr>

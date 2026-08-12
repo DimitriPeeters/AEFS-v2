@@ -5,6 +5,7 @@ declare(strict_types=1);
 use AEFS\Core\Application;
 use AEFS\Core\Config;
 use AEFS\Core\Container;
+use AEFS\Core\Database;
 use AEFS\Core\Http\Request;
 use AEFS\Core\Kernel;
 use AEFS\Core\Router;
@@ -58,6 +59,8 @@ $container->instance(
     Config::class,
     $config
 );
+
+$container->singleton(Database::class);
 
 $databaseManager = new DatabaseManager(
     $config->get('database', [])

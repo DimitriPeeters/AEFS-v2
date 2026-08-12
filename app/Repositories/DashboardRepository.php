@@ -7,6 +7,7 @@ namespace App\Repositories;
 use AEFS\Database\DB;
 use AEFS\Database\Query\Expression;
 use App\Models\Event;
+use App\Models\EventRegistration;
 use App\Models\Shift;
 use App\Models\User;
 
@@ -38,6 +39,40 @@ final class DashboardRepository
                 'goedkeuringsstatus',
                 '=',
                 User::APPROVAL_PENDING
+            )
+            ->count();
+    }
+
+    public function countPendingEventCancellations(): int
+    {
+        return DB::table('event_inschrijvingen')
+            ->whereNotNull('annulatie_aangevraagd_op')
+            ->whereNull('uitgeschreven_op')
+            ->count();
+    }
+
+    public function countPendingEventRegistrations(): int
+    {
+        return DB::table('event_inschrijvingen as ei')
+            ->join(
+                'evenementen as e',
+                'e.event_id',
+                '=',
+                'ei.event_id'
+            )
+            ->where(
+                'ei.status',
+                '=',
+                EventRegistration::STATUS_WACHTEND
+            )
+            ->whereNull('ei.uitgeschreven_op')
+            ->whereNull('ei.annulatie_aangevraagd_op')
+            ->where(
+                Expression::raw(
+                    'COALESCE(`e`.`einddatum`, `e`.`startdatum`)'
+                ),
+                '>=',
+                date('Y-m-d')
             )
             ->count();
     }
@@ -149,6 +184,85 @@ final class DashboardRepository
                 User::APPROVAL_PENDING
             )
             ->orderBy('g.gebruiker_id', 'DESC')
+            ->limit(max(1, $limit))
+            ->get();
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    public function pendingEventCancellations(int $limit = 5): array
+    {
+        return DB::table('event_inschrijvingen as ei')
+            ->select(
+                'ei.inschrijving_id',
+                'ei.event_id',
+                'ei.annulatie_aangevraagd_op',
+                'ei.uitschrijfreden',
+                'e.titel as event_titel',
+                'l.voornaam',
+                'l.achternaam'
+            )
+            ->join(
+                'evenementen as e',
+                'e.event_id',
+                '=',
+                'ei.event_id'
+            )
+            ->join(
+                'leden as l',
+                'l.lid_id',
+                '=',
+                'ei.lid_id'
+            )
+            ->whereNotNull('ei.annulatie_aangevraagd_op')
+            ->whereNull('ei.uitgeschreven_op')
+            ->orderBy('ei.annulatie_aangevraagd_op', 'ASC')
+            ->limit(max(1, $limit))
+            ->get();
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    public function pendingEventRegistrations(int $limit = 5): array
+    {
+        return DB::table('event_inschrijvingen as ei')
+            ->select(
+                'ei.inschrijving_id',
+                'ei.event_id',
+                'ei.aangemeld_op',
+                'e.titel as event_titel',
+                'l.voornaam',
+                'l.achternaam'
+            )
+            ->join(
+                'evenementen as e',
+                'e.event_id',
+                '=',
+                'ei.event_id'
+            )
+            ->join(
+                'leden as l',
+                'l.lid_id',
+                '=',
+                'ei.lid_id'
+            )
+            ->where(
+                'ei.status',
+                '=',
+                EventRegistration::STATUS_WACHTEND
+            )
+            ->whereNull('ei.uitgeschreven_op')
+            ->whereNull('ei.annulatie_aangevraagd_op')
+            ->where(
+                Expression::raw(
+                    'COALESCE(`e`.`einddatum`, `e`.`startdatum`)'
+                ),
+                '>=',
+                date('Y-m-d')
+            )
+            ->orderBy('ei.aangemeld_op', 'DESC')
             ->limit(max(1, $limit))
             ->get();
     }

@@ -54,10 +54,6 @@ final class NavigationViewComposer extends AbstractViewComposer
                 'path' => '/shifts',
             ],
             [
-                'label' => 'Inschrijvingen',
-                'path' => '/registrations',
-            ],
-            [
                 'label' => 'Mailings',
                 'path' => '/mailings',
             ],

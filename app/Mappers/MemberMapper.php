@@ -19,6 +19,15 @@ final class MemberMapper
      */
     public function fromDatabase(array $row): Member
     {
+        $encryptedNationalIdentificationNumber = $this->nullableString(
+            $row['rijksregisternummer'] ?? null
+        );
+
+        $nationalIdentificationNumberIsUnreadable = $this->encryption
+            ->isUndecryptableLegacyValue(
+                $encryptedNationalIdentificationNumber
+            );
+
         return new Member(
             lidId: (int) ($row['lid_id'] ?? 0),
 
@@ -68,11 +77,11 @@ final class MemberMapper
                 )
             ),
 
-            rijksregisternummer: $this->encryption->decrypt(
-                $this->nullableString(
-                    $row['rijksregisternummer'] ?? null
-                )
-            ),
+            rijksregisternummer: $nationalIdentificationNumberIsUnreadable
+                ? null
+                : $this->encryption->decrypt(
+                    $encryptedNationalIdentificationNumber
+                ),
 
             tshirtmaat: $this->nullableString(
                 $row['tshirtmaat'] ?? null
@@ -96,7 +105,10 @@ final class MemberMapper
 
             bijgewerktOp: $this->nullableString(
                 $row['bijgewerkt_op'] ?? null
-            )
+            ),
+
+            nationaalIdentificatienummerOnleesbaar:
+                $nationalIdentificationNumberIsUnreadable
         );
     }
 

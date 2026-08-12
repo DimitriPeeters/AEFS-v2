@@ -4,6 +4,7 @@ use AEFS\Core\View\Helper\ViewHelpers;
 use App\Models\Event;
 use App\Models\Shift;
 use App\Models\ShiftType;
+use App\Support\BelgianDateTime;
 
 /** @var ViewHelpers $helpers */
 /** @var Event[] $events */
@@ -51,7 +52,7 @@ $naam = (string) $value(
 
 $shiftDatum = (string) $value(
     'shift_datum',
-    $start?->format('Y-m-d') ?? ''
+    BelgianDateTime::formatDate($start, '')
 );
 
 $starttijd = (string) $value(
@@ -223,11 +224,15 @@ $status = $shift?->status ?? Shift::STATUS_ACTIEF;
                 </label>
 
                 <input
-                    type="date"
+                    type="text"
                     id="shift_datum"
                     name="shift_datum"
                     value="<?= $this->escape($shiftDatum) ?>"
                     class="form-control"
+                    placeholder="DD/mm/YYYY"
+                    pattern="(?:0[1-9]|[12][0-9]|3[01])/(?:0[1-9]|1[0-2])/[0-9]{4}"
+                    maxlength="10"
+                    autocomplete="off"
                     required
                 >
             </div>
@@ -239,12 +244,15 @@ $status = $shift?->status ?? Shift::STATUS_ACTIEF;
                 </label>
 
                 <input
-                    type="time"
+                    type="text"
                     id="starttijd"
                     name="starttijd"
                     value="<?= $this->escape($starttijd) ?>"
                     class="form-control"
-                    step="300"
+                    placeholder="UU:mm"
+                    pattern="(?:[01][0-9]|2[0-3]):[0-5][0-9]"
+                    maxlength="5"
+                    autocomplete="off"
                     required
                 >
             </div>
@@ -256,12 +264,15 @@ $status = $shift?->status ?? Shift::STATUS_ACTIEF;
                 </label>
 
                 <input
-                    type="time"
+                    type="text"
                     id="eindtijd"
                     name="eindtijd"
                     value="<?= $this->escape($eindtijd) ?>"
                     class="form-control"
-                    step="300"
+                    placeholder="UU:mm"
+                    pattern="(?:[01][0-9]|2[0-3]):[0-5][0-9]"
+                    maxlength="5"
+                    autocomplete="off"
                     aria-describedby="shift-end-help"
                     required
                 >

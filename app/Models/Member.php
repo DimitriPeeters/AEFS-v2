@@ -48,7 +48,9 @@ final class Member
 
         public readonly ?string $aangemaaktOp,
 
-        public readonly ?string $bijgewerktOp
+        public readonly ?string $bijgewerktOp,
+
+        public readonly bool $nationaalIdentificatienummerOnleesbaar = false
 
     ) {
     }

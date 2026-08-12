@@ -62,6 +62,12 @@ $isAdmin ??= false;
                                     ) ?>
                                 </div>
                             <?php endif; ?>
+
+                            <?php if ($isAdmin && $event->hasPendingCancellationRequests()): ?>
+                                <div class="event-table__cancellation-alert">
+                                    <?= $event->aantalAnnulatieverzoeken ?> annulatieverzoek(en) te verifiëren
+                                </div>
+                            <?php endif; ?>
                         </td>
 
                         <td><?= $this->escape($event->displayDate()) ?></td>
@@ -158,6 +164,17 @@ $isAdmin ??= false;
             color: var(--text-muted);
             font-size: 0.85rem;
             line-height: 1.35;
+        }
+
+        .event-table__cancellation-alert {
+            width: max-content;
+            margin-top: 0.45rem;
+            padding: 0.25rem 0.45rem;
+            color: #9a3412;
+            font-size: 0.78rem;
+            font-weight: 700;
+            background: #ffedd5;
+            border-radius: var(--radius-small);
         }
 
         .event-table__actions-heading {

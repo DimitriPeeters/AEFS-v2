@@ -2,6 +2,7 @@
 
 use AEFS\Core\View\Helper\ViewHelpers;
 use App\Models\Member;
+use App\Support\BelgianDateTime;
 
 /** @var ViewHelpers $helpers */
 /** @var Member|null $lid */
@@ -27,7 +28,10 @@ $value = static function (
         'postcode' => $lid->postcode,
         'gemeente' => $lid->gemeente,
         'land' => $lid->land,
-        'geboortedatum' => $lid->geboortedatum,
+        'geboortedatum' => BelgianDateTime::formatDate(
+            $lid->geboortedatum,
+            ''
+        ),
         'geslacht' => $lid->geslacht,
         'rekeningnummer' => $lid->rekeningnummer,
         'rijksregisternummer' => $lid->rijksregisternummer,
@@ -291,13 +295,16 @@ $cancelUrl = $isEdit
                     </label>
 
                     <input
-                        type="date"
+                        type="text"
                         id="geboortedatum"
                         name="geboortedatum"
                         value="<?= $this->escape(
                             (string) $value('geboortedatum')
                         ) ?>"
                         class="member-form__control"
+                        placeholder="DD/mm/YYYY"
+                        pattern="(?:0[1-9]|[12][0-9]|3[01])/(?:0[1-9]|1[0-2])/[0-9]{4}"
+                        maxlength="10"
                         autocomplete="bday"
                     >
                 </div>
@@ -476,7 +483,7 @@ $cancelUrl = $isEdit
                         for="rijksregisternummer"
                         class="member-form__label"
                     >
-                        Rijksregisternummer
+                        Nationaal identificatienummer
                     </label>
 
                     <input
@@ -487,11 +494,23 @@ $cancelUrl = $isEdit
                             (string) $value('rijksregisternummer')
                         ) ?>"
                         class="member-form__control"
+                        maxlength="100"
                         autocomplete="off"
                     >
 
                     <small class="member-form__help">
-                        Het rijksregisternummer wordt versleuteld opgeslagen.
+                        <?php if (
+                            $lid instanceof Member
+                            && $lid->nationaalIdentificatienummerOnleesbaar
+                        ): ?>
+                            De bestaande legacywaarde kan niet worden ontsleuteld.
+                            Laat dit veld leeg om die waarde te bewaren, of voer het
+                            correcte nummer opnieuw in om ze veilig te vervangen.
+                        <?php else: ?>
+                            Voor Belgische leden is dit het rijksregisternummer.
+                            Buitenlandse nummers mogen letters en leestekens bevatten.
+                            Het nummer wordt versleuteld opgeslagen.
+                        <?php endif; ?>
                     </small>
                 </div>
 

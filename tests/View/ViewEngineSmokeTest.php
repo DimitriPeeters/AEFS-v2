@@ -37,11 +37,14 @@ final readonly class ViewEngineSmokeTest
         $html = $this->view->render(
             'dashboard.index',
             [
+                'isAdmin' => true,
                 'statistics' => [
                     'members' => 12,
+                    'pending' => 3,
+                    'eventRegistrations' => 7,
                     'users' => 9,
+                    'eventCancellations' => 2,
                     'events' => 4,
-                    'shifts' => 18,
                 ],
                 'latestMembers' => [
                     [
@@ -56,12 +59,10 @@ final readonly class ViewEngineSmokeTest
                         'startdatum' => '2026-08-01',
                     ],
                 ],
-                'openShifts' => [
-                    [
-                        'naam' => 'Steward',
-                        'shift_datum' => '2026-08-01',
-                    ],
-                ],
+                'pendingRegistrations' => [],
+                'pendingEventCancellations' => [],
+                'pendingEventRegistrations' => [],
+                'openShifts' => [],
             ]
         );
 
@@ -91,11 +92,6 @@ final readonly class ViewEngineSmokeTest
         );
 
         $this->assertContains(
-            '18',
-            $html
-        );
-
-        $this->assertContains(
             'Test Gebruiker',
             $html
         );
@@ -106,7 +102,12 @@ final readonly class ViewEngineSmokeTest
         );
 
         $this->assertContains(
-            'Steward',
+            'Wachtende eventinschrijvingen',
+            $html
+        );
+
+        $this->assertContains(
+            'Openstaande annulatieaanvragen',
             $html
         );
 

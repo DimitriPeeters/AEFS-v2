@@ -27,7 +27,14 @@ final class EventRepository
                 WHERE ei.event_id = e.event_id
                   AND ei.uitgeschreven_op IS NULL
                   AND ei.status = 'bevestigd'
-            ) AS aantal_bevestigd
+            ) AS aantal_bevestigd,
+            (
+                SELECT COUNT(*)
+                FROM event_inschrijvingen ei
+                WHERE ei.event_id = e.event_id
+                  AND ei.annulatie_aangevraagd_op IS NOT NULL
+                  AND ei.uitgeschreven_op IS NULL
+            ) AS aantal_annulatieverzoeken
         FROM evenementen e
         SQL;
 
@@ -147,6 +154,29 @@ final class EventRepository
             $id,
             true
         );
+    }
+
+    public function lockForUpdate(int $id): ?Event
+    {
+        $statement = $this->database->prepare(
+            self::SELECT_EVENT
+            . PHP_EOL
+            . 'WHERE e.event_id = :event_id'
+            . PHP_EOL
+            . 'LIMIT 1'
+            . PHP_EOL
+            . 'FOR UPDATE'
+        );
+
+        $statement->execute([
+            'event_id' => $id,
+        ]);
+
+        $row = $statement->fetch(PDO::FETCH_ASSOC);
+
+        return is_array($row)
+            ? $this->mapper->fromDatabase($row)
+            : null;
     }
 
     /**

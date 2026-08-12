@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use App\Support\BelgianDateTime;
+
 final class MemberRequest
 {
     /**
@@ -71,8 +73,8 @@ final class MemberRequest
             (string) ($data['geslacht'] ?? '')
         );
 
-        $geboortedatum = trim(
-            (string) ($data['geboortedatum'] ?? '')
+        $geboortedatum = BelgianDateTime::normalizeDateInput(
+            $data['geboortedatum'] ?? ''
         );
 
         $data['geboortedatum'] = $geboortedatum !== ''
@@ -87,13 +89,7 @@ final class MemberRequest
             )
         );
 
-        $data['rijksregisternummer'] = str_replace(
-            [
-                ' ',
-                '.',
-                '-',
-            ],
-            '',
+        $data['rijksregisternummer'] = trim(
             (string) ($data['rijksregisternummer'] ?? '')
         );
 

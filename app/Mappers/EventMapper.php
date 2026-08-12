@@ -44,6 +44,9 @@ final class EventMapper
             ),
             aantalBevestigd: (int) (
                 $row['aantal_bevestigd'] ?? 0
+            ),
+            aantalAnnulatieverzoeken: (int) (
+                $row['aantal_annulatieverzoeken'] ?? 0
             )
         );
     }

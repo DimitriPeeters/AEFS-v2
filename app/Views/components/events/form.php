@@ -2,11 +2,18 @@
 
 use AEFS\Core\View\Helper\ViewHelpers;
 use App\Models\Event;
+use App\Models\Shift;
+use App\Models\ShiftType;
+use App\Support\BelgianDateTime;
 
 /** @var ViewHelpers $helpers */
 /** @var Event|null $event */
+/** @var ShiftType[] $shiftTypes */
+/** @var Shift[] $shifts */
 
 $event ??= null;
+$shiftTypes ??= [];
+$shifts ??= [];
 
 $oldInput = $helpers->old->all();
 
@@ -41,18 +48,34 @@ $maxDeelnemers = $value(
 
 $startdatum = (string) $value(
     'startdatum',
-    $event?->startDatum ?? ''
+    BelgianDateTime::formatDate(
+        $event?->startDatum,
+        ''
+    )
 );
 
 $einddatum = (string) $value(
     'einddatum',
-    $event?->eindDatum ?? ''
+    BelgianDateTime::formatDate(
+        $event?->eindDatum,
+        ''
+    )
 );
 
 $status = (string) $value(
     'status',
     $event?->status ?? Event::STATUS_CONCEPT
 );
+
+$oldShiftRows = $oldInput['shifts'] ?? [];
+$oldShiftRows = is_array($oldShiftRows)
+    ? array_values(
+        array_filter(
+            $oldShiftRows,
+            static fn(mixed $row): bool => is_array($row)
+        )
+    )
+    : [];
 ?>
 
 <section class="card event-form-card">
@@ -224,11 +247,15 @@ $status = (string) $value(
                 </label>
 
                 <input
-                    type="date"
+                    type="text"
                     id="startdatum"
                     name="startdatum"
                     value="<?= $this->escape($startdatum) ?>"
                     class="form-control"
+                    placeholder="DD/mm/YYYY"
+                    pattern="(?:0[1-9]|[12][0-9]|3[01])/(?:0[1-9]|1[0-2])/[0-9]{4}"
+                    maxlength="10"
+                    autocomplete="off"
                     required
                 >
 
@@ -247,11 +274,15 @@ $status = (string) $value(
                 </label>
 
                 <input
-                    type="date"
+                    type="text"
                     id="einddatum"
                     name="einddatum"
                     value="<?= $this->escape($einddatum) ?>"
                     class="form-control"
+                    placeholder="DD/mm/YYYY"
+                    pattern="(?:0[1-9]|[12][0-9]|3[01])/(?:0[1-9]|1[0-2])/[0-9]{4}"
+                    maxlength="10"
+                    autocomplete="off"
                     aria-describedby="einddatum-help"
                 >
 
@@ -268,6 +299,68 @@ $status = (string) $value(
                 ) ?>
             </div>
         </div>
+    </div>
+
+    <div class="card__body event-shift-builder" data-event-shift-builder>
+        <div class="event-shift-builder__heading">
+            <div>
+                <h3>Shifts</h3>
+                <p>
+                    Voeg optioneel meteen shifts toe. Vrijwilligers worden later uitsluitend door een administrator toegewezen.
+                </p>
+            </div>
+
+            <button
+                type="button"
+                class="btn btn-primary"
+                data-add-event-shift
+                <?= $shiftTypes === [] ? 'disabled' : '' ?>
+            >
+                Shift toevoegen
+            </button>
+        </div>
+
+        <?php if ($shifts !== []): ?>
+            <div class="event-existing-shifts">
+                <strong>Bestaande shifts</strong>
+                <div>
+                    <?php foreach ($shifts as $existingShift): ?>
+                        <a href="<?= $this->escape(
+                            $helpers->url->to(
+                                '/shifts/' . $existingShift->shiftId
+                            )
+                        ) ?>">
+                            <?= $this->escape($existingShift->displayNaam()) ?>
+                            · <?= $this->escape($existingShift->displayPeriode()) ?>
+                        </a>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+        <?php endif; ?>
+
+        <div class="event-shift-rows" data-event-shift-rows>
+            <?php foreach ($oldShiftRows as $index => $row): ?>
+                <?= $this->component(
+                    'events/shift-row',
+                    [
+                        'shiftTypes' => $shiftTypes,
+                        'index' => $index,
+                        'row' => $row,
+                    ]
+                ) ?>
+            <?php endforeach; ?>
+        </div>
+
+        <template data-event-shift-template>
+            <?= $this->component(
+                'events/shift-row',
+                [
+                    'shiftTypes' => $shiftTypes,
+                    'index' => '__INDEX__',
+                    'row' => [],
+                ]
+            ) ?>
+        </template>
     </div>
 
     <footer class="card__footer event-form-actions">
@@ -330,6 +423,81 @@ $status = (string) $value(
         gap: 1rem;
     }
 
+    .event-shift-builder {
+        display: grid;
+        gap: 1rem;
+        border-top: 1px solid var(--color-border, #e2e8f0);
+    }
+
+    .event-shift-builder__heading {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 1rem;
+    }
+
+    .event-shift-builder__heading h3,
+    .event-shift-builder__heading p {
+        margin: 0;
+    }
+
+    .event-shift-builder__heading p {
+        margin-top: 0.35rem;
+        color: var(--color-text-muted, #64748b);
+    }
+
+    .event-existing-shifts {
+        display: grid;
+        gap: 0.55rem;
+        padding: 1rem;
+        background: #f8fafc;
+        border: 1px solid var(--color-border, #e2e8f0);
+        border-radius: var(--radius-medium, 0.5rem);
+    }
+
+    .event-existing-shifts div {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.55rem 1rem;
+    }
+
+    .event-shift-rows {
+        display: grid;
+        gap: 1rem;
+    }
+
+    .event-shift-row {
+        display: grid;
+        gap: 1rem;
+        padding: 1rem;
+        background: #f8fafc;
+        border: 1px solid var(--color-border, #e2e8f0);
+        border-radius: var(--radius-medium, 0.5rem);
+    }
+
+    .event-shift-row__header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+    }
+
+    .event-shift-remove {
+        min-height: 34px;
+        padding: 0.4rem 0.7rem;
+        font-size: 0.8rem;
+    }
+
+    .event-shift-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 1rem;
+    }
+
+    .event-shift-field--full {
+        grid-column: span 2;
+    }
+
     @media (max-width: 760px) {
         .event-form-grid {
             grid-template-columns: 1fr;
@@ -347,5 +515,78 @@ $status = (string) $value(
         .event-form-actions .btn {
             width: 100%;
         }
+
+        .event-shift-builder__heading,
+        .event-shift-row__header {
+            align-items: stretch;
+            flex-direction: column;
+        }
+
+        .event-shift-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .event-shift-field--full {
+            grid-column: auto;
+        }
     }
 </style>
+
+<script>
+    (() => {
+        const builder = document.querySelector('[data-event-shift-builder]');
+
+        if (!(builder instanceof HTMLElement)) {
+            return;
+        }
+
+        const rows = builder.querySelector('[data-event-shift-rows]');
+        const template = builder.querySelector('[data-event-shift-template]');
+        const addButton = builder.querySelector('[data-add-event-shift]');
+
+        if (!(rows instanceof HTMLElement)
+            || !(template instanceof HTMLTemplateElement)
+            || !(addButton instanceof HTMLButtonElement)
+        ) {
+            return;
+        }
+
+        let nextIndex = rows.querySelectorAll('[data-event-shift-row]').length;
+
+        const bindRemove = (row) => {
+            const removeButton = row.querySelector('[data-remove-event-shift]');
+
+            if (removeButton instanceof HTMLButtonElement) {
+                removeButton.addEventListener('click', () => row.remove());
+            }
+        };
+
+        rows.querySelectorAll('[data-event-shift-row]').forEach(bindRemove);
+
+        addButton.addEventListener('click', () => {
+            const wrapper = document.createElement('div');
+            wrapper.innerHTML = template.innerHTML.replaceAll(
+                '__INDEX__',
+                String(nextIndex++)
+            ).trim();
+
+            const row = wrapper.firstElementChild;
+
+            if (!(row instanceof HTMLElement)) {
+                return;
+            }
+
+            const dateInput = row.querySelector('[data-event-shift-date]');
+            const eventStart = document.querySelector('#startdatum');
+
+            if (dateInput instanceof HTMLInputElement
+                && eventStart instanceof HTMLInputElement
+            ) {
+                dateInput.value = eventStart.value;
+            }
+
+            bindRemove(row);
+            rows.append(row);
+        });
+    })();
+</script>

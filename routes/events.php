@@ -30,6 +30,19 @@ $router
     ->name('events.store');
 
 $router
+    ->post('/events/{id}/register', [EventController::class, 'register'])
+    ->middleware(AuthMiddleware::class)
+    ->name('events.register');
+
+$router
+    ->post(
+        '/events/{id}/cancel-registration',
+        [EventController::class, 'cancelRegistration']
+    )
+    ->middleware(AuthMiddleware::class)
+    ->name('events.cancel-registration');
+
+$router
     ->get('/events/{id}', [EventController::class, 'show'])
     ->middleware(AuthMiddleware::class)
     ->name('events.show');
@@ -57,3 +70,47 @@ $router
         AdminMiddleware::class
     )
     ->name('events.destroy');
+
+$router
+    ->post(
+        '/event-registrations/{registrationId}/approve',
+        [EventController::class, 'approveRegistration']
+    )
+    ->middleware(
+        AuthMiddleware::class,
+        AdminMiddleware::class
+    )
+    ->name('event-registrations.approve');
+
+$router
+    ->post(
+        '/event-registrations/{registrationId}/reserve',
+        [EventController::class, 'reserveRegistration']
+    )
+    ->middleware(
+        AuthMiddleware::class,
+        AdminMiddleware::class
+    )
+    ->name('event-registrations.reserve');
+
+$router
+    ->post(
+        '/event-registrations/{registrationId}/reject',
+        [EventController::class, 'rejectRegistration']
+    )
+    ->middleware(
+        AuthMiddleware::class,
+        AdminMiddleware::class
+    )
+    ->name('event-registrations.reject');
+
+$router
+    ->post(
+        '/event-registrations/{registrationId}/confirm-cancellation',
+        [EventController::class, 'confirmRegistrationCancellation']
+    )
+    ->middleware(
+        AuthMiddleware::class,
+        AdminMiddleware::class
+    )
+    ->name('event-registrations.confirm-cancellation');

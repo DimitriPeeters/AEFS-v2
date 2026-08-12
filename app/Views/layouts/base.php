@@ -11,7 +11,7 @@ $applicationName = $applicationName ?? 'AEFS Eventbeheer';
 $pageTitle = $pageTitle === '' ? $applicationName : $pageTitle . ' | ' . $applicationName;
 ?>
 <!DOCTYPE html>
-<html lang="nl">
+<html lang="nl-BE">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">

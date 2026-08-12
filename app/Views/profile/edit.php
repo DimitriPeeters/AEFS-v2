@@ -2,6 +2,7 @@
 
 use AEFS\Core\View\Helper\ViewHelpers;
 use App\Models\Member;
+use App\Support\BelgianDateTime;
 
 /** @var ViewHelpers $helpers */
 /** @var Member $lid */
@@ -129,12 +130,18 @@ $this->extend(
                 <label class="profile-form__field">
                     <span>Geboortedatum</span>
                     <input
-                        type="date"
+                        type="text"
                         name="geboortedatum"
                         value="<?= $this->escape((string) $value(
                             'geboortedatum',
-                            $lid->geboortedatum
+                            BelgianDateTime::formatDate(
+                                $lid->geboortedatum,
+                                ''
+                            )
                         )) ?>"
+                        placeholder="DD/mm/YYYY"
+                        pattern="(?:0[1-9]|[12][0-9]|3[01])/(?:0[1-9]|1[0-2])/[0-9]{4}"
+                        maxlength="10"
                         autocomplete="bday"
                     >
                 </label>
@@ -233,7 +240,7 @@ $this->extend(
                 </label>
 
                 <label class="profile-form__field">
-                    <span>Rijksregisternummer</span>
+                    <span>Nationaal identificatienummer</span>
                     <input
                         type="text"
                         name="rijksregisternummer"
@@ -241,9 +248,20 @@ $this->extend(
                             'rijksregisternummer',
                             $lid->rijksregisternummer
                         )) ?>"
+                        maxlength="100"
                         autocomplete="off"
                     >
-                    <small>Wordt versleuteld opgeslagen.</small>
+                    <small>
+                        <?php if ($lid->nationaalIdentificatienummerOnleesbaar): ?>
+                            De bestaande legacywaarde kan niet worden ontsleuteld.
+                            Laat dit veld leeg om die waarde te bewaren, of voer het
+                            correcte nummer opnieuw in om ze veilig te vervangen.
+                        <?php else: ?>
+                            Voor Belgische leden is dit het rijksregisternummer.
+                            Buitenlandse nummers mogen letters en leestekens bevatten.
+                            Wordt versleuteld opgeslagen.
+                        <?php endif; ?>
+                    </small>
                 </label>
 
                 <label class="profile-form__field">

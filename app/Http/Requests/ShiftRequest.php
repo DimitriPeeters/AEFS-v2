@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Requests;
 
 use App\Models\Shift;
+use App\Support\BelgianDateTime;
 use DateTimeImmutable;
 
 final class ShiftRequest
@@ -22,8 +23,8 @@ final class ShiftRequest
      */
     public function all(): array
     {
-        $datum = trim(
-            (string) ($this->input['shift_datum'] ?? '')
+        $datum = BelgianDateTime::normalizeDateInput(
+            $this->input['shift_datum'] ?? ''
         );
 
         $starttijd = $this->normalizeTime(

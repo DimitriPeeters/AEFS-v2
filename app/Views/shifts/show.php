@@ -1,6 +1,7 @@
 <?php
 
 use AEFS\Core\View\Helper\ViewHelpers;
+use App\Models\EventRegistration;
 use App\Models\Shift;
 use App\Models\ShiftRegistration;
 
@@ -9,11 +10,13 @@ use App\Models\ShiftRegistration;
 /** @var bool|null $isAdmin */
 /** @var ShiftRegistration[] $registrations */
 /** @var ShiftRegistration|null $memberRegistration */
+/** @var EventRegistration[] $eligibleEventRegistrations */
 /** @var string|null $title */
 
 $isAdmin ??= false;
 $registrations ??= [];
 $memberRegistration ??= null;
+$eligibleEventRegistrations ??= [];
 
 $this->extend(
     'layouts.app',
@@ -144,50 +147,11 @@ if ($isAdmin) {
     <?php if (!$isAdmin): ?>
         <section class="card">
             <header class="card__header">
-                <h2 class="card__title">Mijn shiftinschrijving</h2>
+                <h2 class="card__title">Mijn shifttoewijzing</h2>
             </header>
 
             <div class="card__body">
-                <?php if (
-                    $memberRegistration === null
-                    || $memberRegistration->isGeannuleerd()
-                ): ?>
-                    <form
-                        method="post"
-                        action="<?= $this->escape(
-                            $helpers->url->to(
-                                '/shifts/' . $shift->shiftId . '/register'
-                            )
-                        ) ?>"
-                        class="shift-registration-form"
-                    >
-                        <?= $helpers->csrf->field() ?>
-
-                        <?php if ($memberRegistration?->isGeannuleerd()): ?>
-                            <div class="alert alert-info" role="alert">
-                                Je vorige inschrijving werd geannuleerd. Een nieuwe aanvraag wordt opnieuw beoordeeld.
-                            </div>
-                        <?php endif; ?>
-
-                        <div class="form-group">
-                            <label for="opmerking_lid" class="form-label">
-                                Opmerking voor de planning
-                            </label>
-                            <textarea
-                                id="opmerking_lid"
-                                name="opmerking_lid"
-                                rows="4"
-                                maxlength="1000"
-                                class="form-control"
-                                placeholder="Optioneel: vermeld hier praktische informatie."
-                            ></textarea>
-                        </div>
-
-                        <button type="submit" class="btn btn-success">
-                            Inschrijven voor deze shift
-                        </button>
-                    </form>
-                <?php else: ?>
+                <?php if ($memberRegistration !== null): ?>
                     <div class="shift-member-status">
                         <div>
                             <span>Status</span>
@@ -199,7 +163,7 @@ if ($isAdmin) {
                         </div>
 
                         <div>
-                            <span>Aangevraagd</span>
+                            <span>Toegewezen</span>
                             <strong><?= $this->escape($memberRegistration->displayAangemaaktOp()) ?></strong>
                         </div>
                     </div>
@@ -211,55 +175,94 @@ if ($isAdmin) {
                         </div>
                     <?php endif; ?>
 
-                    <?php if (
-                        $memberRegistration->isActief()
-                        && $shift->magLidZelfAnnuleren()
-                    ): ?>
-                        <form
-                            method="post"
-                            action="<?= $this->escape(
-                                $helpers->url->to(
-                                    '/shift-registrations/'
-                                    . $memberRegistration->inschrijvingId
-                                    . '/cancel'
-                                )
-                            ) ?>"
-                            class="shift-cancel-form"
-                            onsubmit="return confirm('Je shiftinschrijving annuleren?');"
-                        >
-                            <?= $helpers->csrf->field() ?>
-
-                            <div class="form-group">
-                                <label for="annulatie_reden" class="form-label">
-                                    Reden van annulering
-                                </label>
-                                <textarea
-                                    id="annulatie_reden"
-                                    name="annulatie_reden"
-                                    rows="3"
-                                    maxlength="1000"
-                                    class="form-control"
-                                ></textarea>
-                            </div>
-
-                            <button type="submit" class="btn btn-danger">
-                                Inschrijving annuleren
-                            </button>
-                        </form>
-                    <?php elseif ($memberRegistration->isActief()): ?>
-                        <div class="alert alert-warning" role="alert">
-                            Vanaf veertien dagen voor de start van het evenement kan alleen een administrator deze inschrijving annuleren.
-                        </div>
-                    <?php endif; ?>
+                    <p class="shift-assignment-note">
+                        Shifttoewijzingen worden uitsluitend door een administrator beheerd.
+                    </p>
                 <?php endif; ?>
             </div>
         </section>
     <?php endif; ?>
 
     <?php if ($isAdmin): ?>
+        <?php if ($shift->isActief()): ?>
+            <section class="card">
+                <header class="card__header">
+                    <h2 class="card__title">Vrijwilliger toewijzen</h2>
+                </header>
+
+                <div class="card__body">
+                    <?php if ($eligibleEventRegistrations === []): ?>
+                        <?= $this->component(
+                            'empty-state',
+                            [
+                                'title' => 'Geen beschikbare deelnemers',
+                                'text' => 'Bevestig eerst een evenementinschrijving voor deze dag, of alle geschikte deelnemers zijn al toegewezen.',
+                            ]
+                        ) ?>
+                    <?php else: ?>
+                        <form
+                            method="post"
+                            action="<?= $this->escape(
+                                $helpers->url->to(
+                                    '/shifts/' . $shift->shiftId . '/assign'
+                                )
+                            ) ?>"
+                            class="shift-assignment-form"
+                        >
+                            <?= $helpers->csrf->field() ?>
+
+                            <div class="form-group">
+                                <label for="lid_id" class="form-label">
+                                    Vrijwilliger
+                                </label>
+                                <select id="lid_id" name="lid_id" class="form-control" required>
+                                    <option value="">Kies een bevestigde deelnemer</option>
+                                    <?php foreach ($eligibleEventRegistrations as $eventRegistration): ?>
+                                        <option value="<?= $eventRegistration->lidId ?>">
+                                            <?= $this->escape($eventRegistration->lidNaam()) ?>
+                                            · <?= $this->escape($eventRegistration->displayDagen()) ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="assignment_status" class="form-label">
+                                    Toewijzing
+                                </label>
+                                <select
+                                    id="assignment_status"
+                                    name="status"
+                                    class="form-control"
+                                    required
+                                >
+                                    <option
+                                        value="<?= ShiftRegistration::STATUS_BEVESTIGD ?>"
+                                        <?= $shift->isVolzet() ? 'disabled' : '' ?>
+                                    >
+                                        Bevestigd<?= $shift->isVolzet() ? ' · shift volzet' : '' ?>
+                                    </option>
+                                    <option
+                                        value="<?= ShiftRegistration::STATUS_RESERVE ?>"
+                                        <?= $shift->isVolzet() ? 'selected' : '' ?>
+                                    >
+                                        Reserve
+                                    </option>
+                                </select>
+                            </div>
+
+                            <button type="submit" class="btn btn-success">
+                                Toewijzen
+                            </button>
+                        </form>
+                    <?php endif; ?>
+                </div>
+            </section>
+        <?php endif; ?>
+
         <section class="card">
             <header class="card__header">
-                <h2 class="card__title">Shiftinschrijvingen</h2>
+                <h2 class="card__title">Shifttoewijzingen</h2>
             </header>
 
             <div class="card__body shift-registration-table-body">
@@ -267,8 +270,8 @@ if ($isAdmin) {
                     <?= $this->component(
                         'empty-state',
                         [
-                            'title' => 'Nog geen inschrijvingen',
-                            'text' => 'Voor deze shift zijn nog geen vrijwilligers geregistreerd.',
+                            'title' => 'Nog geen toewijzingen',
+                            'text' => 'Voor deze shift zijn nog geen vrijwilligers toegewezen.',
                         ]
                     ) ?>
                 <?php else: ?>
@@ -313,6 +316,8 @@ if ($isAdmin) {
                                                             . '/presence'
                                                         )
                                                     ) ?>"
+                                                    class="shift-presence-form"
+                                                    data-presence-form
                                                 >
                                                     <?= $helpers->csrf->field() ?>
                                                     <input
@@ -325,11 +330,22 @@ if ($isAdmin) {
                                                         class="btn <?= $registration->aanwezig
                                                             ? 'btn-success'
                                                             : 'btn-secondary' ?> shift-small-button"
+                                                        aria-pressed="<?= $registration->aanwezig
+                                                            ? 'true'
+                                                            : 'false' ?>"
+                                                        data-presence-button
                                                     >
                                                         <?= $registration->aanwezig
                                                             ? 'Aanwezig'
                                                             : 'Markeren' ?>
                                                     </button>
+                                                    <small
+                                                        class="shift-presence-feedback"
+                                                        role="status"
+                                                        aria-live="polite"
+                                                        data-presence-feedback
+                                                        hidden
+                                                    ></small>
                                                 </form>
                                             <?php else: ?>
                                                 <span class="shift-cell-muted">Niet van toepassing</span>
@@ -634,9 +650,24 @@ if ($isAdmin) {
     }
 
     .shift-registration-form,
-    .shift-cancel-form {
+    .shift-cancel-form,
+    .shift-assignment-form {
         display: grid;
         gap: 1rem;
+    }
+
+    .shift-assignment-form {
+        grid-template-columns: minmax(0, 2fr) minmax(220px, 1fr) auto;
+        align-items: end;
+    }
+
+    .shift-assignment-form .form-group {
+        margin: 0;
+    }
+
+    .shift-assignment-note {
+        margin: 1rem 0 0;
+        color: var(--color-text-muted);
     }
 
     .shift-cancel-form {
@@ -674,6 +705,27 @@ if ($isAdmin) {
         font-size: 0.78rem;
     }
 
+    .shift-presence-form {
+        display: grid;
+        gap: 0.4rem;
+        justify-items: start;
+    }
+
+    .shift-presence-feedback {
+        max-width: 220px;
+        color: var(--color-text-muted);
+        font-size: 0.75rem;
+        line-height: 1.35;
+    }
+
+    .shift-presence-feedback[data-state="success"] {
+        color: var(--color-success);
+    }
+
+    .shift-presence-feedback[data-state="error"] {
+        color: var(--color-error);
+    }
+
     .shift-danger-zone {
         border-color: #fecaca;
     }
@@ -690,7 +742,8 @@ if ($isAdmin) {
 
     @media (max-width: 900px) {
         .shift-show-grid,
-        .shift-details {
+        .shift-details,
+        .shift-assignment-form {
             grid-template-columns: 1fr;
         }
     }
@@ -712,4 +765,82 @@ if ($isAdmin) {
         }
     }
 </style>
+<?php $this->endSection(); ?>
+
+<?php $this->startSection('scripts'); ?>
+<script>
+    document.querySelectorAll('[data-presence-form]').forEach((form) => {
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const button = event.submitter instanceof HTMLButtonElement
+                ? event.submitter
+                : form.querySelector('[data-presence-button]');
+            const input = form.querySelector('input[name="aanwezig"]');
+            const feedback = form.querySelector('[data-presence-feedback]');
+
+            if (!(button instanceof HTMLButtonElement)
+                || !(input instanceof HTMLInputElement)
+                || !(feedback instanceof HTMLElement)
+            ) {
+                form.submit();
+                return;
+            }
+
+            button.disabled = true;
+            feedback.hidden = true;
+            feedback.removeAttribute('data-state');
+
+            try {
+                const response = await fetch(form.action, {
+                    method: 'POST',
+                    body: new FormData(form),
+                    credentials: 'same-origin',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                });
+
+                const contentType = response.headers.get('content-type') ?? '';
+
+                if (!contentType.includes('application/json')) {
+                    throw new Error(
+                        'De aanwezigheidsstatus kon niet worden bijgewerkt. Probeer opnieuw.'
+                    );
+                }
+
+                const result = await response.json();
+
+                if (!response.ok || result.success !== true) {
+                    throw new Error(
+                        typeof result.message === 'string'
+                            ? result.message
+                            : 'De aanwezigheidsstatus kon niet worden bijgewerkt.'
+                    );
+                }
+
+                const present = result.present === true;
+
+                input.value = present ? '0' : '1';
+                button.textContent = present ? 'Aanwezig' : 'Markeren';
+                button.classList.toggle('btn-success', present);
+                button.classList.toggle('btn-secondary', !present);
+                button.setAttribute('aria-pressed', present ? 'true' : 'false');
+
+                feedback.textContent = result.message;
+                feedback.dataset.state = 'success';
+                feedback.hidden = false;
+            } catch (error) {
+                feedback.textContent = error instanceof Error
+                    ? error.message
+                    : 'De aanwezigheidsstatus kon niet worden bijgewerkt.';
+                feedback.dataset.state = 'error';
+                feedback.hidden = false;
+            } finally {
+                button.disabled = false;
+            }
+        });
+    });
+</script>
 <?php $this->endSection(); ?>

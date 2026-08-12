@@ -1,12 +1,15 @@
 <?php
 
 use AEFS\Core\View\Helper\ViewHelpers;
+use App\Support\BelgianDateTime;
 
 /** @var ViewHelpers $helpers */
 /** @var bool $isAdmin */
 /** @var array<string, int> $statistics */
 /** @var list<array<string, mixed>> $latestMembers */
 /** @var list<array<string, mixed>> $pendingRegistrations */
+/** @var list<array<string, mixed>> $pendingEventCancellations */
+/** @var list<array<string, mixed>> $pendingEventRegistrations */
 /** @var list<array<string, mixed>> $upcomingEvents */
 /** @var list<array<string, mixed>> $openShifts */
 
@@ -14,22 +17,22 @@ $isAdmin ??= false;
 $statistics ??= [];
 $latestMembers ??= [];
 $pendingRegistrations ??= [];
+$pendingEventCancellations ??= [];
+$pendingEventRegistrations ??= [];
 $upcomingEvents ??= [];
 $openShifts ??= [];
 
-$formatDate = static function (mixed $value): string {
-    $date = trim((string) $value);
+$formatDate = static fn(mixed $value): string =>
+    BelgianDateTime::formatDate(
+        trim((string) $value),
+        '-'
+    );
 
-    if ($date === '') {
-        return '-';
-    }
-
-    $timestamp = strtotime($date);
-
-    return $timestamp === false
-        ? $date
-        : date('d/m/Y', $timestamp);
-};
+$formatDateTime = static fn(mixed $value): string =>
+    BelgianDateTime::formatDateTime(
+        trim((string) $value),
+        '-'
+    );
 
 $this->extend('layouts.app', [
     'title' => 'Dashboard',
@@ -83,7 +86,7 @@ $this->extend('layouts.app', [
                 ) ?>"
             >
                 <div class="stat-card__label">
-                    Wachtende registraties
+                    Wachtende accounts
                 </div>
 
                 <div class="stat-card__value">
@@ -94,6 +97,27 @@ $this->extend('layouts.app', [
 
                 <div class="stat-card__hint">
                     Te beoordelen accounts
+                </div>
+            </a>
+
+            <a
+                class="stat-card stat-card--link stat-card--warning"
+                href="<?= $this->escape(
+                    $helpers->url->to('/events')
+                ) ?>"
+            >
+                <div class="stat-card__label">
+                    Eventinschrijvingen
+                </div>
+
+                <div class="stat-card__value">
+                    <?= $this->escape(
+                        $statistics['eventRegistrations'] ?? 0
+                    ) ?>
+                </div>
+
+                <div class="stat-card__hint">
+                    Te beoordelen inschrijvingen
                 </div>
             </a>
 
@@ -115,6 +139,27 @@ $this->extend('layouts.app', [
 
                 <div class="stat-card__hint">
                     Actieve gekoppelde accounts
+                </div>
+            </a>
+
+            <a
+                class="stat-card stat-card--link stat-card--warning"
+                href="<?= $this->escape(
+                    $helpers->url->to('/events')
+                ) ?>"
+            >
+                <div class="stat-card__label">
+                    Annulatieaanvragen
+                </div>
+
+                <div class="stat-card__value">
+                    <?= $this->escape(
+                        $statistics['eventCancellations'] ?? 0
+                    ) ?>
+                </div>
+
+                <div class="stat-card__hint">
+                    Te verifiëren eventinschrijvingen
                 </div>
             </a>
         <?php endif; ?>
@@ -169,7 +214,171 @@ $this->extend('layouts.app', [
             <div class="dashboard-section__header">
                 <div>
                     <h3 class="dashboard-section__title">
-                        Wachtende registraties
+                        Wachtende eventinschrijvingen
+                    </h3>
+
+                    <p class="dashboard-section__description">
+                        Nieuwe en hernieuwde inschrijvingen die nog moeten worden beoordeeld.
+                    </p>
+                </div>
+
+                <a
+                    class="dashboard-section__link"
+                    href="<?= $this->escape(
+                        $helpers->url->to('/events')
+                    ) ?>"
+                >
+                    Naar evenementen
+                </a>
+            </div>
+
+            <?php if ($pendingEventRegistrations === []): ?>
+                <div class="dashboard-empty dashboard-empty--success">
+                    <strong>Alles is verwerkt.</strong>
+
+                    <span>
+                        Er zijn momenteel geen eventinschrijvingen die op beoordeling wachten.
+                    </span>
+                </div>
+            <?php else: ?>
+                <div class="table-wrapper">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Lid</th>
+                                <th>Evenement</th>
+                                <th>Ingeschreven</th>
+                                <th>Actie</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            <?php foreach ($pendingEventRegistrations as $registration): ?>
+                                <?php $eventId = (int) ($registration['event_id'] ?? 0); ?>
+
+                                <tr>
+                                    <td>
+                                        <?= $this->escape(
+                                            trim(
+                                                (string) ($registration['voornaam'] ?? '')
+                                                . ' '
+                                                . (string) ($registration['achternaam'] ?? '')
+                                            )
+                                        ) ?>
+                                    </td>
+                                    <td><?= $this->escape($registration['event_titel'] ?? '-') ?></td>
+                                    <td>
+                                        <?= $this->escape(
+                                            $formatDateTime(
+                                                $registration['aangemeld_op'] ?? null
+                                            )
+                                        ) ?>
+                                    </td>
+                                    <td>
+                                        <a
+                                            class="btn btn-primary dashboard-action"
+                                            href="<?= $this->escape(
+                                                $helpers->url->to('/events/' . $eventId)
+                                            ) ?>"
+                                        >
+                                            Beoordelen
+                                        </a>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            <?php endif; ?>
+        </section>
+
+        <section class="dashboard-section dashboard-section--pending">
+            <div class="dashboard-section__header">
+                <div>
+                    <h3 class="dashboard-section__title">
+                        Openstaande annulatieaanvragen
+                    </h3>
+
+                    <p class="dashboard-section__description">
+                        Leden met actieve shifttoewijzingen die hun deelname willen annuleren.
+                    </p>
+                </div>
+
+                <a
+                    class="dashboard-section__link"
+                    href="<?= $this->escape(
+                        $helpers->url->to('/events')
+                    ) ?>"
+                >
+                    Naar evenementen
+                </a>
+            </div>
+
+            <?php if ($pendingEventCancellations === []): ?>
+                <div class="dashboard-empty dashboard-empty--success">
+                    <strong>Geen openstaande annulaties.</strong>
+
+                    <span>
+                        Er zijn momenteel geen annulatieaanvragen die verificatie vereisen.
+                    </span>
+                </div>
+            <?php else: ?>
+                <div class="table-wrapper">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Lid</th>
+                                <th>Evenement</th>
+                                <th>Aangevraagd</th>
+                                <th>Actie</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            <?php foreach ($pendingEventCancellations as $cancellation): ?>
+                                <?php $eventId = (int) ($cancellation['event_id'] ?? 0); ?>
+
+                                <tr>
+                                    <td>
+                                        <?= $this->escape(
+                                            trim(
+                                                (string) ($cancellation['voornaam'] ?? '')
+                                                . ' '
+                                                . (string) ($cancellation['achternaam'] ?? '')
+                                            )
+                                        ) ?>
+                                    </td>
+                                    <td><?= $this->escape($cancellation['event_titel'] ?? '-') ?></td>
+                                    <td>
+                                        <?= $this->escape(
+                                            $formatDateTime(
+                                                $cancellation['annulatie_aangevraagd_op'] ?? null
+                                            )
+                                        ) ?>
+                                    </td>
+                                    <td>
+                                        <a
+                                            class="btn btn-primary dashboard-action"
+                                            href="<?= $this->escape(
+                                                $helpers->url->to('/events/' . $eventId)
+                                            ) ?>"
+                                        >
+                                            Verifiëren
+                                        </a>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            <?php endif; ?>
+        </section>
+
+        <section class="dashboard-section dashboard-section--pending">
+            <div class="dashboard-section__header">
+                <div>
+                    <h3 class="dashboard-section__title">
+                        Wachtende accounts
                     </h3>
 
                     <p class="dashboard-section__description">

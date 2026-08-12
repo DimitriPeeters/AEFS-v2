@@ -178,16 +178,24 @@ final class Database
 
     public function transaction(callable $callback): mixed
     {
-        $this->beginTransaction();
+        $ownsTransaction = !$this->pdo->inTransaction();
+
+        if ($ownsTransaction) {
+            $this->pdo->beginTransaction();
+        }
 
         try {
             $result = $callback($this);
 
-            $this->commit();
+            if ($ownsTransaction) {
+                $this->pdo->commit();
+            }
 
             return $result;
         } catch (Throwable $throwable) {
-            $this->rollBack();
+            if ($ownsTransaction && $this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
 
             throw $throwable;
         }

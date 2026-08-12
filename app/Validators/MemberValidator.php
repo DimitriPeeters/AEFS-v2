@@ -19,6 +19,8 @@ final class MemberValidator
         $this->validatePostcode($data);
 
         $this->validateIBAN($data);
+
+        $this->validateNationalIdentificationNumber($data);
     }
 
     private function validateVoornaam(array $data): void
@@ -91,6 +93,28 @@ final class MemberValidator
                 'Ongeldig IBAN-rekeningnummer.'
             );
 
+        }
+    }
+
+    private function validateNationalIdentificationNumber(
+        array $data
+    ): void {
+        $number = trim(
+            (string) ($data['rijksregisternummer'] ?? '')
+        );
+
+        if ($number === '') {
+            return;
+        }
+
+        $length = function_exists('mb_strlen')
+            ? mb_strlen($number)
+            : strlen($number);
+
+        if ($length > 100) {
+            throw new InvalidArgumentException(
+                'Het nationale identificatienummer mag maximaal 100 tekens bevatten.'
+            );
         }
     }
 }

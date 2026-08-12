@@ -462,12 +462,15 @@ $gdprAccepted = filter_var(
                         </label>
 
                         <input
-                            type="date"
+                            type="text"
                             id="geboortedatum"
                             name="geboortedatum"
                             value="<?= $this->escape(
                                 (string) $value('geboortedatum')
                             ) ?>"
+                            placeholder="DD/mm/YYYY"
+                            pattern="(?:0[1-9]|[12][0-9]|3[01])/(?:0[1-9]|1[0-2])/[0-9]{4}"
+                            maxlength="10"
                             autocomplete="bday"
                         >
 
@@ -695,7 +698,7 @@ $gdprAccepted = filter_var(
 
                     <div class="registration-field">
                         <label for="rijksregisternummer">
-                            Rijksregisternummer
+                            Nationaal identificatienummer
                         </label>
 
                         <input
@@ -707,10 +710,13 @@ $gdprAccepted = filter_var(
                                     'rijksregisternummer'
                                 )
                             ) ?>"
+                            maxlength="100"
                             autocomplete="off"
                         >
 
                         <small class="registration-help">
+                            Voor Belgische leden is dit het rijksregisternummer.
+                            Buitenlandse nummers mogen letters en leestekens bevatten.
                             Wordt versleuteld opgeslagen.
                         </small>
 

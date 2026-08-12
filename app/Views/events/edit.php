@@ -2,10 +2,14 @@
 
 use AEFS\Core\View\Helper\ViewHelpers;
 use App\Models\Event;
+use App\Models\Shift;
+use App\Models\ShiftType;
 
 /** @var ViewHelpers $helpers */
 /** @var Event $event */
 /** @var string|null $title */
+/** @var ShiftType[] $shiftTypes */
+/** @var Shift[] $shifts */
 
 $this->extend(
     'layouts.app',
@@ -40,6 +44,8 @@ $this->extend(
             'events/form',
             [
                 'event' => $event,
+                'shiftTypes' => $shiftTypes,
+                'shifts' => $shifts,
             ]
         ) ?>
     </form>

@@ -2,6 +2,7 @@
 
 use AEFS\Core\View\Helper\ViewHelpers;
 use App\Models\Member;
+use App\Support\BelgianDateTime;
 
 /** @var ViewHelpers $helpers */
 /** @var Member $lid */
@@ -19,15 +20,9 @@ $display = static function (mixed $value): string {
         : $value;
 };
 
-$birthDate = '—';
-
-if ($lid->geboortedatum !== null) {
-    $timestamp = strtotime($lid->geboortedatum);
-
-    if ($timestamp !== false) {
-        $birthDate = date('d/m/Y', $timestamp);
-    }
-}
+$birthDate = BelgianDateTime::formatDate(
+    $lid->geboortedatum
+);
 
 $this->extend(
     'layouts.app',
@@ -141,8 +136,17 @@ $this->extend(
                     <td><?= $this->escape($display($lid->rekeningnummer)) ?></td>
                 </tr>
                 <tr>
-                    <th scope="row">Rijksregisternummer</th>
-                    <td><?= $this->escape($display($lid->rijksregisternummer)) ?></td>
+                    <th scope="row">Nationaal identificatienummer</th>
+                    <td>
+                        <?php if ($lid->nationaalIdentificatienummerOnleesbaar): ?>
+                            De bestaande legacywaarde kan niet worden ontsleuteld.
+                            Voer het nummer opnieuw in via Profiel wijzigen.
+                        <?php else: ?>
+                            <?= $this->escape(
+                                $display($lid->rijksregisternummer)
+                            ) ?>
+                        <?php endif; ?>
+                    </td>
                 </tr>
                 <tr>
                     <th scope="row">T-shirtmaat</th>

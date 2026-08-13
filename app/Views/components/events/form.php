@@ -149,6 +149,8 @@ $oldShiftRows = is_array($oldShiftRows)
                     class="event-form-help"
                 >
                     Alleen concepten zijn niet zichtbaar voor gewone leden.
+                    Bij annulering worden betrokken leden eerst per mail verwittigd;
+                    actieve inschrijvingen en shifts worden na succesvolle aflevering geannuleerd.
                 </small>
 
                 <?= $helpers->errorRenderer->field(

@@ -819,10 +819,15 @@ through the normal member flow. Reuse/reactivate the existing logical
 `(event_id, lid_id)` registration and return it to `wachtend`; do not create a
 duplicate row.
 
-Publishing an event is the future mail trigger for informing eligible members.
-The mail transport is not implemented yet. Do not fake delivery or set a
-"sent" marker until the mail subsystem actually confirms the intended
-workflow.
+Publishing an event queues one personalized notification for every eligible
+active member. Queue this only when an event actually transitions from a
+non-published status to `gepubliceerd`, including initial creation as a
+published event. Do not queue a duplicate merely because an already published
+event is edited.
+
+The event transaction records the delivery intent in the mail outbox. SMTP
+delivery happens later through the mail worker; temporary transport failure
+must not roll back or misreport the already committed event mutation.
 
 ## Event-registration cancellation
 
@@ -838,9 +843,10 @@ A member may cancel their own active registration for a future event.
 - Pending cancellation requests for past events must not be shown as actionable
   dashboard work.
 
-The future mail subsystem must notify administration when verification is
-required. That notification requirement must not be implemented as ad-hoc mail
-code inside controllers.
+An individual cancellation request that requires administrator verification
+must remain visible on the platform/dashboard. Do not send an email to all
+administrators for this workflow; the organization has too many administrator
+accounts for that to be useful.
 
 Before changing an event in a way that affects shifts:
 
@@ -1472,12 +1478,7 @@ Event registrations and cancellation verification
 Shift management and administrative shift assignment
 Member groups
 Sensitive member-data migration
-```
-
-The next planned development area is:
-
-```text
-Mailings and notification delivery
+Mailings and SMTP delivery queue
 ```
 
 Later modules may include:
@@ -1822,38 +1823,132 @@ Never add cascade deletes that silently destroy business history without explici
 
 # 48. Notifications and mail
 
-Do not invent a new mail/notification subsystem during unrelated work.
+Mailing is an established module. Do not create a second notification or SMTP
+subsystem during unrelated work.
 
-No definitive mail transport/provider is active yet. Before implementing the
-mail subsystem, inspect the current repository and configuration, then make an
-explicit design decision for transport, templates, delivery state, retries,
-batching, and failure handling within the AEFS architecture.
+## Definitive persistence
 
-The agreed notification intents currently include:
+Use:
 
-- notify eligible members when an administrator publishes an event;
-- notify administration when a member with active shift assignments requests
-  cancellation of event participation;
-- in a later event-cancellation workflow, notify affected event registrants and
-  confirmed shift volunteers before their related registrations are cancelled;
-- allow member groups to be used as a mailing audience where applicable;
-- support later planning/shift communication without duplicating event or shift
-  business rules in the mail layer.
+```text
+mailings
+mailing_ontvangers
+mailing_bijlagen
+```
 
-Mail delivery must be triggered from successful domain workflows, remain
-auditable, and must not cause a committed domain mutation to be reported as
-failed solely because transport delivery is temporarily unavailable. The exact
-reliability mechanism must be designed as part of the mail-module task, not
-guessed in advance.
+The old `mail_logs` table is obsolete and is not part of the current baseline.
 
-If a task requires notifications:
+`mailings` stores the campaign/intent and aggregate status.
+`mailing_ontvangers` stores one personalized delivery per address, including
+attempts, retry state, provider message ID, success timestamp, and the latest
+safe error. `mailing_bijlagen` stores attachment metadata and an integrity
+hash; files live below the ignored `storage/mail-attachments/` directory.
 
-1. inspect existing mail/logging infrastructure;
-2. inspect current provider/config conventions;
-3. keep delivery limits and batching in mind;
-4. separate domain event/intent from transport where the existing architecture supports it.
+## Transport and secrets
 
-Do not send mail from views, repositories, or ad-hoc controller code.
+SMTP transport uses PHPMailer behind:
+
+```text
+App\Mail\Transport\MailTransportInterface
+```
+
+Gmail SMTP is the preferred deployment configuration. one.com SMTP is a
+supported configuration alternative; changing provider must not change domain
+or queue code.
+
+Never commit SMTP credentials. The active bootstrap reads them from the
+ignored:
+
+```text
+config/local/mail.php
+```
+
+Use `config/local/mail.example.php` as the non-secret template. Gmail must use
+an app password rather than an account password.
+
+During local end-to-end testing, an ignored
+`config/local/mail-recipients.php` may contain an explicit recipient
+allowlist. When non-empty, both mailing creation and the SMTP transport must
+enforce that list. This defense must remain active until unrestricted delivery
+is deliberately enabled for production; never remove or bypass it merely to
+make a local automatic-flow test easier.
+
+## Queue and delivery
+
+Domain services record mail intent transactionally through `MailService`.
+They never contact SMTP directly. Actual delivery runs through:
+
+```text
+php bin/process-mail-queue.php
+```
+
+The worker sends each recipient separately, processes bounded batches, retries
+temporary failures with delay, releases stale locks, records provider results,
+and remains safe for concurrent workers through row locking. Keep this outbox
+boundary intact.
+
+The local Windows development environment uses:
+
+```text
+bin/run-mail-worker.ps1
+bin/install-mail-worker-task.ps1
+```
+
+The installed local task is named `AEFS v2 Mail Queue (Local)`. It runs every
+minute with a maximum of 25 recipients per invocation, prevents overlapping
+instances, and only runs while the configured interactive Windows user is
+signed in. Empty runs are not written to the worker log.
+
+This local task does not complete the production deployment. The eventual
+hosting environment still requires its own cron/scheduler configuration,
+appropriate Gmail/provider quota settings, and operational monitoring. Do not
+assume background delivery is active in a new environment merely because the
+worker code exists.
+
+A committed domain mutation must not be reported as failed solely because SMTP
+is temporarily unavailable. Do not send mail from views, repositories, or
+ad-hoc controller code.
+
+## Current automatic intents
+
+- event publication to all eligible active members;
+- event-registration confirmation to the affected member;
+- event-registration reserve decision to the affected member;
+- event cancellation to active event registrants and confirmed shift
+  volunteers;
+- an administrator-triggered personalized overview of all confirmed shifts for
+  each assigned member in an event.
+
+The event `planning_verstuurd` timestamp may only be set after every recipient
+of that planning mailing has actually been delivered successfully. Merely
+queuing the planning is not delivery.
+
+## Current manual audiences
+
+Administrators can compose a plain-text message, optionally add one validated
+attachment, and target:
+
+- all eligible active members;
+- one or more member groups;
+- active registrations of one or more events;
+- confirmed/reserve assignments of one or more shifts.
+
+Recipients are deduplicated and `gebruikers.mail_blacklist` is respected.
+Never expose recipient lists to other recipients.
+
+## Event-cancellation completion
+
+Changing an event to `geannuleerd` queues one deduplicated notification per
+eligible active event registrant or confirmed shift volunteer. The event status
+changes immediately, but active event registrations, shifts, and shift
+assignments are only transitioned after every notification in that mailing has
+been delivered. The worker completes that historical cancellation
+transactionally and retries the completion safely when necessary.
+
+A partial or failed cancellation mailing must leave those related records
+active until the failed deliveries have been retried successfully. Individual
+member cancellation requests remain platform-only administration work and must
+not generate an administrator email.
 
 ---
 

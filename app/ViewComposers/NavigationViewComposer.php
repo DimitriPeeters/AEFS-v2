@@ -53,14 +53,18 @@ final class NavigationViewComposer extends AbstractViewComposer
                 'label' => 'Shiften',
                 'path' => '/shifts',
             ],
-            [
+        ];
+
+        if (Auth::isAdmin()) {
+            $items[] = [
                 'label' => 'Mailings',
                 'path' => '/mailings',
-            ],
-            [
-                'label' => 'Rapporten',
-                'path' => '/reports',
-            ],
+            ];
+        }
+
+        $items[] = [
+            'label' => 'Rapporten',
+            'path' => '/reports',
         ];
 
         if (Auth::isAdmin()) {

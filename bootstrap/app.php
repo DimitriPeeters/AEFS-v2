@@ -13,6 +13,8 @@ use AEFS\Core\Session;
 use AEFS\Core\View;
 use AEFS\Database\DatabaseManager;
 use AEFS\Database\DB;
+use App\Mail\Transport\MailTransportInterface;
+use App\Mail\Transport\PhpMailerSmtpTransport;
 
 $basePath = dirname(__DIR__);
 
@@ -61,6 +63,11 @@ $container->instance(
 );
 
 $container->singleton(Database::class);
+
+$container->singleton(
+    MailTransportInterface::class,
+    PhpMailerSmtpTransport::class
+);
 
 $databaseManager = new DatabaseManager(
     $config->get('database', [])

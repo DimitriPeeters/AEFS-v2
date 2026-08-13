@@ -8,6 +8,7 @@ use AEFS\Core\Auth;
 use AEFS\Core\Database;
 use App\Models\Event;
 use App\Models\EventRegistration;
+use App\Models\Mailing;
 use App\Models\Shift;
 use App\Models\ShiftType;
 use App\Repositories\EventRegistrationRepository;
@@ -27,6 +28,7 @@ final class EventService
         private readonly EvenementenValidator $validator,
         private readonly EventRegistrationValidator $registrationValidator,
         private readonly ShiftService $shiftService,
+        private readonly MailService $mailService,
         private readonly AuditLogService $auditLog
     ) {
     }
@@ -161,6 +163,12 @@ final class EventService
 
                 $this->createShiftsForEvent($id, $shifts);
 
+                $event = $this->repository->find($id);
+
+                if ($event !== null && $event->isPublished()) {
+                    $this->mailService->queueEventPublished($event);
+                }
+
                 return $id;
             }
         );
@@ -193,6 +201,25 @@ final class EventService
                     );
                 }
 
+                $targetStatus = (string) ($data['status'] ?? '');
+                $startsCancellation = !$event->isCancelled()
+                    && $targetStatus === Event::STATUS_CANCELLED;
+
+                if (
+                    $event->isCancelled()
+                    && $targetStatus !== Event::STATUS_CANCELLED
+                ) {
+                    throw new DomainException(
+                        'Een geannuleerd evenement kan niet opnieuw worden geactiveerd.'
+                    );
+                }
+
+                if ($startsCancellation && $newShifts !== []) {
+                    throw new DomainException(
+                        'Tijdens het annuleren van een evenement kunnen geen nieuwe shifts worden toegevoegd.'
+                    );
+                }
+
                 $this->repository->update($id, $data);
 
                 $this->auditLog->updated(
@@ -203,7 +230,134 @@ final class EventService
                     newValues: $data
                 );
 
-                $this->createShiftsForEvent($id, $newShifts);
+                if (!$startsCancellation) {
+                    $this->createShiftsForEvent($id, $newShifts);
+                }
+
+                if ($startsCancellation) {
+                    $cancelledEvent = $this->repository->find($id);
+
+                    if ($cancelledEvent === null) {
+                        throw new RuntimeException(
+                            'Het geannuleerde evenement kon niet worden geladen.'
+                        );
+                    }
+
+                    $mailingId = $this->mailService
+                        ->queueEventCancellation($cancelledEvent);
+
+                    $this->completeEventCancellationAfterNotification(
+                        $mailingId
+                    );
+
+                    return;
+                }
+
+                if (
+                    !$event->isPublished()
+                    && ($data['status'] ?? null) === Event::STATUS_PUBLISHED
+                ) {
+                    $publishedEvent = $this->repository->find($id);
+
+                    if ($publishedEvent === null) {
+                        throw new RuntimeException(
+                            'Het gepubliceerde evenement kon niet worden geladen.'
+                        );
+                    }
+
+                    $this->mailService->queueEventPublished(
+                        $publishedEvent
+                    );
+                }
+            }
+        );
+    }
+
+    public function completeEventCancellationAfterNotification(
+        int $mailingId
+    ): bool {
+        $mailing = $this->mailService->find($mailingId);
+
+        if (
+            $mailing === null
+            || $mailing->type !== 'event_geannuleerd'
+            || $mailing->status !== Mailing::STATUS_SENT
+            || $mailing->eventId === null
+        ) {
+            return false;
+        }
+
+        if ($mailing->createdBy === null || $mailing->createdBy <= 0) {
+            throw new RuntimeException(
+                'De beheerder van de evenementannulatie kon niet worden bepaald.'
+            );
+        }
+
+        return $this->database->transaction(
+            function () use ($mailing): bool {
+                $event = $this->repository->lockForUpdate(
+                    (int) $mailing->eventId
+                );
+
+                if ($event === null || !$event->isCancelled()) {
+                    return false;
+                }
+
+                $reason = 'Evenement geannuleerd door een administrator.';
+                $changed = false;
+
+                foreach (
+                    $this->shiftService->findByEvent(
+                        $event->eventId,
+                        true
+                    ) as $shift
+                ) {
+                    if (!$shift->isActief()) {
+                        continue;
+                    }
+
+                    $this->shiftService->cancelShift(
+                        $shift->shiftId,
+                        $reason,
+                        $mailing->createdBy
+                    );
+                    $changed = true;
+                }
+
+                foreach (
+                    $this->registrationRepository->findByEvent(
+                        $event->eventId
+                    ) as $registration
+                ) {
+                    if (!$registration->isActief()) {
+                        continue;
+                    }
+
+                    $this->registrationRepository
+                        ->cancelForEventCancellation(
+                            $registration->inschrijvingId,
+                            $mailing->createdBy,
+                            $reason
+                        );
+
+                    $updated = $this->registrationRepository->find(
+                        $registration->inschrijvingId
+                    );
+
+                    if ($updated !== null) {
+                        $this->auditLog->updated(
+                            entity: 'event_registration',
+                            id: $registration->inschrijvingId,
+                            userId: $mailing->createdBy,
+                            oldValues: $registration->toAuditArray(),
+                            newValues: $updated->toAuditArray()
+                        );
+                    }
+
+                    $changed = true;
+                }
+
+                return $changed;
             }
         );
     }
@@ -611,6 +765,12 @@ final class EventService
                     );
                 }
 
+                if ($event->isCancelled()) {
+                    throw new DomainException(
+                        'Inschrijvingen voor een geannuleerd evenement kunnen niet meer worden beoordeeld.'
+                    );
+                }
+
                 if (!$current->isActief()) {
                     throw new DomainException(
                         'Deze evenementinschrijving is niet meer actief.'
@@ -676,6 +836,17 @@ final class EventService
                     oldValues: $current->toAuditArray(),
                     newValues: $updated->toAuditArray()
                 );
+
+                if (
+                    $targetStatus === EventRegistration::STATUS_BEVESTIGD
+                    || $targetStatus === EventRegistration::STATUS_RESERVE
+                ) {
+                    $this->mailService->queueEventDecision(
+                        $event,
+                        $updated,
+                        $targetStatus
+                    );
+                }
             }
         );
     }

@@ -332,6 +332,29 @@ final class EventRegistrationRepository
         ]);
     }
 
+    public function cancelForEventCancellation(
+        int $id,
+        int $cancelledBy,
+        string $reason
+    ): void {
+        $statement = $this->database->prepare(<<<'SQL'
+            UPDATE event_inschrijvingen
+            SET
+                uitschrijfreden = :uitschrijfreden,
+                annulatie_aangevraagd_op = NULL,
+                uitgeschreven_op = NOW(),
+                annulatie_bevestigd_door = :annulatie_bevestigd_door
+            WHERE inschrijving_id = :inschrijving_id
+              AND status IN ('wachtend', 'bevestigd', 'reserve')
+              AND uitgeschreven_op IS NULL
+            SQL);
+        $statement->execute([
+            'inschrijving_id' => $id,
+            'uitschrijfreden' => $reason,
+            'annulatie_bevestigd_door' => $cancelledBy,
+        ]);
+    }
+
     public function countConfirmed(int $eventId): int
     {
         $statement = $this->database->prepare(<<<'SQL'

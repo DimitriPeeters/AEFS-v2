@@ -169,15 +169,18 @@ final class EventController extends BaseController
             $this->validateCsrf($input);
 
             $eventRequest = new EventRequest($input);
+            $data = $eventRequest->all();
 
             $this->service->update(
                 $id,
-                $eventRequest->all(),
+                $data,
                 $eventRequest->shifts()
             );
 
             $this->success(
-                'Het evenement en de opgegeven shifts werden succesvol gewijzigd.'
+                ($data['status'] ?? null) === 'geannuleerd'
+                    ? 'Het evenement werd geannuleerd. Betrokken leden worden per mail verwittigd; hun actieve inschrijvingen en shifts worden na succesvolle aflevering automatisch geannuleerd.'
+                    : 'Het evenement en de opgegeven shifts werden succesvol gewijzigd.'
             );
 
             return $this->redirect('/events/' . $id);

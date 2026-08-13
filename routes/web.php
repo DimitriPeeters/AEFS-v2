@@ -13,5 +13,6 @@ require __DIR__ . '/members.php';
 require __DIR__ . '/users.php';
 require __DIR__ . '/events.php';
 require __DIR__ . '/shifts.php';
+require __DIR__ . '/mailings.php';
 
 $router->get('/', [HomeController::class, 'index']);

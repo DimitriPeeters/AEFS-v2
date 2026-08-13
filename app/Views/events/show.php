@@ -302,12 +302,6 @@ if (
     <?php endif; ?>
 
     <?php if ($isAdmin): ?>
-        <?php if ($event->isPublished()): ?>
-            <div class="alert alert-info" role="status">
-                Het evenement is gepubliceerd. Automatische publicatiemails worden pas gekoppeld zodra de mailmodule beschikbaar is.
-            </div>
-        <?php endif; ?>
-
         <section class="card">
             <header class="card__header event-section-header">
                 <div>
@@ -451,16 +445,35 @@ if (
                     <h2 class="card__title">Shifts</h2>
                     <p>Open een shift om bevestigde deelnemers voor de juiste dag toe te wijzen.</p>
                 </div>
-                <a
-                    href="<?= $this->escape(
-                        $helpers->url->to(
-                            '/shifts/event/' . $event->eventId
-                        )
-                    ) ?>"
-                    class="btn btn-secondary"
-                >
-                    Volledige planning
-                </a>
+                <div class="event-section-actions">
+                    <a
+                        href="<?= $this->escape(
+                            $helpers->url->to(
+                                '/shifts/event/' . $event->eventId
+                            )
+                        ) ?>"
+                        class="btn btn-secondary"
+                    >
+                        Volledige planning
+                    </a>
+
+                    <form
+                        method="post"
+                        action="<?= $this->escape(
+                            $helpers->url->to(
+                                '/events/'
+                                . $event->eventId
+                                . '/send-shift-planning'
+                            )
+                        ) ?>"
+                        onsubmit="return confirm('De persoonlijke shiftplanning naar alle bevestigde vrijwilligers mailen?');"
+                    >
+                        <?= $helpers->csrf->field() ?>
+                        <button type="submit" class="btn btn-success">
+                            Shiftplanning mailen
+                        </button>
+                    </form>
+                </div>
             </header>
 
             <div class="card__body">
@@ -473,6 +486,13 @@ if (
                         ]
                     ) ?>
                 <?php else: ?>
+                    <p class="event-planning-status">
+                        <?= $event->planningWasSent()
+                            ? 'Laatste volledig afgeleverde planning: '
+                                . $this->escape($event->displayPlanningSentAt())
+                            : 'Er werd nog geen shiftplanning volledig afgeleverd.' ?>
+                    </p>
+
                     <div class="event-shift-list">
                         <?php foreach ($shifts as $shift): ?>
                             <a href="<?= $this->escape(
@@ -600,6 +620,18 @@ if (
     .event-description p,
     .event-section-header p {
         margin: 0;
+    }
+
+    .event-section-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.65rem;
+    }
+
+    .event-planning-status {
+        margin: 0 0 1rem;
+        color: var(--color-text-muted);
+        font-size: 0.88rem;
     }
 
     .event-description h3 {

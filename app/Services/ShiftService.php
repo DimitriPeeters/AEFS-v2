@@ -245,6 +245,12 @@ final class ShiftService
                     );
                 }
 
+                if ($event->isCancelled()) {
+                    throw new DomainException(
+                        'Aan een geannuleerd evenement kan niemand meer aan een shift worden toegewezen.'
+                    );
+                }
+
                 $eventRegistration = $this->eventRegistrationRepository
                     ->findByEventAndMember(
                         $shift->eventId,
@@ -488,7 +494,8 @@ final class ShiftService
 
     public function cancelShift(
         int $id,
-        ?string $reason = null
+        ?string $reason = null,
+        ?int $cancelledBy = null
     ): int {
         if ($id <= 0) {
             throw new InvalidArgumentException(
@@ -505,7 +512,7 @@ final class ShiftService
             ->validateCancellationReason($reason);
 
         return $this->database->transaction(
-            function () use ($id, $reason): int {
+            function () use ($id, $reason, $cancelledBy): int {
                 $shift = $this->shiftRepository->lockForUpdate($id);
 
                 if ($shift === null) {
@@ -520,7 +527,8 @@ final class ShiftService
                     );
                 }
 
-                $userId = $this->requireAuthenticatedUserId();
+                $userId = $cancelledBy
+                    ?? $this->requireAuthenticatedUserId();
 
                 $registrations = $this->registrationRepository
                     ->findByShift($id);

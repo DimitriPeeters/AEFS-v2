@@ -8,12 +8,14 @@ use App\Models\Shift;
 /** @var ViewHelpers $helpers */
 /** @var Event $event */
 /** @var bool|null $isAdmin */
+/** @var bool|null $canManageOwnRegistration */
 /** @var EventRegistration|null $registration */
 /** @var EventRegistration[] $registrations */
 /** @var Shift[] $shifts */
 /** @var string|null $title */
 
 $isAdmin ??= false;
+$canManageOwnRegistration ??= false;
 $registration ??= null;
 $registrations ??= [];
 $shifts ??= [];
@@ -176,7 +178,9 @@ if (
                             <dt>Openstaande annulaties</dt>
                             <dd><?= $event->aantalAnnulatieverzoeken ?></dd>
                         </div>
-                    <?php elseif ($registration !== null): ?>
+                    <?php endif; ?>
+
+                    <?php if ($registration !== null): ?>
                         <div>
                             <dt>Mijn inschrijving</dt>
                             <dd>
@@ -191,7 +195,7 @@ if (
         </aside>
     </div>
 
-    <?php if (!$isAdmin): ?>
+    <?php if ($canManageOwnRegistration): ?>
         <section class="card">
             <header class="card__header">
                 <h2 class="card__title">Mijn deelname</h2>
@@ -215,7 +219,7 @@ if (
                     </div>
 
                     <p class="event-muted">
-                        Een administrator beheert eventuele shifttoewijzingen; je kiest zelf geen shift.
+                        Eventuele shifttoewijzingen worden administratief beheerd; je kiest zelf geen shift.
                     </p>
 
                     <?php if ($registration->hasPendingCancellation()): ?>
@@ -308,7 +312,7 @@ if (
                         </fieldset>
 
                         <p class="event-muted">
-                            Een administrator beoordeelt je deelname en wijst eventuele shifts toe. Je kiest zelf geen shift.
+                            De inschrijving wordt administratief beoordeeld en eventuele shifts worden administratief toegewezen. Je kiest zelf geen shift.
                         </p>
 
                         <button type="submit" class="btn btn-success">

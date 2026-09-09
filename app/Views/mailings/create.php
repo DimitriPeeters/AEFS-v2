@@ -44,7 +44,7 @@ $selectedShifts = is_array($selectedShifts)
 
     <?php if ($recipientRestriction['active']): ?>
         <div class="alert alert-warning" role="status">
-            <strong>Alfa-mailtestbeperking actief.</strong>
+            <strong>Mailontvangersbeperking actief.</strong>
             Ongeacht de gekozen doelgroep worden uitsluitend
             <?= $this->escape(implode(', ', $recipientRestriction['emails'])) ?>
             als ontvanger opgenomen.

@@ -28,8 +28,8 @@ $this->extend('layouts.app', ['title' => $title ?? $mailing->subject]);
 
     <?php if ($recipientRestriction['active']): ?>
         <div class="alert alert-warning" role="status">
-            De alfa-mailtestbeperking is actief; alleen expliciet toegestane
-            testadressen kunnen worden afgeleverd.
+            De mailontvangersbeperking is actief; alleen expliciet toegestane
+            adressen kunnen worden afgeleverd.
         </div>
     <?php endif; ?>
 

@@ -35,6 +35,12 @@ $config = new Config(
     $basePath . DIRECTORY_SEPARATOR . 'config'
 );
 
+Session::configure(
+    strtolower(
+        trim((string) $config->get('app.environment', 'production'))
+    ) === 'production'
+);
+
 $timezone = $config->get(
     'app.timezone',
     'Europe/Brussels'

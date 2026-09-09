@@ -67,7 +67,7 @@ $this->extend('layouts.app', [
                 rel="noopener"
             >
                 <span class="dashboard-manual__eyebrow">
-                    Alfa-handleiding
+                    Adminhandleiding
                 </span>
 
                 <strong>Open adminhandleiding (PDF)</strong>

@@ -1,12 +1,11 @@
 # AEFS v2 deployment naar one.com
 
-Deze procedure maakt een controleerbare alfa-deployment. Ze houdt broncode,
+Deze procedure maakt een controleerbare productiedeployment. Ze houdt broncode,
 databasegegevens en geheimen bewust van elkaar gescheiden.
 
 ## 1. Voorwaarden bij one.com
 
-- Maak bij voorkeur een afzonderlijk subdomein, bijvoorbeeld `leden`, zodat de
-  alfa naast de bestaande website kan draaien.
+- Kies vooraf het definitieve domein of subdomein en leg het cutovermoment vast.
 - Selecteer voor dat (sub)domein PHP 8.4 of een latere, door AEFS ondersteunde
   8.4-versie.
 - Activeer SFTP. SSH is alleen beschikbaar op de one.com-abonnementen die dit
@@ -99,9 +98,10 @@ Voor `app.php`:
 
 Voor `database.php` worden uitsluitend de one.com-verbindingsgegevens gebruikt.
 Voor `mail.php` blijven SMTP-wachtwoorden buiten Git. Zet de lokale
-`mail-recipients.php` niet automatisch over: tijdens de alfa kan op de server
-wel eerst een gecontroleerde allowlist worden geplaatst, maar die lijst moet
-bewust worden beoordeeld vóór echte bulkmail wordt vrijgegeven.
+`mail-recipients.php` niet automatisch over. Tijdens acceptatietests kan op de
+server een gecontroleerde allowlist worden geplaatst. Verwijder die pas na een
+verse back-up en een geslaagde smoketest, vlak vóór echte bulkmail wordt
+vrijgegeven.
 
 ## 5. Bestaande one.com-data veilig samenvoegen
 
@@ -242,9 +242,9 @@ De instellingenpagina toont alleen of de beveiligde scheduleringang correct is
 geconfigureerd; controleer daarnaast de uitvoeringshistoriek en
 foutmeldingen van de externe scheduler.
 
-## 7. Alfa-smoketest
+## 7. Productiesmoketest en publieke vrijgave
 
-Voer eerst uit met een beperkte productie-allowlist:
+Voer de functionele controle eerst uit met een beperkte productie-allowlist:
 
 1. login, logout en wachtwoord vergeten;
 2. dashboard en PDF-adminhandleiding;
@@ -257,6 +257,13 @@ Voer eerst uit met een beperkte productie-allowlist:
 9. instellingenpagina controleren op productie, tijdzone, mailstatus en app-key;
 10. foutlog en mailingdetail controleren zonder foutdetails aan bezoekers te
     tonen.
+
+Maak daarna een verse database- en webrootback-up, controleer dat de mailwachtrij
+leeg is en verwijder pas dan `config/local/mail-recipients.php`. Voer
+`php bin/deployment-readiness.php` opnieuw uit: de controle mag pas slagen als
+de ontvangersbeperking werkelijk uitgeschakeld is. Laat de externe mailworker
+actief en controleer de eerste echte verzending onmiddellijk in de
+mailhistoriek en schedulerhistoriek.
 
 ## 8. Rollback
 

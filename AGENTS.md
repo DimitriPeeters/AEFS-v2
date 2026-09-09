@@ -467,6 +467,12 @@ An administrator may perform administration functionality such as:
 - shift-registration decisions;
 - presence administration.
 
+An administrator remains linked to a member profile and may use that profile
+to register themselves for an eligible published event through the same flow
+as a normal member. Administrative privileges do not bypass event eligibility,
+the initial `wachtend` status, or the prohibition on member-facing shift
+registration.
+
 ## Member
 
 A normal member:
@@ -803,8 +809,9 @@ for that event. This is one transactional application workflow coordinated by
 the current event and shift services; do not introduce a second shift concept
 inside the event module.
 
-Members may only see and register for events that the current event lifecycle
-exposes to them. A member registration starts as:
+Members and administrators acting through their linked member profile may only
+register for events that the current event lifecycle exposes to them. An event
+registration starts as:
 
 ```text
 wachtend
@@ -2333,8 +2340,8 @@ mechanism. On hosting without cron or SSH, only the established token-protected
 HTTPS scheduler endpoint may be used; never expose an unauthenticated HTTP
 worker.
 
-Recipient allowlists are environment-specific safety controls. A local or
-alpha allowlist must never be assumed to be the definitive production audience.
+Recipient allowlists are environment-specific safety controls. A test or
+acceptance allowlist must never be assumed to be the definitive production audience.
 
 ---
 

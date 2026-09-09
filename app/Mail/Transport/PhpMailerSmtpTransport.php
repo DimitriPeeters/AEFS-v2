@@ -26,7 +26,7 @@ final class PhpMailerSmtpTransport implements MailTransportInterface
     {
         if (!$this->recipientPolicy->allows($mail->recipientEmail)) {
             throw new RuntimeException(
-                'Deze ontvanger is geblokkeerd door de lokale mailtestbeperking.'
+                'Deze ontvanger is geblokkeerd door de actieve mailontvangersbeperking.'
             );
         }
 

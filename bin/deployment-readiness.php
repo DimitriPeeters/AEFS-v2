@@ -132,6 +132,7 @@ try {
 $mailEnabled = (bool) $config->get('mail.enabled', false);
 $mailFrom = trim((string) $config->get('mail.from_address', ''));
 $mailUrl = trim((string) $config->get('mail.application_url', ''));
+$recipientAllowlist = $config->get('mail.recipient_allowlist', []);
 
 $check(
     $mailEnabled,
@@ -147,6 +148,11 @@ $check(
     str_starts_with($mailUrl, 'https://'),
     'Mail-links gebruiken de publieke HTTPS-URL.',
     'mail.application_url moet de publieke HTTPS-URL bevatten.'
+);
+$check(
+    is_array($recipientAllowlist) && $recipientAllowlist === [],
+    'De mailontvangersbeperking is uitgeschakeld voor publiek gebruik.',
+    'De mailontvangersbeperking is nog actief; beoordeel en verwijder config/local/mail-recipients.php vóór de publieke vrijgave.'
 );
 
 $mailWorkerEnabled = (bool) $config->get(

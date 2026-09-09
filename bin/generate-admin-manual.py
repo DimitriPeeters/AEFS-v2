@@ -234,7 +234,7 @@ def page_header(canvas, doc) -> None:
     canvas.setFont(FONT_BOLD, 9)
     canvas.drawString(14 * mm, height - 9.2 * mm, "AEFS v2")
     canvas.setFont(FONT, 8)
-    canvas.drawRightString(width - 14 * mm, height - 9.2 * mm, "Adminhandleiding · alfa")
+    canvas.drawRightString(width - 14 * mm, height - 9.2 * mm, "Adminhandleiding · productie")
     canvas.setStrokeColor(colors.HexColor("#D8DEE9"))
     canvas.line(14 * mm, 13 * mm, width - 14 * mm, 13 * mm)
     canvas.setFillColor(MUTED)
@@ -251,7 +251,7 @@ def cover_footer(canvas, doc) -> None:
     canvas.line(14 * mm, 13 * mm, width - 14 * mm, 13 * mm)
     canvas.setFillColor(MUTED)
     canvas.setFont(FONT, 7.5)
-    canvas.drawCentredString(width / 2, 8.5 * mm, "Versie 0.1 · 17/08/2026 · intern gebruik")
+    canvas.drawCentredString(width / 2, 8.5 * mm, "Versie 1.0 · 08/09/2026 · intern gebruik")
     canvas.restoreState()
 
 
@@ -271,14 +271,14 @@ def build_manual() -> None:
         bottomMargin=19 * mm,
         title="AEFS v2 adminhandleiding",
         author="All Events Forever Sure",
-        subject="Beheerdershandleiding voor de AEFS v2 alfa",
+        subject="Beheerdershandleiding voor AEFS v2",
     )
 
     story: list = []
 
     cover = Table(
         [
-            [p("ADMINHANDLEIDING · ALFA", "kicker")],
+            [p("ADMINHANDLEIDING · PRODUCTIE", "kicker")],
             [p("AEFS v2<br/>Eventbeheer", "title")],
             [p("Praktische gids voor beheerders", "subtitle")],
         ],
@@ -309,7 +309,7 @@ def build_manual() -> None:
             ),
             Spacer(1, 9 * mm),
             callout(
-                "Alfa-afspraak",
+                "Veilige werkwijze",
                 "Werk met echte persoonsgegevens alleen wanneer dat nodig is. "
                 "Test publicaties, bulkmail en annulaties eerst met een beperkt "
                 "testevent en de geconfigureerde mailallowlist.",
@@ -439,8 +439,8 @@ def build_manual() -> None:
     story.append(
         callout(
             "Testmailadressen",
-            "De lokale alfa gebruikt een allowlist. Nieuwe administrators worden niet automatisch "
-            "aan iedere omgeving toegevoegd; beoordeel de lijst per omgeving vóór een mailtest.",
+            "Een test- of acceptatieomgeving kan een allowlist gebruiken. Nieuwe administrators worden "
+            "niet automatisch toegevoegd; beoordeel de lijst per omgeving vóór een mailtest.",
             "info",
         )
     )
@@ -490,8 +490,18 @@ def build_manual() -> None:
         story,
         "5",
         "Eventinschrijvingen en annulaties",
-        "Leden schrijven zichzelf in voor een gepubliceerd event. Iedere inschrijving start als "
-        "wachtend en wordt door een beheerder beoordeeld.",
+        "Leden en administrators met een gekoppeld ledenprofiel schrijven zichzelf via dezelfde "
+        "flow in voor een gepubliceerd event. Iedere inschrijving start als wachtend en wordt "
+        "administratief beoordeeld.",
+    )
+    story.append(
+        callout(
+            "Administrator als deelnemer",
+            "Een administrator kan zichzelf voor een event inschrijven en beschikbare dagen kiezen, "
+            "maar kan zichzelf nooit rechtstreeks op een shift inschrijven. De gewone beoordeling en "
+            "administratieve shifttoewijzing blijven gelden.",
+            "info",
+        )
     )
     story.append(
         process_table(
@@ -595,9 +605,9 @@ def build_manual() -> None:
     )
     story.append(
         callout(
-            "Alfa-mailveiligheid",
-            "Laat de allowlist actief tot SMTP, afzender, links, workerplanning en quota op de "
-            "live omgeving gecontroleerd zijn. Publiceer geen echt event als de uitnodigingen nog niet mogen vertrekken.",
+            "Mailveiligheid",
+            "Gebruik een allowlist tijdens gecontroleerde tests. Schakel die pas uit nadat SMTP, afzender, "
+            "links, workerplanning en quota op de live omgeving gecontroleerd zijn.",
             "warn",
         )
     )
@@ -646,7 +656,7 @@ def build_manual() -> None:
     add_section(
         story,
         "9",
-        "Instellingen en alfa-checklist",
+        "Instellingen en beheerchecklist",
         "De instellingenpagina bundelt organisatiegegevens, mailnamen, standaardvergoedingen, "
         "groepstoeslag, groepswerking en shiftfuncties. Operationele status blijft alleen-lezen.",
     )
@@ -661,7 +671,7 @@ def build_manual() -> None:
             ]
         )
     )
-    story.append(p("Dagelijkse alfa-check", "h2"))
+    story.append(p("Dagelijkse beheercheck", "h2"))
     checklist = [
         ("Dashboard", "Geen onverwachte wachtende of annulatie-items."),
         ("Events", "Status, data, shiften en capaciteiten kloppen."),

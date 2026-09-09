@@ -8,6 +8,29 @@ final class Session
 {
     private const FLASH_KEY = '_aefs_flash';
 
+    public static function configure(bool $secure): void
+    {
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            return;
+        }
+
+        ini_set('session.use_strict_mode', '1');
+        ini_set('session.use_only_cookies', '1');
+
+        $parameters = session_get_cookie_params();
+
+        session_set_cookie_params(
+            [
+                'lifetime' => 0,
+                'path' => $parameters['path'],
+                'domain' => $parameters['domain'],
+                'secure' => $secure,
+                'httponly' => true,
+                'samesite' => 'Lax',
+            ]
+        );
+    }
+
     public static function start(): void
     {
         if (session_status() === PHP_SESSION_ACTIVE) {
@@ -158,11 +181,14 @@ final class Session
             setcookie(
                 session_name(),
                 '',
-                time() - 42000,
-                $parameters['path'],
-                $parameters['domain'],
-                $parameters['secure'],
-                $parameters['httponly']
+                [
+                    'expires' => time() - 42000,
+                    'path' => $parameters['path'],
+                    'domain' => $parameters['domain'],
+                    'secure' => $parameters['secure'],
+                    'httponly' => $parameters['httponly'],
+                    'samesite' => $parameters['samesite'] ?? 'Lax',
+                ]
             );
         }
 

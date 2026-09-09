@@ -226,7 +226,7 @@ $system = $status['system'];
                         ) ?></strong>
                     </div>
                     <div>
-                        <span>Testbeperking</span>
+                        <span>Ontvangersbeperking</span>
                         <strong class="settings-status settings-status--<?= $mail['restriction']['active'] ? 'warning' : 'ok' ?>">
                             <?= $mail['restriction']['active']
                                 ? count($mail['restriction']['emails']) . ' toegelaten adres(s)'

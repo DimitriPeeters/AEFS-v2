@@ -98,6 +98,7 @@ try {
         'evenementen',
         'event_inschrijvingen',
         'event_inschrijving_dagen',
+        'event_shift_voorkeuren',
         'event_beheerders',
         'event_groepen',
         'shift_types',
@@ -119,6 +120,18 @@ try {
             in_array($table, $available, true),
             'Databasetabel aanwezig: ' . $table,
             'Vereiste databasetabel ontbreekt: ' . $table
+        );
+    }
+
+    if (in_array('event_inschrijvingen', $available, true)) {
+        $mailingColumn = $database->query(
+            "SHOW COLUMNS FROM event_inschrijvingen LIKE 'voorkeur_mailing_id'"
+        )->fetch();
+        $check(
+            is_array($mailingColumn)
+                && strtolower((string) ($mailingColumn['Type'] ?? '')) === 'bigint unsigned',
+            'Kolom voor bevestigingsmail en shiftvoorkeuren aanwezig.',
+            'Migratie 20260922_000010 ontbreekt of heeft een afwijkende kolom.'
         );
     }
 } catch (Throwable $throwable) {

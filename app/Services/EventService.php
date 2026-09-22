@@ -810,6 +810,70 @@ final class EventService
         );
     }
 
+    public function sendConfirmationMails(int $eventId): int
+    {
+        return $this->database->transaction(
+            function () use ($eventId): int {
+                $event = $this->repository->lockForUpdate($eventId);
+
+                if (
+                    $event === null
+                    || $event->isCancelled()
+                    || $event->isPast()
+                    || !in_array(
+                        $event->status,
+                        [Event::STATUS_PUBLISHED, Event::STATUS_CLOSED],
+                        true
+                    )
+                ) {
+                    throw new DomainException(
+                        'Dit evenement kan geen bevestigingsmails verzenden.'
+                    );
+                }
+
+                $registrations = array_values(array_filter(
+                    $this->registrationRepository->findByEvent($eventId),
+                    static fn(EventRegistration $registration): bool =>
+                        $registration->isBevestigd()
+                        && $registration->isActief()
+                        && !$registration->hasPendingCancellation()
+                        && $registration->voorkeurMailingId === null
+                ));
+
+                if ($registrations === []) {
+                    throw new DomainException(
+                        'Er zijn geen bevestigde deelnemers zonder ingeplande bevestigingsmail.'
+                    );
+                }
+
+                $mailingId = $this->mailService->queueEventConfirmations(
+                    $event,
+                    $registrations
+                );
+
+                foreach ($registrations as $registration) {
+                    $this->registrationRepository->setConfirmationMailing(
+                        $registration->inschrijvingId,
+                        $mailingId
+                    );
+                }
+
+                $this->auditLog->updated(
+                    entity: 'event_confirmation_mailing',
+                    id: $eventId,
+                    userId: Auth::id(),
+                    oldValues: [],
+                    newValues: [
+                        'mailing_id' => $mailingId,
+                        'recipient_count' => count($registrations),
+                    ]
+                );
+
+                return count($registrations);
+            }
+        );
+    }
+
     public function reserveRegistration(int $registrationId): void
     {
         $this->changeRegistrationStatus(
@@ -968,10 +1032,7 @@ final class EventService
                     newValues: $updated->toAuditArray()
                 );
 
-                if (
-                    $targetStatus === EventRegistration::STATUS_BEVESTIGD
-                    || $targetStatus === EventRegistration::STATUS_RESERVE
-                ) {
+                if ($targetStatus === EventRegistration::STATUS_RESERVE) {
                     $this->mailService->queueEventDecision(
                         $event,
                         $updated,

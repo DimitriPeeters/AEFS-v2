@@ -65,7 +65,10 @@ final class EventRegistrationMapper
             ),
             eventEindDatum: $this->nullableString(
                 $row['event_einddatum'] ?? null
-            )
+            ),
+            voorkeurMailingId: isset($row['voorkeur_mailing_id'])
+                ? (int) $row['voorkeur_mailing_id']
+                : null
         );
     }
 

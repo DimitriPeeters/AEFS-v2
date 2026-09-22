@@ -53,6 +53,10 @@ auditpayloads; de auditactie en overige historiek blijven behouden.
 
 Voor de uitbreiding met eventbeheerders en zichtbaarheid per ledengroep is
 `database/migrations/20260921_000009_add_event_access_control.sql` vereist.
+Voor de latere uitbreiding met bevestigingsmails en samen-op-shiftvoorkeuren
+is bovendien `database/migrations/20260922_000010_add_shift_companion_preferences.sql`
+vereist. Volg hiervoor de veilige volgorde en controles in
+`docs/20260922-samen-op-shift-uitrol.md`.
 Maak eerst een verse back-up van de live-database. Importeer daarna dit
 additieve SQL-bestand via phpMyAdmin in de bestaande database en controleer:
 

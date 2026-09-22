@@ -56,6 +56,33 @@ $this->extend(
     </header>
 
     <div class="profile-page__grid">
+        <?php if (($companionEvents ?? []) !== []): ?>
+            <section class="profile-card profile-card--full">
+                <header class="profile-card__header">
+                    <h2 class="profile-card__title">Samen op een shift</h2>
+                </header>
+                <p>Kies per evenement met welke bevestigde deelnemers je liefst samen staat. Dit is een voorkeur; de beheerder maakt de definitieve planning.</p>
+                <?php foreach ($companionEvents as $companionEvent): ?>
+                    <h3><?= $this->escape($companionEvent['titel']) ?></h3>
+                    <p>Deadline: <?= $this->escape(\App\Support\BelgianDateTime::formatDateTime($companionEvent['deadline'])) ?></p>
+                    <?php if ($companionEvent['open']): ?>
+                        <form method="post" action="<?= $this->escape($helpers->url->to('/profile/shift-companions/' . $companionEvent['event_id'])) ?>">
+                            <?= $helpers->csrf->field() ?>
+                            <?php foreach ($companionEvent['members'] as $otherMember): ?>
+                                <label style="display:block; margin:.45rem 0">
+                                    <input type="checkbox" name="lid_ids[]" value="<?= (int) $otherMember['lid_id'] ?>"
+                                        <?= in_array($otherMember['lid_id'], $companionEvent['selected'], true) ? 'checked' : '' ?>>
+                                    <?= $this->escape(trim($otherMember['voornaam'] . ' ' . $otherMember['achternaam'])) ?>
+                                </label>
+                            <?php endforeach; ?>
+                            <button type="submit" class="btn btn-primary">Voorkeuren opslaan</button>
+                        </form>
+                    <?php else: ?>
+                        <p>De keuzeperiode is voorbij. De beheerders plannen nu de shifts.</p>
+                    <?php endif; ?>
+                <?php endforeach; ?>
+            </section>
+        <?php endif; ?>
         <section class="profile-card">
             <header class="profile-card__header">
                 <h2 class="profile-card__title">

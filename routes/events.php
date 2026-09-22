@@ -82,6 +82,11 @@ $router
     ->name('event-registrations.approve');
 
 $router
+    ->post('/events/{id}/send-confirmations', [EventController::class, 'sendConfirmations'])
+    ->middleware(AuthMiddleware::class)
+    ->name('events.send-confirmations');
+
+$router
     ->post(
         '/event-registrations/{registrationId}/reserve',
         [EventController::class, 'reserveRegistration']

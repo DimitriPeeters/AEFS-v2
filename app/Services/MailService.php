@@ -224,6 +224,58 @@ final class MailService
         );
     }
 
+    /**
+     * @param EventRegistration[] $registrations
+     */
+    public function queueEventConfirmations(
+        Event $event,
+        array $registrations
+    ): int {
+        $members = [];
+        $addresses = [];
+
+        foreach ($registrations as $registration) {
+            $member = $this->repository->eligibleMember(
+                $registration->lidId
+            );
+
+              if (
+                  $member === null
+                  || !filter_var((string) $member['email'], FILTER_VALIDATE_EMAIL)
+                  || !$this->recipientPolicy->allows((string) $member['email'])
+            ) {
+                throw new DomainException(
+                    'Niet alle bevestigde deelnemers hebben een bereikbaar, toegelaten e-mailadres. De verzending werd niet ingepland.'
+                );
+            }
+
+            $address = strtolower(trim((string) $member['email']));
+            if (isset($addresses[$address])) {
+                throw new DomainException(
+                    'Twee bevestigde deelnemers hebben hetzelfde e-mailadres. Los dit op vóór de groepsverzending.'
+                );
+            }
+            $addresses[$address] = true;
+
+            $members[] = $member;
+        }
+
+        return $this->createPersonalizedMailing(
+            type: 'event_bevestigd',
+            audienceType: 'automatisch',
+            audience: ['event_id' => $event->eventId],
+            eventId: $event->eventId,
+            createdBy: Auth::id(),
+            members: $members,
+            content: fn(array $member): MailContent => $this->templates
+                ->eventDecision(
+                    $event,
+                    (string) ($member['voornaam'] ?? ''),
+                    'bevestigd'
+                )
+        );
+    }
+
     public function queueEventCancellation(Event $event): int
     {
         $members = $this->repository

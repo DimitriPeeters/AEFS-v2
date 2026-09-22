@@ -14,10 +14,82 @@ final class ReportService
     public function __construct(
         private readonly ShiftService $shiftService,
         private readonly EventService $eventService,
+        private readonly EventCompanionService $companions,
         private readonly EventAccessService $access,
         private readonly ReportRepository $reportRepository,
         private readonly EncryptionService $encryption
     ) {
+    }
+
+    /**
+     * @return array{event: Event, shift: ?Shift, groups: array<int, array{members: array<int, array<string, mixed>>}>}|null
+     */
+    public function shiftCompanions(int $eventId, ?int $shiftId = null): ?array
+    {
+        $event = $this->eventService->find($eventId);
+        if ($event === null) {
+            return null;
+        }
+        $shift = $shiftId !== null ? $this->shiftService->find($shiftId) : null;
+        if ($shiftId !== null && ($shift === null || $shift->eventId !== $eventId)) {
+            return null;
+        }
+
+        $date = $shift !== null ? substr($shift->startOp, 0, 10) : null;
+        $members = $this->companions->confirmedMembers($eventId, $date);
+        $byId = [];
+        foreach ($members as $member) {
+            $byId[$member['lid_id']] = $member;
+        }
+        $adjacency = [];
+        $wishes = [];
+        foreach ($this->companions->edges($eventId) as $edge) {
+            $source = $edge['lid_id'];
+            $target = $edge['gewenst_lid_id'];
+            if (!isset($byId[$source], $byId[$target])) {
+                continue;
+            }
+            $adjacency[$source][] = $target;
+            $adjacency[$target][] = $source;
+            $wishes[$source][] = trim(
+                $byId[$target]['voornaam'] . ' ' . $byId[$target]['achternaam']
+            );
+        }
+
+        $groups = [];
+        $visited = [];
+        foreach (array_keys($adjacency) as $start) {
+            if (isset($visited[$start])) {
+                continue;
+            }
+            $queue = [$start];
+            $group = [];
+            while ($queue !== []) {
+                $memberId = array_pop($queue);
+                if (isset($visited[$memberId])) {
+                    continue;
+                }
+                $visited[$memberId] = true;
+                $group[] = [
+                    ...$byId[$memberId],
+                    'wishes' => implode(', ', $wishes[$memberId] ?? []),
+                ];
+                foreach ($adjacency[$memberId] ?? [] as $neighbor) {
+                    if (!isset($visited[$neighbor])) {
+                        $queue[] = $neighbor;
+                    }
+                }
+            }
+              usort($group, static fn(array $a, array $b): int =>
+                  [$a['achternaam'], $a['voornaam']] <=> [$b['achternaam'], $b['voornaam']]);
+              $groups[] = ['members' => $group];
+          }
+
+          usort($groups, static fn(array $a, array $b): int =>
+              [$a['members'][0]['achternaam'], $a['members'][0]['voornaam']]
+              <=> [$b['members'][0]['achternaam'], $b['members'][0]['voornaam']]);
+
+          return ['event' => $event, 'shift' => $shift, 'groups' => $groups];
     }
 
     /**

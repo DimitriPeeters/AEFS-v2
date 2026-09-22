@@ -8,6 +8,7 @@ use AEFS\Core\Database;
 use App\Mappers\EventRegistrationMapper;
 use App\Models\EventRegistration;
 use PDO;
+use RuntimeException;
 
 final class EventRegistrationRepository
 {
@@ -182,6 +183,7 @@ final class EventRegistrationRepository
                 event_id,
                 lid_id,
                 status,
+                voorkeur_mailing_id,
                 aangemeld_op,
                 uitschrijfreden,
                 annulatie_aangevraagd_op,
@@ -193,6 +195,7 @@ final class EventRegistrationRepository
                 :event_id,
                 :lid_id,
                 :status,
+                NULL,
                 NOW(),
                 NULL,
                 NULL,
@@ -201,6 +204,7 @@ final class EventRegistrationRepository
             )
             ON DUPLICATE KEY UPDATE
                 status = VALUES(status),
+                voorkeur_mailing_id = NULL,
                 aangemeld_op = NOW(),
                 uitschrijfreden = NULL,
                 annulatie_aangevraagd_op = NULL,
@@ -261,6 +265,7 @@ final class EventRegistrationRepository
             UPDATE event_inschrijvingen
             SET
                 status = :status,
+                voorkeur_mailing_id = NULL,
                 uitschrijfreden = NULL,
                 annulatie_aangevraagd_op = NULL,
                 uitgeschreven_op = NULL,
@@ -272,6 +277,27 @@ final class EventRegistrationRepository
             'inschrijving_id' => $id,
             'status' => $status,
         ]);
+    }
+
+    public function setConfirmationMailing(int $id, int $mailingId): void
+    {
+        $statement = $this->database->execute(<<<'SQL'
+            UPDATE event_inschrijvingen
+            SET voorkeur_mailing_id = :mailing_id
+            WHERE inschrijving_id = :inschrijving_id
+              AND status = 'bevestigd'
+              AND uitgeschreven_op IS NULL
+              AND voorkeur_mailing_id IS NULL
+            SQL, [
+            'mailing_id' => $mailingId,
+            'inschrijving_id' => $id,
+        ]);
+
+        if ($statement->rowCount() !== 1) {
+            throw new RuntimeException(
+                'De bevestigingsmail kon niet aan de evenementinschrijving worden gekoppeld.'
+            );
+        }
     }
 
     public function requestCancellation(

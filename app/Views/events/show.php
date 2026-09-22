@@ -37,11 +37,17 @@ $actions = '';
 if ($canManageEvent) {
     $actions = sprintf(
         '<a href="%s" class="btn btn-secondary">Vergoedingsrapport</a>'
+        . '<a href="%s" class="btn btn-secondary">Samen op shift</a>'
         . '<a href="%s" class="btn btn-primary">Shift toevoegen</a>'
         . '<a href="%s" class="btn btn-warning">Wijzigen</a>',
         $this->escape(
             $helpers->url->to(
                 '/reports/event-compensation?event_id=' . $event->eventId
+            )
+        ),
+        $this->escape(
+            $helpers->url->to(
+                '/reports/shift-companions?event_id=' . $event->eventId
             )
         ),
         $this->escape(
@@ -343,6 +349,13 @@ if (
                     <h2 class="card__title">Evenementinschrijvingen</h2>
                     <p>Beoordeel eerst de gekozen dagen; daarna kan je bevestigde deelnemers aan shifts toewijzen.</p>
                 </div>
+                <?php if (!$event->isPast() && in_array($event->status, ['gepubliceerd', 'afgesloten'], true) && array_filter($registrations, static fn(EventRegistration $item): bool => $item->isBevestigd() && !$item->hasPendingCancellation() && $item->voorkeurMailingId === null) !== []): ?>
+                    <form method="post" action="<?= $this->escape($helpers->url->to('/events/' . $event->eventId . '/send-confirmations')) ?>"
+                          onsubmit="return confirm('Bevestigingsmails naar alle nog niet aangeschreven bevestigde deelnemers inplannen?');">
+                        <?= $helpers->csrf->field() ?>
+                        <button type="submit" class="btn btn-success">Bevestigingsmails versturen</button>
+                    </form>
+                <?php endif; ?>
             </header>
 
             <div class="card__body event-table-body">

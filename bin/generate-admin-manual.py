@@ -532,10 +532,19 @@ def build_manual() -> None:
         process_table(
             [
                 ("Wachtend", "Controleer lid, gekozen dagen en beschikbare eventcapaciteit."),
-                ("Bevestigd", "Het lid neemt deel en ontvangt automatisch een beslissingsmail."),
+                ("Bevestigd", "Het lid neemt deel. Verzending volgt pas na de aparte knop Bevestigingsmails versturen op het evenement."),
                 ("Reserve", "Het lid staat op reserve en ontvangt automatisch een reservemail."),
                 ("Geweigerd", "Gebruik wanneer deelname niet kan worden toegestaan."),
             ]
+        )
+    )
+    story.append(
+        callout(
+            "Samen op een shift",
+            "Bevestig eerst de deelnemers en verstuur daarna de bevestigingsmails in een keer. "
+            "Vanaf de werkelijke aflevering heeft elk lid zeven dagen om via Mijn profiel andere "
+            "bevestigde deelnemers als shiftvoorkeur te kiezen. Daarna sluit de keuzeperiode.",
+            "info",
         )
     )
     story.append(p("Annulatie door een lid", "h2"))
@@ -571,6 +580,7 @@ def build_manual() -> None:
             [
                 ("Shift", "Controleer functie, volledige start/eindtijd, capaciteit en vergoeding."),
                 ("Toewijzen", "Selecteer een geschikt lid en kies bevestigd of reserve."),
+                ("Samen plannen", "Na een bevestigde toewijzing biedt een pop-up de gekozen mededeelnemers individueel aan. Na toevoeging verschijnen hun eigen keuzes. Controleer elke stap; de capaciteit blijft gelden."),
                 ("Capaciteit", "Alleen bevestigde toewijzingen gebruiken de beschikbare plaatsen."),
                 ("Planning", "Gebruik op eventniveau de mailknop om ieder betrokken lid zijn persoonlijke shiftoverzicht te sturen."),
                 ("Aanwezig", "Open de shift en gebruik de knop per bevestigde vrijwilliger; de pagina blijft op dezelfde scrollpositie."),
@@ -610,7 +620,7 @@ def build_manual() -> None:
         bullets(
             [
                 "publicatie van een evenement naar alle geschikte actieve leden of één gekozen ledengroep;",
-                "bevestiging of reservestatus van een eventinschrijving naar het betrokken lid;",
+                "bevestigingsmails per evenement na een expliciete beheeractie; reservestatus blijft een automatische mail naar het betrokken lid;",
                 "annulatie van een volledig evenement naar eventinschrijvers en bevestigde shiftvrijwilligers;",
                 "persoonlijk overzicht van alle ingeplande shiften via de eventknop.",
             ]
@@ -665,6 +675,15 @@ def build_manual() -> None:
         )
     )
     story.append(p("Vergoedingsrapport per event", "h2"))
+    story.append(
+        callout(
+            "Samen op shift - Excel",
+            "Onder Rapporten kan je per evenement of per shift een Excelbestand met gegroepeerde "
+            "shiftvoorkeuren downloaden. Dit bevat alleen namen en wensen, geen vertrouwelijke "
+            "persoonsgegevens. Een voorkeur is geen definitieve toewijzing.",
+            "info",
+        )
+    )
     story.append(
         process_table(
             [

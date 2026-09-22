@@ -30,10 +30,17 @@ $actions = '';
 if ($isAdmin) {
     $actions = sprintf(
         '<a href="%s" class="btn btn-secondary">Aanwezigheidslijst</a> '
+        . '<a href="%s" class="btn btn-secondary">Samen op shift</a> '
         . '<a href="%s" class="btn btn-warning">Wijzigen</a>',
         $this->escape(
             $helpers->url->to(
                 '/reports/shift-attendance?shift_id=' . $shift->shiftId
+            )
+        ),
+        $this->escape(
+            $helpers->url->to(
+                '/reports/shift-companions?event_id=' . $shift->eventId
+                    . '&shift_id=' . $shift->shiftId
             )
         ),
         $this->escape(
@@ -45,6 +52,34 @@ if ($isAdmin) {
 
 <?php $this->startSection('content'); ?>
 <div class="shift-show-page">
+    <?php if ($isAdmin && ($companionCandidates ?? []) !== []): ?>
+        <section class="shift-companion-overlay" role="dialog" aria-modal="true" aria-labelledby="shift-companion-title">
+            <div class="card shift-companion-dialog">
+                <header class="card__header"><h2 id="shift-companion-title" class="card__title">Samen op deze shift?</h2></header>
+                <div class="card__body">
+                    <p>De zojuist toegewezen deelnemer wil graag met onderstaande bevestigde leden samenwerken. Kies hen één voor één; na elke toevoeging verschijnen hun eigen voorkeuren.</p>
+                    <?php foreach ($companionCandidates as $candidate): ?>
+                        <form method="post" action="<?= $this->escape($helpers->url->to('/shifts/' . $shift->shiftId . '/assign')) ?>" class="shift-companion-choice">
+                            <?= $helpers->csrf->field() ?>
+                            <input type="hidden" name="lid_id" value="<?= (int) $candidate->lidId ?>">
+                            <input type="hidden" name="status" value="bevestigd">
+                            <input type="hidden" name="companion_from" value="<?= (int) end($companionChain) ?>">
+                            <input type="hidden" name="companion_chain" value="<?= $this->escape(implode(',', $companionChain)) ?>">
+                            <span><?= $this->escape($candidate->lidNaam()) ?></span>
+                            <button type="submit" class="btn btn-success" <?= $shift->isVolzet() ? 'disabled' : '' ?>>Toevoegen</button>
+                        </form>
+                    <?php endforeach; ?>
+                    <?php if ($shift->isVolzet()): ?><p>De shift is volzet; er kunnen geen bevestigde deelnemers meer bij.</p><?php endif; ?>
+                    <div class="shift-companion-actions">
+                        <?php if (count($companionChain) > 1): ?>
+                            <a class="btn btn-secondary" href="<?= $this->escape($helpers->url->to('/shifts/' . $shift->shiftId . '?companion_chain=' . rawurlencode(implode(',', array_slice($companionChain, 0, -1))))) ?>">Terug naar vorige keuzes</a>
+                        <?php endif; ?>
+                        <a class="btn btn-secondary" href="<?= $this->escape($helpers->url->to('/shifts/' . $shift->shiftId)) ?>">Klaar met toevoegen</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+    <?php endif; ?>
     <?= $this->component(
         'page-header',
         [
@@ -538,6 +573,10 @@ if ($isAdmin) {
 
 <?php $this->startSection('styles'); ?>
 <style>
+    .shift-companion-overlay { position: fixed; inset: 0; z-index: 1000; background: rgba(15,23,42,.6); display: grid; place-items: center; padding: 1rem; }
+    .shift-companion-dialog { width: min(40rem, 100%); max-height: 90vh; overflow: auto; }
+    .shift-companion-choice { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: .65rem 0; border-bottom: 1px solid #dbe3ef; }
+    .shift-companion-actions { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: 1rem; }
     .shift-show-page {
         display: grid;
         gap: 1.25rem;

@@ -104,6 +104,7 @@ CREATE TABLE `event_inschrijvingen` (
   `event_id` int NOT NULL,
   `lid_id` int NOT NULL,
   `status` enum('wachtend','bevestigd','reserve','geweigerd') COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'wachtend',
+  `voorkeur_mailing_id` bigint unsigned DEFAULT NULL,
   `aangemeld_op` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `uitschrijfreden` text COLLATE utf8mb4_general_ci,
   `annulatie_aangevraagd_op` datetime DEFAULT NULL,
@@ -112,12 +113,31 @@ CREATE TABLE `event_inschrijvingen` (
   PRIMARY KEY (`inschrijving_id`),
   UNIQUE KEY `event_id` (`event_id`,`lid_id`),
   KEY `lid_id` (`lid_id`),
+  KEY `idx_event_inschrijvingen_voorkeur_mailing` (`voorkeur_mailing_id`),
   KEY `idx_event_inschrijvingen_annulatie_open` (`annulatie_aangevraagd_op`,`uitgeschreven_op`),
   KEY `idx_event_inschrijvingen_annulatie_bevestigd_door` (`annulatie_bevestigd_door`),
   CONSTRAINT `event_inschrijvingen_ibfk_1` FOREIGN KEY (`event_id`) REFERENCES `evenementen` (`event_id`) ON DELETE CASCADE,
   CONSTRAINT `event_inschrijvingen_ibfk_2` FOREIGN KEY (`lid_id`) REFERENCES `leden` (`lid_id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_event_inschrijvingen_voorkeur_mailing` FOREIGN KEY (`voorkeur_mailing_id`) REFERENCES `mailings` (`mailing_id`) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT `fk_event_inschrijvingen_annulatie_bevestigd_door` FOREIGN KEY (`annulatie_bevestigd_door`) REFERENCES `gebruikers` (`gebruiker_id`) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=122 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+DROP TABLE IF EXISTS `event_shift_voorkeuren`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `event_shift_voorkeuren` (
+  `event_id` int NOT NULL,
+  `lid_id` int NOT NULL,
+  `voorkeur_mailing_id` bigint unsigned NOT NULL,
+  `gewenst_lid_id` int NOT NULL,
+  `aangemaakt_op` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`event_id`,`lid_id`,`voorkeur_mailing_id`,`gewenst_lid_id`),
+  KEY `idx_event_shift_voorkeuren_gewenst` (`event_id`,`gewenst_lid_id`),
+  CONSTRAINT `fk_event_shift_voorkeuren_event` FOREIGN KEY (`event_id`) REFERENCES `evenementen` (`event_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_event_shift_voorkeuren_lid` FOREIGN KEY (`lid_id`) REFERENCES `leden` (`lid_id`) ON DELETE RESTRICT ON UPDATE CASCADE,
+  CONSTRAINT `fk_event_shift_voorkeuren_mailing` FOREIGN KEY (`voorkeur_mailing_id`) REFERENCES `mailings` (`mailing_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_event_shift_voorkeuren_gewenst_lid` FOREIGN KEY (`gewenst_lid_id`) REFERENCES `leden` (`lid_id`) ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 DROP TABLE IF EXISTS `event_shifts_legacy`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;

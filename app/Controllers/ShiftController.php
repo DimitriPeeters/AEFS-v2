@@ -15,6 +15,7 @@ use App\Http\Requests\ShiftRegistrationRequest;
 use App\Http\Requests\ShiftRequest;
 use App\Repositories\EventRepository;
 use App\Services\EventAccessService;
+use App\Services\EventCompanionService;
 use App\Services\ShiftService;
 use App\Services\SettingsService;
 use DomainException;
@@ -28,6 +29,7 @@ final class ShiftController extends BaseController
         ViewFactory $views,
         Request $request,
         private readonly ShiftService $service,
+        private readonly EventCompanionService $companions,
         private readonly EventAccessService $access,
         private readonly SettingsService $settings,
         private readonly EventRepository $eventRepository,
@@ -133,6 +135,41 @@ final class ShiftController extends BaseController
             );
         }
 
+        $eligible = $canManage
+            ? $this->service->eligibleEventRegistrationsForShift($shiftId)
+            : [];
+        $assignedIds = [];
+        if ($canManage) {
+            foreach ($this->service->registrationsForShift($shiftId) as $assignment) {
+                if ($assignment->isActief()) {
+                    $assignedIds[] = $assignment->lidId;
+                }
+            }
+        }
+        $chain = array_values(array_filter(array_map(
+            'intval',
+            explode(',', (string) $this->request()->query->get('companion_chain', ''))
+        ), static fn(int $id): bool => $id > 0));
+        $chain = array_slice($chain, 0, 50);
+        $companionCandidates = [];
+        while ($canManage && $chain !== []) {
+            $sourceId = end($chain);
+            if (!in_array($sourceId, $assignedIds, true)) {
+                array_pop($chain);
+                continue;
+            }
+            $selected = $this->companions->selectedIds($shift->eventId, $sourceId);
+            $companionCandidates = array_values(array_filter(
+                $eligible,
+                static fn($registration): bool => in_array($registration->lidId, $selected, true)
+                    && !in_array($registration->lidId, $chain, true)
+            ));
+            if ($companionCandidates !== []) {
+                break;
+            }
+            array_pop($chain);
+        }
+
         return $this->view(
             'shifts.show',
             [
@@ -145,10 +182,9 @@ final class ShiftController extends BaseController
                     )
                     : [],
                 'memberRegistration' => $memberRegistration,
-                'eligibleEventRegistrations' => $canManage
-                    ? $this->service
-                        ->eligibleEventRegistrationsForShift($shiftId)
-                    : [],
+                'eligibleEventRegistrations' => $eligible,
+                'companionChain' => $chain,
+                'companionCandidates' => $companionCandidates,
             ]
         );
     }
@@ -410,6 +446,7 @@ final class ShiftController extends BaseController
             return $this->forbidden();
         }
 
+        $redirect = '/shifts/' . $shiftId;
         try {
             $this->validateCsrf($input);
 
@@ -418,6 +455,34 @@ final class ShiftController extends BaseController
             );
 
             $data = $request->all();
+
+            $sourceId = (int) ($input['companion_from'] ?? 0);
+            $chain = trim((string) ($input['companion_chain'] ?? ''));
+            if ($sourceId > 0) {
+                $chainIds = array_values(array_filter(array_map(
+                    'intval',
+                    explode(',', $chain)
+                ), static fn(int $id): bool => $id > 0));
+                if (count($chainIds) > 50
+                    || end($chainIds) !== $sourceId
+                    || !in_array(
+                        $data['lid_id'],
+                        $this->companions->selectedIds($shift->eventId, $sourceId),
+                        true
+                    )) {
+                    throw new DomainException('Deze voorgestelde deelnemer is niet geldig.');
+                }
+                $assignedSource = false;
+                foreach ($this->service->registrationsForShift($shiftId) as $assignment) {
+                    if ($assignment->lidId === $sourceId && $assignment->isActief()) {
+                        $assignedSource = true;
+                        break;
+                    }
+                }
+                if (!$assignedSource) {
+                    throw new DomainException('De oorspronkelijke deelnemer is niet aan deze shift toegewezen.');
+                }
+            }
 
             $this->service->assignByAdmin(
                 shiftId: $shiftId,
@@ -428,15 +493,19 @@ final class ShiftController extends BaseController
             $this->success(
                 'De vrijwilliger werd aan de shift toegewezen.'
             );
+            if ($data['status'] === 'bevestigd') {
+                $nextChain = $sourceId > 0
+                    ? $chain . ',' . $data['lid_id']
+                    : (string) $data['lid_id'];
+                $redirect .= '?companion_chain=' . rawurlencode($nextChain);
+            }
         } catch (Throwable $throwable) {
             $this->error(
                 $throwable->getMessage()
             );
         }
 
-        return $this->redirect(
-            '/shifts/' . $shiftId
-        );
+        return $this->redirect($redirect);
     }
 
     public function approve(): Response
@@ -450,7 +519,8 @@ final class ShiftController extends BaseController
                     $registrationId
                 );
             },
-            'De inschrijving werd goedgekeurd.'
+            'De inschrijving werd goedgekeurd.',
+            true
         );
     }
 
@@ -660,7 +730,8 @@ final class ShiftController extends BaseController
      */
     private function handleDecision(
         callable $decision,
-        string $successMessage
+        string $successMessage,
+        bool $offerCompanions = false
     ): Response {
         $registrationId = $this->routeId(
             'registrationId'
@@ -684,6 +755,7 @@ final class ShiftController extends BaseController
         }
 
         $input = $this->request()->request->all();
+        $redirect = '/shifts/' . $registration->shiftId;
 
         try {
             $this->validateCsrf($input);
@@ -694,15 +766,16 @@ final class ShiftController extends BaseController
             );
 
             $this->success($successMessage);
+            if ($offerCompanions && !$registration->isBevestigd()) {
+                $redirect .= '?companion_chain=' . $registration->lidId;
+            }
         } catch (Throwable $throwable) {
             $this->error(
                 $throwable->getMessage()
             );
         }
 
-        return $this->redirect(
-            '/shifts/' . $registration->shiftId
-        );
+        return $this->redirect($redirect);
     }
 
     /**

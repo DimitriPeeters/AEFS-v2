@@ -1997,7 +1997,9 @@ ad-hoc controller code.
 ## Current automatic intents
 
 - event publication to all eligible active members;
-- event-registration confirmation to the affected member;
+- event-registration confirmations, queued together only after an event
+  administrator or assigned event manager explicitly presses the event's
+  confirmation-mail button; deciding `bevestigd` alone does not queue mail;
 - event-registration reserve decision to the affected member;
 - event cancellation to active event registrants and confirmed shift
   volunteers;
@@ -2007,6 +2009,24 @@ ad-hoc controller code.
 The event `planning_verstuurd` timestamp may only be set after every recipient
 of that planning mailing has actually been delivered successfully. Merely
 queuing the planning is not delivery.
+
+## Shift companion preferences
+
+Each delivered event-confirmation mail invites its recipient to select other
+confirmed participants of that event from their own profile. The choice window
+ends exactly seven days after that recipient's `mailing_ontvangers.verzonden_op`,
+not seven days after queueing. A missing or failed delivery opens no window.
+The service must validate the member, event, confirmed participants and deadline;
+the browser alone is not authoritative. Preferences do not guarantee placement.
+Preference rows are tied to the mailing that opened the choice window, so a
+later reconfirmation never reactivates choices from an earlier invitation.
+
+During administrative shift assignment, offered companions must remain
+individually selectable. After one is assigned, their own choices may be
+offered recursively without re-offering someone already assigned or creating
+a cycle. Every added member must pass the existing event-date, capacity and
+authorization checks. Non-confidential Excel reports may group these wishes
+per event or per shift; only names and preferences belong in those files.
 
 ## Current manual audiences
 

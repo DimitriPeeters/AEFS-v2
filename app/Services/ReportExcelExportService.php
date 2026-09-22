@@ -23,7 +23,7 @@ final class ReportExcelExportService
     /**
      * @param array<string, mixed> $report
      */
-    public function export(array $report): string
+    public function export(array $report, bool $companions = false): string
     {
         $event = $report['event'] ?? null;
 
@@ -58,7 +58,7 @@ final class ReportExcelExportService
             }
 
             try {
-                foreach ($this->parts($report) as $path => $contents) {
+                foreach ($this->parts($report, $companions) as $path => $contents) {
                     if (!$archive->addFromString($path, $contents)) {
                         throw new RuntimeException(
                             'Een onderdeel van de Excel-export kon niet worden toegevoegd.'
@@ -83,6 +83,25 @@ final class ReportExcelExportService
                 unlink($temporaryFile);
             }
         }
+    }
+
+    /** @param array<string, mixed> $report */
+    public function exportCompanions(array $report): string
+    {
+        return $this->export($report, true);
+    }
+
+    /** @param array<string, mixed> $report */
+    public function companionFilename(array $report): string
+    {
+        $event = $report['event'];
+        $shift = $report['shift'] ?? null;
+        $name = 'samen-op-shift-' . $this->slug($event->titel);
+        if ($shift !== null) {
+            $name .= '-shift-' . $shift->shiftId;
+        }
+
+        return $name . '.xlsx';
     }
 
     /**
@@ -116,21 +135,82 @@ final class ReportExcelExportService
      *
      * @return array<string, string>
      */
-    private function parts(array $report): array
+    private function parts(array $report, bool $companions = false): array
     {
         $createdAt = (new DateTimeImmutable())->format(DATE_ATOM);
 
         return [
             '[Content_Types].xml' => $this->contentTypesXml(),
             '_rels/.rels' => $this->packageRelationshipsXml(),
-            'docProps/app.xml' => $this->appPropertiesXml(),
-            'docProps/core.xml' => $this->corePropertiesXml($createdAt),
-            'xl/workbook.xml' => $this->workbookXml(),
+            'docProps/app.xml' => $this->appPropertiesXml(
+                $companions ? 'Samen op shift' : 'Vergoedingen'
+            ),
+            'docProps/core.xml' => $this->corePropertiesXml(
+                $createdAt,
+                $companions ? 'Samen op shift' : 'Vrijwilligersvergoedingen'
+            ),
+            'xl/workbook.xml' => $this->workbookXml(
+                $companions ? 'Samen op shift' : 'Vergoedingen'
+            ),
             'xl/_rels/workbook.xml.rels' =>
                 $this->workbookRelationshipsXml(),
             'xl/styles.xml' => $this->stylesXml(),
-            'xl/worksheets/sheet1.xml' => $this->worksheetXml($report),
+            'xl/worksheets/sheet1.xml' => $companions
+                ? $this->companionWorksheetXml($report)
+                : $this->worksheetXml($report),
         ];
+    }
+
+    /** @param array<string, mixed> $report */
+    private function companionWorksheetXml(array $report): string
+    {
+        $event = $report['event'];
+        $shift = $report['shift'] ?? null;
+        $rows = [];
+        $line = 1;
+        $rows[] = $this->row($line, [
+            $this->stringCell('A1', 'Samen op shift · ' . $event->titel, 1),
+        ], 30);
+        $line++;
+        if ($shift !== null) {
+            $rows[] = $this->row($line, [
+                $this->stringCell('A' . $line, 'Shift', 2),
+                $this->stringCell('B' . $line, $shift->displayNaam() . ' · ' . $shift->displayPeriode(), 3),
+            ], 23);
+            $line++;
+        }
+        $rows[] = $this->row($line, [
+            $this->stringCell('A' . $line, 'Groep', 4),
+            $this->stringCell('B' . $line, 'Achternaam', 4),
+            $this->stringCell('C' . $line, 'Voornaam', 4),
+            $this->stringCell('D' . $line, 'Wil samen met', 4),
+        ], 25);
+        $line++;
+        foreach ($report['groups'] as $index => $group) {
+            foreach ($group['members'] as $member) {
+                $rows[] = $this->row($line, [
+                    $this->stringCell('A' . $line, (string) ($index + 1), 5),
+                    $this->stringCell('B' . $line, $member['achternaam'], 5),
+                    $this->stringCell('C' . $line, $member['voornaam'], 5),
+                    $this->stringCell('D' . $line, $member['wishes'], 5),
+                ], 22);
+                $line++;
+            }
+        }
+        if ($report['groups'] === []) {
+            $rows[] = $this->row($line, [
+                $this->stringCell('A' . $line, 'Geen actuele samenwerkingsvoorkeuren.', 5),
+            ], 22);
+        }
+
+        return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+            . '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
+            . '<sheetViews><sheetView showGridLines="0" workbookViewId="0"/></sheetViews>'
+            . '<cols><col min="1" max="1" width="12" customWidth="1"/>'
+            . '<col min="2" max="3" width="24" customWidth="1"/>'
+            . '<col min="4" max="4" width="60" customWidth="1"/></cols>'
+            . '<sheetData>' . implode('', $rows) . '</sheetData>'
+            . '</worksheet>';
     }
 
     /**
@@ -618,7 +698,7 @@ final class ReportExcelExportService
             . '</Relationships>';
     }
 
-    private function appPropertiesXml(): string
+    private function appPropertiesXml(string $sheetName = 'Vergoedingen'): string
     {
         return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
             . '<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties" xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes">'
@@ -628,7 +708,9 @@ final class ReportExcelExportService
             . '<DocSecurity>0</DocSecurity>'
             . '<ScaleCrop>false</ScaleCrop>'
             . '<HeadingPairs><vt:vector size="2" baseType="variant"><vt:variant><vt:lpstr>Werkbladen</vt:lpstr></vt:variant><vt:variant><vt:i4>1</vt:i4></vt:variant></vt:vector></HeadingPairs>'
-            . '<TitlesOfParts><vt:vector size="1" baseType="lpstr"><vt:lpstr>Vergoedingen</vt:lpstr></vt:vector></TitlesOfParts>'
+            . '<TitlesOfParts><vt:vector size="1" baseType="lpstr"><vt:lpstr>'
+            . $this->xml($sheetName)
+            . '</vt:lpstr></vt:vector></TitlesOfParts>'
             . '<Company>'
             . $this->xml($this->settings->organizationName())
             . '</Company>'
@@ -639,11 +721,14 @@ final class ReportExcelExportService
             . '</Properties>';
     }
 
-    private function corePropertiesXml(string $createdAt): string
+    private function corePropertiesXml(
+        string $createdAt,
+        string $title = 'Vrijwilligersvergoedingen'
+    ): string
     {
         return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
             . '<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:dcmitype="http://purl.org/dc/dcmitype/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">'
-            . '<dc:title>Vrijwilligersvergoedingen</dc:title>'
+            . '<dc:title>' . $this->xml($title) . '</dc:title>'
             . '<dc:creator>'
             . $this->xml($this->settings->applicationName())
             . '</dc:creator>'
@@ -659,11 +744,11 @@ final class ReportExcelExportService
             . '</cp:coreProperties>';
     }
 
-    private function workbookXml(): string
+    private function workbookXml(string $sheetName = 'Vergoedingen'): string
     {
         return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
             . '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">'
-            . '<sheets><sheet name="Vergoedingen" sheetId="1" r:id="rId1"/></sheets>'
+            . '<sheets><sheet name="' . $this->xml($sheetName) . '" sheetId="1" r:id="rId1"/></sheets>'
             . '<calcPr calcId="191029" fullCalcOnLoad="1" forceFullCalc="1"/>'
             . '</workbook>';
     }

@@ -14,9 +14,15 @@ if (!class_exists(\ZipArchive::class)) {
 
 $root = dirname(__DIR__);
 $buildDirectory = $root . DIRECTORY_SEPARATOR . 'build';
+$outputName = $argv[1] ?? 'aefs-v2-one-com.zip';
+if (!preg_match('/^[a-zA-Z0-9][a-zA-Z0-9._-]*\.zip$/', $outputName)) {
+    throw new \InvalidArgumentException(
+        'Geef uitsluitend een .zip-bestandsnaam zonder pad op.'
+    );
+}
 $output = $buildDirectory
     . DIRECTORY_SEPARATOR
-    . 'aefs-v2-one-com.zip';
+    . $outputName;
 
 if (!is_dir($buildDirectory) && !mkdir($buildDirectory, 0775, true)) {
     throw new \RuntimeException('De buildmap kon niet worden aangemaakt.');

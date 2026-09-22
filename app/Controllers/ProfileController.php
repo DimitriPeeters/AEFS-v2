@@ -8,10 +8,13 @@ use AEFS\Core\Auth;
 use AEFS\Core\Http\Request;
 use AEFS\Core\Http\Response;
 use AEFS\Core\Session;
+use AEFS\Core\View\Helper\CsrfHelper;
 use AEFS\Core\View\ViewFactory;
 use App\Http\Requests\MemberRequest;
 use App\Models\Member;
 use App\Services\MemberService;
+use App\Services\EventCompanionService;
+use RuntimeException;
 use Throwable;
 
 final class ProfileController extends BaseController
@@ -19,7 +22,9 @@ final class ProfileController extends BaseController
     public function __construct(
         ViewFactory $views,
         Request $request,
-        private readonly MemberService $members
+        private readonly MemberService $members,
+        private readonly EventCompanionService $companions,
+        private readonly CsrfHelper $csrf
     ) {
         parent::__construct(
             $views,
@@ -40,6 +45,7 @@ final class ProfileController extends BaseController
             [
                 'title' => 'Mijn profiel',
                 'lid' => $member,
+                'companionEvents' => $this->companions->choicesForMember($member->lidId),
             ]
         );
     }
@@ -110,6 +116,34 @@ final class ProfileController extends BaseController
 
             return $this->redirect('/profile/edit');
         }
+    }
+
+    public function saveShiftCompanions(): Response
+    {
+        $member = $this->currentMember();
+        if ($member === null) {
+            return $this->memberNotFound();
+        }
+
+        $input = $this->request()->request->all();
+        $eventId = (int) $this->request()->route('eventId', 0);
+
+        try {
+            if (!is_string($input['_token'] ?? null)
+                || !$this->csrf->validate($input['_token'])) {
+                throw new RuntimeException('De beveiligingstoken is ongeldig of verlopen.');
+            }
+            $ids = $input['lid_ids'] ?? [];
+            if (!is_array($ids)) {
+                throw new RuntimeException('De gekozen deelnemers zijn ongeldig.');
+            }
+            $this->companions->saveChoices($eventId, $member->lidId, $ids);
+            $this->success('Je shiftvoorkeuren werden opgeslagen.');
+        } catch (Throwable $throwable) {
+            $this->error($throwable->getMessage());
+        }
+
+        return $this->redirect('/profile');
     }
 
     private function currentMember(): ?Member

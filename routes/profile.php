@@ -21,3 +21,8 @@ $router
     ->post('/profile/update', [ProfileController::class, 'update'])
     ->middleware(AuthMiddleware::class)
     ->name('profile.update');
+
+$router
+    ->post('/profile/shift-companions/{eventId}', [ProfileController::class, 'saveShiftCompanions'])
+    ->middleware(AuthMiddleware::class)
+    ->name('profile.shift-companions');

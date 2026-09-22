@@ -79,6 +79,17 @@ final class MailTemplateRenderer
             $event,
             $event->beschrijving ?? ''
         );
+        if ($confirmed) {
+            $html .= $this->paragraph(
+                'Wil je samen met andere bevestigde deelnemers op een shift staan? '
+                . 'Kies hen binnen 7 dagen na verzending van deze e-mail via Mijn profiel. '
+                . 'Daarna maken de beheerders de planning zonder nieuwe voorkeuren.'
+            );
+            $html .= $this->button(
+                'Mijn profiel en shiftvoorkeuren',
+                '/profile'
+            );
+        }
         $html .= $this->button(
             'Mijn inschrijving bekijken',
             '/events/' . $event->eventId
@@ -88,6 +99,10 @@ final class MailTemplateRenderer
             $this->greeting($firstName),
             '',
             $message,
+            $confirmed
+                ? 'Wil je met andere bevestigde deelnemers op een shift staan? Kies hen binnen 7 dagen na verzending van deze e-mail via Mijn profiel: '
+                    . $this->plainUrl('/profile')
+                : '',
             '',
             $event->titel,
             'Periode: ' . $event->displayDate(),

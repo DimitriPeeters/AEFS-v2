@@ -176,6 +176,57 @@ final class ReportController extends BaseController
         return $value;
     }
 
+    public function shiftCompanions(): Response
+    {
+        if (!$this->access->hasManagementAccess()) {
+            return $this->forbidden();
+        }
+        $eventId = max(0, (int) $this->request()->query->get('event_id', 0));
+        $shiftId = max(0, (int) $this->request()->query->get('shift_id', 0));
+        if ($eventId > 0 && !$this->access->canManage($eventId)) {
+            return $this->forbidden();
+        }
+        $report = $eventId > 0
+            ? $this->service->shiftCompanions($eventId, $shiftId ?: null)
+            : null;
+        if ($eventId > 0 && $report === null) {
+            return $this->view('core::errors.404', [
+                'message' => 'Het evenement of de gekozen shift bestaat niet.',
+            ], 404);
+        }
+
+        return $this->view('reports.shift-companions', [
+            'title' => 'Samen op shift',
+            'events' => $this->service->eventsForCompensation(),
+            'shifts' => $this->service->shiftsForAttendance(),
+            'selectedEventId' => $eventId,
+            'selectedShiftId' => $shiftId,
+            'report' => $report,
+        ]);
+    }
+
+    public function shiftCompanionsExport(): Response
+    {
+        $eventId = max(0, (int) $this->request()->query->get('event_id', 0));
+        $shiftId = max(0, (int) $this->request()->query->get('shift_id', 0));
+        if (!$this->access->hasManagementAccess()
+            || !$this->access->canManage($eventId)) {
+            return $this->forbidden();
+        }
+        $report = $this->service->shiftCompanions($eventId, $shiftId ?: null);
+        if ($report === null) {
+            return $this->view('core::errors.404', [
+                'message' => 'Het evenement of de gekozen shift bestaat niet.',
+            ], 404);
+        }
+
+        return (new Response())->download(
+            $this->excelExport->companionFilename($report),
+            $this->excelExport->exportCompanions($report),
+            ReportExcelExportService::MIME_TYPE
+        );
+    }
+
     private function forbidden(): Response
     {
         return $this->view(

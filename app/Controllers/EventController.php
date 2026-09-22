@@ -596,6 +596,27 @@ final class EventController extends BaseController
         );
     }
 
+    public function sendConfirmations(): Response
+    {
+        $eventId = $this->routeId();
+
+        if (!$this->access->canManage($eventId)) {
+            return $this->forbidden();
+        }
+
+        try {
+            $this->validateCsrf($this->request()->request->all());
+            $count = $this->service->sendConfirmationMails($eventId);
+            $this->success(
+                $count . ' bevestigingsmail(s) werden in de verzendwachtrij geplaatst.'
+            );
+        } catch (Throwable $throwable) {
+            $this->error($throwable->getMessage());
+        }
+
+        return $this->redirect('/events/' . $eventId);
+    }
+
     private function forbidden(): Response
     {
         return $this->view(

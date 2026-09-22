@@ -25,6 +25,13 @@ $this->extend(
 
     <div class="report-grid">
         <article class="card report-card">
+            <header class="card__header"><h2 class="card__title">Samen op shift</h2></header>
+            <div class="card__body report-card__body">
+                <p>Bekijk en download per evenement of shift de gegroepeerde voorkeuren van bevestigde deelnemers.</p>
+                <a class="btn btn-primary" href="<?= $this->escape($helpers->url->to('/reports/shift-companions')) ?>">Rapport openen</a>
+            </div>
+        </article>
+        <article class="card report-card">
             <header class="card__header">
                 <div>
                     <span class="report-card__type">Shiften</span>

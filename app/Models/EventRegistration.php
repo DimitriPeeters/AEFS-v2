@@ -32,7 +32,8 @@ final class EventRegistration
         public readonly ?string $lidEmail = null,
         public readonly ?string $eventTitel = null,
         public readonly ?string $eventStartDatum = null,
-        public readonly ?string $eventEindDatum = null
+        public readonly ?string $eventEindDatum = null,
+        public readonly ?int $voorkeurMailingId = null
     ) {
     }
 

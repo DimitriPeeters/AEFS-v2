@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Repositories;
 
+use AEFS\Core\Database;
 use AEFS\Database\DB;
 use AEFS\Database\Query\Expression;
 use App\Models\Event;
@@ -13,6 +14,107 @@ use App\Models\User;
 
 final class DashboardRepository
 {
+    public function __construct(
+        private readonly Database $database
+    ) {
+    }
+
+    public function countUpcomingEventsForMember(int $memberId): int
+    {
+        if ($memberId <= 0) {
+            return 0;
+        }
+
+        $statement = $this->database->prepare(<<<'SQL'
+            SELECT COUNT(*)
+            FROM evenementen e
+            WHERE COALESCE(e.einddatum, e.startdatum) >= CURDATE()
+              AND e.status <> 'concept'
+              AND (
+                  NOT EXISTS (
+                      SELECT 1 FROM event_groepen eg
+                      WHERE eg.event_id = e.event_id
+                  )
+                  OR EXISTS (
+                      SELECT 1
+                      FROM event_groepen eg
+                      INNER JOIN leden_groepen lg ON lg.groep_id = eg.groep_id
+                      WHERE eg.event_id = e.event_id
+                        AND lg.lid_id = :lid_id
+                  )
+              )
+            SQL);
+        $statement->execute(['lid_id' => $memberId]);
+
+        return (int) $statement->fetchColumn();
+    }
+
+    public function countOpenShiftsForMember(int $memberId): int
+    {
+        if ($memberId <= 0) {
+            return 0;
+        }
+
+        $statement = $this->database->prepare(<<<'SQL'
+            SELECT COUNT(*)
+            FROM shifts s
+            INNER JOIN evenementen e ON e.event_id = s.event_id
+            WHERE s.status = 'actief'
+              AND s.eind_op >= NOW()
+              AND e.status = 'gepubliceerd'
+              AND (
+                  NOT EXISTS (
+                      SELECT 1 FROM event_groepen eg
+                      WHERE eg.event_id = e.event_id
+                  )
+                  OR EXISTS (
+                      SELECT 1
+                      FROM event_groepen eg
+                      INNER JOIN leden_groepen lg ON lg.groep_id = eg.groep_id
+                      WHERE eg.event_id = e.event_id
+                        AND lg.lid_id = :lid_id
+                  )
+              )
+            SQL);
+        $statement->execute(['lid_id' => $memberId]);
+
+        return (int) $statement->fetchColumn();
+    }
+
+    /** @return array<int, array<string, mixed>> */
+    public function upcomingEventsForMember(int $memberId, int $limit = 5): array
+    {
+        if ($memberId <= 0) {
+            return [];
+        }
+
+        $limit = max(1, min(100, $limit));
+        $statement = $this->database->prepare(<<<SQL
+            SELECT e.event_id, e.titel, e.startdatum, e.einddatum, e.locatie
+            FROM evenementen e
+            WHERE COALESCE(e.einddatum, e.startdatum) >= CURDATE()
+              AND e.status <> 'concept'
+              AND (
+                  NOT EXISTS (
+                      SELECT 1 FROM event_groepen eg
+                      WHERE eg.event_id = e.event_id
+                  )
+                  OR EXISTS (
+                      SELECT 1
+                      FROM event_groepen eg
+                      INNER JOIN leden_groepen lg ON lg.groep_id = eg.groep_id
+                      WHERE eg.event_id = e.event_id
+                        AND lg.lid_id = :lid_id
+                  )
+              )
+            ORDER BY e.startdatum ASC
+            LIMIT $limit
+            SQL);
+        $statement->execute(['lid_id' => $memberId]);
+
+        return $statement->fetchAll(\PDO::FETCH_ASSOC);
+    }
+
     public function countActiveMembers(): int
     {
         return DB::table('leden as l')

@@ -46,6 +46,12 @@ final class MailService
         return $this->repository->latest();
     }
 
+    /** @param int[] $eventIds @return Mailing[] */
+    public function latestForEvents(array $eventIds, int $createdBy): array
+    {
+        return $this->repository->latestForEvents($eventIds, $createdBy);
+    }
+
     public function find(int $mailingId): ?Mailing
     {
         return $mailingId > 0
@@ -72,11 +78,34 @@ final class MailService
     }
 
     /**
+     * @param int[] $eventIds
+     * @return array{queued: int, sent: int, failed: int, total: int}
+     */
+    public function totalsForEvents(array $eventIds, int $createdBy): array
+    {
+        return $this->repository->totalsForEvents($eventIds, $createdBy);
+    }
+
+    /**
      * @return array<string, mixed>
      */
     public function audienceOptions(): array
     {
         return $this->repository->audienceOptions();
+    }
+
+    /** @param int[] $eventIds @return array<string, mixed> */
+    public function audienceOptionsForEvents(array $eventIds): array
+    {
+        return $this->repository->audienceOptionsForEvents($eventIds);
+    }
+
+    /**
+     * @return array<int, array{id: int, label: string}>
+     */
+    public function groupAudienceOptions(): array
+    {
+        return $this->repository->groupOptions();
     }
 
     /**
@@ -90,16 +119,57 @@ final class MailService
         ];
     }
 
-    public function queueEventPublished(Event $event): int
-    {
-        $members = $this->repository->eligibleAllMembers();
+    /**
+     * @param array{type?: string, groep_id?: int|null}|null $audience
+     */
+    public function queueEventPublished(
+        Event $event,
+        ?array $audience = null
+    ): int {
+        $audienceType = trim(
+            (string) ($audience['type'] ?? 'alle_leden')
+        );
+        $groupId = (int) ($audience['groep_id'] ?? 0);
+
+        if ($audienceType === 'alle_leden') {
+            $members = $this->repository->eligibleMembersForPublishedEvent(
+                $event->eventId
+            );
+            $audienceSnapshot = [
+                'event_id' => $event->eventId,
+                'alle_zichtbare_actieve_leden' => true,
+            ];
+        } elseif ($audienceType === 'groep') {
+            if ($groupId <= 0) {
+                throw new DomainException(
+                    'Kies een ledengroep voor de publicatiemail.'
+                );
+            }
+
+            if (!$this->repository->groupExists($groupId)) {
+                throw new DomainException(
+                    'De gekozen ledengroep bestaat niet meer.'
+                );
+            }
+
+            $members = $this->repository->eligibleMembersForPublishedEvent(
+                $event->eventId,
+                $groupId
+            );
+            $audienceSnapshot = [
+                'event_id' => $event->eventId,
+                'groep_ids' => [$groupId],
+            ];
+        } else {
+            throw new DomainException(
+                'Kies wie de publicatiemail moet ontvangen.'
+            );
+        }
 
         return $this->createPersonalizedMailing(
             type: 'event_gepubliceerd',
-            audienceType: 'alle_leden',
-            audience: [
-                'event_id' => $event->eventId,
-            ],
+            audienceType: $audienceType,
+            audience: $audienceSnapshot,
             eventId: $event->eventId,
             createdBy: Auth::id(),
             members: $members,
@@ -315,11 +385,19 @@ final class MailService
                     $createdBy,
                     $storedAttachment
                 ): int {
+                    $eventIds = $data['doelgroep_type'] === 'evenement'
+                        ? array_values(array_filter(
+                            array_map('intval', $data['event_ids'] ?? []),
+                            static fn(int $id): bool => $id > 0
+                        ))
+                        : [];
                     $mailingId = $this->createPersonalizedMailing(
                         type: 'manueel',
                         audienceType: (string) $data['doelgroep_type'],
                         audience: $this->audienceSnapshot($data),
-                        eventId: null,
+                        eventId: count($eventIds) === 1
+                            ? $eventIds[0]
+                            : null,
                         createdBy: $createdBy,
                         members: $members,
                         content: fn(array $member): MailContent => $this->templates

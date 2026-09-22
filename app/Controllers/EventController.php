@@ -13,6 +13,8 @@ use AEFS\Core\View\ViewFactory;
 use App\Http\Requests\EventCancellationRequest;
 use App\Http\Requests\EventRegistrationRequest;
 use App\Http\Requests\EventRequest;
+use App\Services\EventAccessService;
+use App\Services\EventRegistrationProfileService;
 use App\Services\EventService;
 use App\Services\SettingsService;
 use RuntimeException;
@@ -24,6 +26,8 @@ final class EventController extends BaseController
         ViewFactory $views,
         Request $request,
         private readonly EventService $service,
+        private readonly EventAccessService $access,
+        private readonly EventRegistrationProfileService $profiles,
         private readonly SettingsService $settings,
         private readonly CsrfHelper $csrf
     ) {
@@ -49,9 +53,17 @@ final class EventController extends BaseController
                 ? $this->service->allForAdministration()
                 : $this->service->searchForAdministration($zoekterm);
         } else {
-            $events = $zoekterm === ''
-                ? $this->service->visibleToMembers()
-                : $this->service->searchVisibleToMembers($zoekterm);
+            $events = $this->service->visibleOrManagedForCurrentMember(
+                $zoekterm
+            );
+        }
+
+        $manageableEventIds = [];
+
+        foreach ($events as $listedEvent) {
+            if ($this->access->canManage($listedEvent->eventId)) {
+                $manageableEventIds[] = $listedEvent->eventId;
+            }
         }
 
         return $this->view(
@@ -61,6 +73,7 @@ final class EventController extends BaseController
                 'events' => $events,
                 'zoekterm' => $zoekterm,
                 'isAdmin' => $isAdmin,
+                'manageableEventIds' => $manageableEventIds,
             ]
         );
     }
@@ -69,8 +82,9 @@ final class EventController extends BaseController
     {
         $id = $this->routeId();
         $isAdmin = Auth::isAdmin();
+        $canManageEvent = $this->access->canManage($id);
 
-        $event = $isAdmin
+        $event = $canManageEvent
             ? $this->service->find($id)
             : $this->service->findVisibleToMembers($id);
 
@@ -79,7 +93,12 @@ final class EventController extends BaseController
         }
 
         $memberId = Auth::memberId();
-        $canManageOwnRegistration = $memberId !== null && $memberId > 0;
+        $canManageOwnRegistration = $memberId !== null
+            && $memberId > 0
+            && $this->service->findVisibleToMembers($id) !== null;
+        $missingProfileFields = $canManageOwnRegistration
+            ? $this->profiles->missingFields($memberId)
+            : [];
 
         return $this->view(
             'events.show',
@@ -87,6 +106,7 @@ final class EventController extends BaseController
                 'title' => $event->titel,
                 'event' => $event,
                 'isAdmin' => $isAdmin,
+                'canManageEvent' => $canManageEvent,
                 'canManageOwnRegistration' => $canManageOwnRegistration,
                 'registration' => $canManageOwnRegistration
                     ? $this->service->registrationForMember(
@@ -94,12 +114,20 @@ final class EventController extends BaseController
                         $memberId
                     )
                     : null,
-                'registrations' => $isAdmin
+                'registrations' => $canManageEvent
                     ? $this->service->registrationsForEvent($id)
                     : [],
-                'shifts' => $isAdmin
+                'shifts' => $canManageEvent
                     ? $this->service->shiftsForEvent($id)
                     : [],
+                'missingProfileFields' => $missingProfileFields,
+                'profileValues' => $canManageOwnRegistration
+                    ? $this->profiles->formValues($memberId)
+                    : [],
+                'openProfileCompletion' => Session::getFlash(
+                    '_open_profile_completion',
+                    false
+                ) === true,
             ]
         );
     }
@@ -117,6 +145,13 @@ final class EventController extends BaseController
                     ->groupSupplement(),
                 'defaultEventUsesGroups' => $this->settings
                     ->defaultEventUsesGroups(),
+                'publicationGroups' => $this->service
+                    ->publicationGroupOptions(),
+                'canManageAssignments' => true,
+                'managerOptions' => $this->access->managerOptions(),
+                'visibilityGroupOptions' => $this->access->groupOptions(),
+                'selectedManagerIds' => [],
+                'selectedVisibilityGroupIds' => [],
             ]
         );
     }
@@ -136,7 +171,10 @@ final class EventController extends BaseController
             );
             $id = $this->service->create(
                 $eventRequest->all(),
-                $eventRequest->shifts()
+                $eventRequest->shifts(),
+                $eventRequest->publicationAudience(),
+                $eventRequest->managerIds(),
+                $eventRequest->visibilityGroupIds()
             );
 
             $this->success(
@@ -158,6 +196,11 @@ final class EventController extends BaseController
     public function edit(): Response
     {
         $id = $this->routeId();
+
+        if (!$this->access->canManage($id)) {
+            return $this->forbidden();
+        }
+
         $event = $this->service->find($id);
 
         if ($event === null) {
@@ -176,6 +219,17 @@ final class EventController extends BaseController
                 'defaultGroupSupplement' => $this->settings
                     ->groupSupplement(),
                 'defaultEventUsesGroups' => false,
+                'publicationGroups' => $this->service
+                    ->publicationGroupOptions(),
+                'canManageAssignments' => Auth::isAdmin(),
+                'managerOptions' => Auth::isAdmin()
+                    ? $this->access->managerOptions()
+                    : [],
+                'visibilityGroupOptions' => Auth::isAdmin()
+                    ? $this->access->groupOptions()
+                    : [],
+                'selectedManagerIds' => $this->access->managerIds($id),
+                'selectedVisibilityGroupIds' => $this->access->groupIds($id),
             ]
         );
     }
@@ -188,6 +242,10 @@ final class EventController extends BaseController
 
         if ($event === null) {
             return $this->notFound();
+        }
+
+        if (!$this->access->canManage($id)) {
+            return $this->forbidden();
         }
 
         try {
@@ -204,7 +262,12 @@ final class EventController extends BaseController
             $this->service->update(
                 $id,
                 $data,
-                $eventRequest->shifts()
+                $eventRequest->shifts(),
+                $eventRequest->publicationAudience(),
+                Auth::isAdmin() ? $eventRequest->managerIds() : null,
+                Auth::isAdmin()
+                    ? $eventRequest->visibilityGroupIds()
+                    : null
             );
 
             $this->success(
@@ -254,10 +317,19 @@ final class EventController extends BaseController
 
             $request = new EventRegistrationRequest($input);
             $data = $request->all();
+            $memberId = $this->requireMemberId();
+
+            if ($this->profiles->missingFields($memberId) !== []) {
+                Session::flash('_open_profile_completion', true);
+
+                throw new RuntimeException(
+                    'Vul eerst de ontbrekende persoonsgegevens en adresgegevens aan.'
+                );
+            }
 
             $this->service->registerMember(
                 $eventId,
-                $this->requireMemberId(),
+                $memberId,
                 $data['dagen']
             );
 
@@ -266,6 +338,37 @@ final class EventController extends BaseController
             );
         } catch (Throwable $throwable) {
             $this->flashRegistrationFailure($input, $throwable);
+        }
+
+        return $this->redirect('/events/' . $eventId);
+    }
+
+    public function completeProfileAndRegister(): Response
+    {
+        $eventId = $this->routeId();
+        $input = $this->request()->request->all();
+
+        try {
+            $this->validateCsrf($input);
+            $memberId = $this->requireMemberId();
+            $request = new EventRegistrationRequest($input);
+            $data = $request->all();
+
+            $this->profiles->complete($memberId, $input);
+            $this->service->registerMember(
+                $eventId,
+                $memberId,
+                $data['dagen']
+            );
+
+            $this->success(
+                'Je profiel werd aangevuld en je beschikbaarheid werd geregistreerd.'
+            );
+        } catch (Throwable $throwable) {
+            unset($input['_token']);
+            Session::flash('_old_input', $input);
+            Session::flash('_open_profile_completion', true);
+            $this->error($throwable->getMessage());
         }
 
         return $this->redirect('/events/' . $eventId);
@@ -309,6 +412,10 @@ final class EventController extends BaseController
             return $this->notFound(
                 'Evenementinschrijving niet gevonden.'
             );
+        }
+
+        if (!$this->access->canManage($registration->eventId)) {
+            return $this->forbidden();
         }
 
         $input = $this->request()->request->all();
@@ -388,6 +495,10 @@ final class EventController extends BaseController
             return $this->notFound(
                 'Evenementinschrijving niet gevonden.'
             );
+        }
+
+        if (!$this->access->canManage($registration->eventId)) {
+            return $this->forbidden();
         }
 
         $input = $this->request()->request->all();
@@ -482,6 +593,17 @@ final class EventController extends BaseController
                 'message' => $message,
             ],
             404
+        );
+    }
+
+    private function forbidden(): Response
+    {
+        return $this->view(
+            'core::errors.403',
+            [
+                'message' => 'Je hebt geen beheerrechten voor dit evenement.',
+            ],
+            403
         );
     }
 }

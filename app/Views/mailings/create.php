@@ -6,15 +6,20 @@ use AEFS\Core\View\Helper\ViewHelpers;
 /** @var array<string, array<int, array<string, mixed>>> $options */
 /** @var bool $mailConfigured */
 /** @var array{active: bool, emails: string[]} $recipientRestriction */
+/** @var bool $eventManagerMode */
+/** @var int[] $selectedEventIds */
+
+$eventManagerMode ??= false;
+$selectedEventIds ??= [];
 
 $this->extend('layouts.app', ['title' => $title ?? 'Nieuwe mailing']);
 
 $audienceType = (string) $helpers->old->get(
     'doelgroep_type',
-    'alle_leden'
+    $eventManagerMode ? 'evenement' : 'alle_leden'
 );
 $selectedGroups = $helpers->old->get('groep_ids', []);
-$selectedEvents = $helpers->old->get('event_ids', []);
+$selectedEvents = $helpers->old->get('event_ids', $selectedEventIds);
 $selectedShifts = $helpers->old->get('shift_ids', []);
 
 $selectedGroups = is_array($selectedGroups)
@@ -46,7 +51,9 @@ $selectedShifts = is_array($selectedShifts)
         <div class="alert alert-warning" role="status">
             <strong>Mailontvangersbeperking actief.</strong>
             Ongeacht de gekozen doelgroep worden uitsluitend
-            <?= $this->escape(implode(', ', $recipientRestriction['emails'])) ?>
+            <?= $eventManagerMode
+                ? 'expliciet toegestane testadressen'
+                : $this->escape(implode(', ', $recipientRestriction['emails'])) ?>
             als ontvanger opgenomen.
         </div>
     <?php endif; ?>
@@ -79,18 +86,22 @@ $selectedShifts = is_array($selectedShifts)
                         required
                         data-audience-type
                     >
-                        <option value="alle_leden" <?= $audienceType === 'alle_leden' ? 'selected' : '' ?>>
-                            Alle actieve leden
-                        </option>
-                        <option value="groep" <?= $audienceType === 'groep' ? 'selected' : '' ?>>
-                            Leden van één of meer groepen
-                        </option>
+                        <?php if (!$eventManagerMode): ?>
+                            <option value="alle_leden" <?= $audienceType === 'alle_leden' ? 'selected' : '' ?>>
+                                Alle actieve leden
+                            </option>
+                            <option value="groep" <?= $audienceType === 'groep' ? 'selected' : '' ?>>
+                                Leden van één of meer groepen
+                            </option>
+                        <?php endif; ?>
                         <option value="evenement" <?= $audienceType === 'evenement' ? 'selected' : '' ?>>
-                            Actieve inschrijvingen van één of meer evenementen
+                            Actieve inschrijvingen van <?= $eventManagerMode ? 'een beheerd evenement' : 'één of meer evenementen' ?>
                         </option>
-                        <option value="shifts" <?= $audienceType === 'shifts' ? 'selected' : '' ?>>
-                            Bevestigde en reserveleden van bepaalde shifts
-                        </option>
+                        <?php if (!$eventManagerMode): ?>
+                            <option value="shifts" <?= $audienceType === 'shifts' ? 'selected' : '' ?>>
+                                Bevestigde en reserveleden van bepaalde shifts
+                            </option>
+                        <?php endif; ?>
                     </select>
                     <small>
                         Leden zonder geldig e-mailadres en leden op de mail-blacklist worden automatisch uitgesloten.
@@ -114,7 +125,12 @@ $selectedShifts = is_array($selectedShifts)
 
                 <div class="form-group mailing-full-width" data-audience-panel="evenement" hidden>
                     <label for="event_ids">Evenementen *</label>
-                    <select id="event_ids" name="event_ids[]" multiple size="8">
+                    <select
+                        id="event_ids"
+                        name="event_ids[]"
+                        <?= $eventManagerMode ? '' : 'multiple' ?>
+                        size="<?= $eventManagerMode ? 5 : 8 ?>"
+                    >
                         <?php foreach ($options['events'] ?? [] as $event): ?>
                             <option
                                 value="<?= (int) $event['id'] ?>"
@@ -124,7 +140,10 @@ $selectedShifts = is_array($selectedShifts)
                             </option>
                         <?php endforeach; ?>
                     </select>
-                    <small>Wachtende, bevestigde en reserve-inschrijvingen worden meegenomen; geweigerde en uitgeschreven leden niet.</small>
+                    <small>
+                        Wachtende, bevestigde en reserve-inschrijvingen worden meegenomen; geweigerde en uitgeschreven leden niet.
+                        <?= $eventManagerMode ? 'Je kunt alleen deelnemers van één aan jou toegewezen evenement mailen.' : '' ?>
+                    </small>
                 </div>
 
                 <div class="form-group mailing-full-width" data-audience-panel="shifts" hidden>

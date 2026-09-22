@@ -9,6 +9,7 @@ use App\Models\Event;
 
 $events ??= [];
 $isAdmin ??= false;
+$manageableEventIds ??= [];
 ?>
 
 <?php if ($events === []): ?>
@@ -40,6 +41,11 @@ $isAdmin ??= false;
 
             <tbody>
                 <?php foreach ($events as $event): ?>
+                    <?php $canManageEvent = in_array(
+                        $event->eventId,
+                        $manageableEventIds,
+                        true
+                    ); ?>
                     <tr>
                         <td>
                             <strong><?= $this->escape($event->titel) ?></strong>
@@ -63,7 +69,7 @@ $isAdmin ??= false;
                                 </div>
                             <?php endif; ?>
 
-                            <?php if ($isAdmin && $event->hasPendingCancellationRequests()): ?>
+                            <?php if ($canManageEvent && $event->hasPendingCancellationRequests()): ?>
                                 <div class="event-table__cancellation-alert">
                                     <?= $event->aantalAnnulatieverzoeken ?> annulatieverzoek(en) te verifiëren
                                 </div>
@@ -76,7 +82,7 @@ $isAdmin ??= false;
                         <td>
                             <?= $this->escape($event->capacityLabel()) ?>
 
-                            <?php if ($isAdmin): ?>
+                            <?php if ($canManageEvent): ?>
                                 <div class="event-table__description">
                                     <?= $event->aantalInschrijvingen ?> totaal
                                 </div>
@@ -110,7 +116,7 @@ $isAdmin ??= false;
                                     Bekijken
                                 </a>
 
-                                <?php if ($isAdmin): ?>
+                                <?php if ($canManageEvent): ?>
                                     <a
                                         href="<?= $this->escape(
                                             $helpers->url->to(
@@ -122,6 +128,7 @@ $isAdmin ??= false;
                                         Wijzigen
                                     </a>
 
+                                    <?php if ($isAdmin): ?>
                                     <form
                                         method="post"
                                         action="<?= $this->escape(
@@ -140,6 +147,7 @@ $isAdmin ??= false;
                                             Verwijderen
                                         </button>
                                     </form>
+                                    <?php endif; ?>
                                 <?php endif; ?>
                             </div>
                         </td>

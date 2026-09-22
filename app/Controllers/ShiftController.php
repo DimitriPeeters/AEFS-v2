@@ -14,6 +14,7 @@ use AEFS\Core\View\ViewFactory;
 use App\Http\Requests\ShiftRegistrationRequest;
 use App\Http\Requests\ShiftRequest;
 use App\Repositories\EventRepository;
+use App\Services\EventAccessService;
 use App\Services\ShiftService;
 use App\Services\SettingsService;
 use DomainException;
@@ -27,6 +28,7 @@ final class ShiftController extends BaseController
         ViewFactory $views,
         Request $request,
         private readonly ShiftService $service,
+        private readonly EventAccessService $access,
         private readonly SettingsService $settings,
         private readonly EventRepository $eventRepository,
         private readonly CsrfHelper $csrf
@@ -40,19 +42,31 @@ final class ShiftController extends BaseController
     public function index(): Response
     {
         $isAdmin = Auth::isAdmin();
+        $canManage = $this->access->hasManagementAccess();
         $memberId = Auth::memberId();
+        $events = $isAdmin
+            ? $this->eventRepository->allForAdministration()
+            : $this->managedEvents();
+        $shifts = $isAdmin
+            ? $this->service->allForAdministration()
+            : [];
+
+        if (!$isAdmin) {
+            foreach ($events as $event) {
+                $shifts = [
+                    ...$shifts,
+                    ...$this->service->findByEvent($event->eventId, true),
+                ];
+            }
+        }
 
         return $this->view(
             'shifts.index',
             [
                 'title' => 'Shiftplanning',
-                'isAdmin' => $isAdmin,
-                'events' => $isAdmin
-                    ? $this->eventRepository->allForAdministration()
-                    : [],
-                'shifts' => $isAdmin
-                    ? $this->service->allForAdministration()
-                    : [],
+                'isAdmin' => $canManage,
+                'events' => $events,
+                'shifts' => $shifts,
                 'memberRegistrations' => $memberId !== null
                     ? $this->service->registrationsForMember(
                         $memberId
@@ -68,6 +82,10 @@ final class ShiftController extends BaseController
     public function planner(): Response
     {
         $eventId = $this->routeId('eventId');
+
+        if (!$this->access->canManage($eventId)) {
+            return $this->forbidden();
+        }
         $event = $this->eventRepository->find($eventId);
 
         if ($event === null) {
@@ -92,17 +110,19 @@ final class ShiftController extends BaseController
     public function show(): Response
     {
         $shiftId = $this->routeId();
-        $isAdmin = Auth::isAdmin();
         $memberId = Auth::memberId();
-        $memberRegistration = !$isAdmin && $memberId !== null
+        $shift = $this->service->find($shiftId);
+        $canManage = $shift !== null
+            && $this->access->canManage($shift->eventId);
+        $memberRegistration = !$canManage && $memberId !== null
             ? $this->service->findMemberRegistration(
                 $shiftId,
                 $memberId
             )
             : null;
 
-        $shift = $isAdmin
-            ? $this->service->find($shiftId)
+        $shift = $canManage
+            ? $shift
             : ($memberRegistration !== null
                 ? $this->service->find($shiftId)
                 : null);
@@ -118,14 +138,14 @@ final class ShiftController extends BaseController
             [
                 'title' => $shift->displayNaam(),
                 'shift' => $shift,
-                'isAdmin' => $isAdmin,
-                'registrations' => $isAdmin
+                'isAdmin' => $canManage,
+                'registrations' => $canManage
                     ? $this->service->registrationsForShift(
                         $shiftId
                     )
                     : [],
                 'memberRegistration' => $memberRegistration,
-                'eligibleEventRegistrations' => $isAdmin
+                'eligibleEventRegistrations' => $canManage
                     ? $this->service
                         ->eligibleEventRegistrationsForShift($shiftId)
                     : [],
@@ -135,6 +155,10 @@ final class ShiftController extends BaseController
 
     public function create(): Response
     {
+        if (!$this->access->hasManagementAccess()) {
+            return $this->forbidden();
+        }
+
         $selectedEventId = (int) $this->request()
             ->query
             ->get(
@@ -142,12 +166,20 @@ final class ShiftController extends BaseController
                 0
             );
 
+        if (
+            $selectedEventId > 0
+            && !$this->access->canManage($selectedEventId)
+        ) {
+            return $this->forbidden();
+        }
+
         return $this->view(
             'shifts.create',
             [
                 'title' => 'Nieuwe shift',
-                'events' => $this->eventRepository
-                    ->allForAdministration(),
+                'events' => Auth::isAdmin()
+                    ? $this->eventRepository->allForAdministration()
+                    : $this->managedEvents(),
                 'shiftTypes' => $this->service
                     ->activeTypes(),
                 'selectedEventId' => $selectedEventId,
@@ -171,8 +203,11 @@ final class ShiftController extends BaseController
                 $this->settings->defaultShiftCompensation()
             );
 
+            $data = $shiftRequest->all();
+            $this->access->requireManage((int) $data['event_id']);
+
             $id = $this->service->create(
-                $shiftRequest->all()
+                $data
             );
 
             $this->success(
@@ -206,13 +241,18 @@ final class ShiftController extends BaseController
             );
         }
 
+        if (!$this->access->canManage($shift->eventId)) {
+            return $this->forbidden();
+        }
+
         return $this->view(
             'shifts.edit',
             [
                 'title' => 'Shift wijzigen',
                 'shift' => $shift,
-                'events' => $this->eventRepository
-                    ->allForAdministration(),
+                'events' => Auth::isAdmin()
+                    ? $this->eventRepository->allForAdministration()
+                    : $this->managedEvents(),
                 'shiftTypes' => $this->service
                     ->allTypes(),
                 'defaultShiftCompensation' => $this->settings
@@ -235,6 +275,10 @@ final class ShiftController extends BaseController
             );
         }
 
+        if (!$this->access->canManage($shift->eventId)) {
+            return $this->forbidden();
+        }
+
         try {
             $this->validateCsrf($input);
 
@@ -243,9 +287,12 @@ final class ShiftController extends BaseController
                 $shift->vergoedingBedrag
             );
 
+            $data = $shiftRequest->all();
+            $this->access->requireManage((int) $data['event_id']);
+
             $this->service->update(
                 $shiftId,
-                $shiftRequest->all()
+                $data
             );
 
             $this->success(
@@ -272,6 +319,15 @@ final class ShiftController extends BaseController
     {
         $shiftId = $this->routeId();
         $input = $this->request()->request->all();
+        $shift = $this->service->find($shiftId);
+
+        if ($shift === null) {
+            return $this->notFound('Shift niet gevonden.');
+        }
+
+        if (!$this->access->canManage($shift->eventId)) {
+            return $this->forbidden();
+        }
 
         try {
             $this->validateCsrf($input);
@@ -309,6 +365,15 @@ final class ShiftController extends BaseController
     {
         $shiftId = $this->routeId();
         $input = $this->request()->request->all();
+        $shift = $this->service->find($shiftId);
+
+        if ($shift === null) {
+            return $this->notFound('Shift niet gevonden.');
+        }
+
+        if (!$this->access->canManage($shift->eventId)) {
+            return $this->forbidden();
+        }
 
         try {
             $this->validateCsrf($input);
@@ -335,6 +400,15 @@ final class ShiftController extends BaseController
     {
         $shiftId = $this->routeId();
         $input = $this->request()->request->all();
+        $shift = $this->service->find($shiftId);
+
+        if ($shift === null) {
+            return $this->notFound('Shift niet gevonden.');
+        }
+
+        if (!$this->access->canManage($shift->eventId)) {
+            return $this->forbidden();
+        }
 
         try {
             $this->validateCsrf($input);
@@ -427,6 +501,12 @@ final class ShiftController extends BaseController
             );
         }
 
+        $shift = $this->service->find($registration->shiftId);
+
+        if ($shift === null || !$this->access->canManage($shift->eventId)) {
+            return $this->forbidden();
+        }
+
         $input = $this->request()->request->all();
 
         try {
@@ -486,6 +566,12 @@ final class ShiftController extends BaseController
             return $this->notFound(
                 'Shiftinschrijving niet gevonden.'
             );
+        }
+
+        $shift = $this->service->find($registration->shiftId);
+
+        if ($shift === null || !$this->access->canManage($shift->eventId)) {
+            return $this->forbidden();
         }
 
         $input = $this->request()->request->all();
@@ -591,6 +677,12 @@ final class ShiftController extends BaseController
             );
         }
 
+        $shift = $this->service->find($registration->shiftId);
+
+        if ($shift === null || !$this->access->canManage($shift->eventId)) {
+            return $this->forbidden();
+        }
+
         $input = $this->request()->request->all();
 
         try {
@@ -675,6 +767,25 @@ final class ShiftController extends BaseController
                 'message' => $message,
             ],
             404
+        );
+    }
+
+    /** @return array<int, \App\Models\Event> */
+    private function managedEvents(): array
+    {
+        $memberId = Auth::memberId();
+
+        return $memberId !== null
+            ? $this->eventRepository->managedByMember($memberId)
+            : [];
+    }
+
+    private function forbidden(): Response
+    {
+        return $this->view(
+            'core::errors.403',
+            ['message' => 'Je hebt geen beheerrechten voor dit evenement.'],
+            403
         );
     }
 }

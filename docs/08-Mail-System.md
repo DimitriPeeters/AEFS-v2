@@ -164,7 +164,9 @@ De queue, templates en domeinflows wijzigen niet wanneer de provider wisselt.
 
 Momenteel worden mails ingepland voor:
 
-- de overgang van een evenement naar `gepubliceerd`;
+- de overgang van een evenement naar `gepubliceerd`, gericht aan alle
+  geschikte actieve leden die het evenement mogen zien of aan één gekozen
+  ledengroep binnen die zichtbaarheid;
 - een evenementinschrijving die `bevestigd` wordt;
 - een evenementinschrijving die `reserve` wordt;
 - een evenement dat naar `geannuleerd` gaat, gericht aan actieve
@@ -173,6 +175,15 @@ Momenteel worden mails ingepland voor:
 
 Een gewone wijziging aan een reeds gepubliceerd evenement veroorzaakt geen
 nieuwe publicatiemail.
+
+De doelgroepkeuze bij publicatie beperkt alleen de automatische
+publicatiemail. De permanente zichtbaarheid volgt `event_groepen`: zonder
+gekoppelde groep is het evenement voor alle leden zichtbaar; met één of meer
+groepen alleen voor leden uit minstens één gekoppelde groep. Ook een mailing
+naar "alle leden" wordt daarom beperkt tot actieve leden die het evenement
+mogen zien. Bij een groepsmail worden alleen zichtbare actieve leden uit die
+groep met een geldig e-mailadres geselecteerd; de bestaande blacklist- en
+ontvangersbeperkingen blijven van toepassing.
 
 Bij een volledige evenementannulatie wordt het evenement onmiddellijk als
 geannuleerd zichtbaar. De actieve eventinschrijvingen, shifts en bijbehorende
@@ -194,6 +205,12 @@ optioneel één bijlage toevoegen. Doelgroepen zijn:
 - één of meer ledengroepen;
 - actieve inschrijvingen van één of meer evenementen;
 - bevestigde of reserveleden van één of meer shifts.
+
+Een eventbeheerder kan het mailsysteem eveneens openen, maar uitsluitend voor
+toegewezen evenementen. Die beheerder kan per mailing één toegewezen event
+selecteren en alleen de actieve inschrijvingen daarvan aanschrijven. De
+zichtbare mailhistoriek bevat alleen zijn of haar eigen handmatige mailings
+voor die events.
 
 AEFS dedupliceert ontvangers en respecteert `gebruikers.mail_blacklist`.
 Iedere ontvanger krijgt een afzonderlijk `To`-bericht.

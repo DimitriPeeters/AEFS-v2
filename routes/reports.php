@@ -10,10 +10,7 @@ use App\Middleware\AuthMiddleware;
 
 $router
     ->get('/reports', [ReportController::class, 'index'])
-    ->middleware(
-        AuthMiddleware::class,
-        AdminMiddleware::class
-    )
+    ->middleware(AuthMiddleware::class)
     ->name('reports.index');
 
 $router
@@ -21,10 +18,7 @@ $router
         '/reports/shift-attendance',
         [ReportController::class, 'shiftAttendance']
     )
-    ->middleware(
-        AuthMiddleware::class,
-        AdminMiddleware::class
-    )
+    ->middleware(AuthMiddleware::class)
     ->name('reports.shift-attendance');
 
 $router
@@ -32,10 +26,7 @@ $router
         '/reports/event-compensation',
         [ReportController::class, 'eventCompensation']
     )
-    ->middleware(
-        AuthMiddleware::class,
-        AdminMiddleware::class
-    )
+    ->middleware(AuthMiddleware::class)
     ->name('reports.event-compensation');
 
 $router

@@ -131,6 +131,8 @@ final class OneComCutoverBuilder
             'evenementen',
             'event_inschrijvingen',
             'event_inschrijving_dagen',
+            'event_beheerders',
+            'event_groepen',
             'shift_types',
             'shifts',
             'shift_inschrijvingen',

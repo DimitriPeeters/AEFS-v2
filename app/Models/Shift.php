@@ -175,17 +175,25 @@ final class Shift
         );
     }
 
-    public function statusLabel(): string
+    public function statusLabel(?DateTimeImmutable $moment = null): string
     {
+        if ($this->isActief() && $this->isAfgelopen($moment)) {
+            return 'Afgerond';
+        }
+
         return self::statusOptions()[$this->status]
             ?? ucfirst($this->status);
     }
 
-    public function statusCssClass(): string
+    public function statusCssClass(?DateTimeImmutable $moment = null): string
     {
-        return $this->isActief()
-            ? 'badge-success'
-            : 'badge-danger';
+        if (!$this->isActief()) {
+            return 'badge-danger';
+        }
+
+        return $this->isAfgelopen($moment)
+            ? 'badge-info'
+            : 'badge-success';
     }
 
     public function annulatieDeadline(): DateTimeImmutable

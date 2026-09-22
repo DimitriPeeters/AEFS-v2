@@ -49,6 +49,29 @@ auditpayloads; de auditactie en overige historiek blijven behouden.
 
 ## 3. Productiepakket bouwen
 
+### Upgrade van een bestaande live-installatie
+
+Voor de uitbreiding met eventbeheerders en zichtbaarheid per ledengroep is
+`database/migrations/20260921_000009_add_event_access_control.sql` vereist.
+Maak eerst een verse back-up van de live-database. Importeer daarna dit
+additieve SQL-bestand via phpMyAdmin in de bestaande database en controleer:
+
+```sql
+SHOW TABLES LIKE 'event_beheerders';
+SHOW TABLES LIKE 'event_groepen';
+SELECT COUNT(*) FROM leden;
+SELECT COUNT(*) FROM gebruikers;
+```
+
+Controleer dat de bestaande aantallen leden en gebruikers niet zijn gewijzigd.
+Upload pas daarna het nieuwe webpakket. De applicatie gebruikt beide nieuwe
+tabellen direct. Bij een upgrade blijven de bestaande bestanden in
+`config/local/` op de server staan; het pakket bevat daar alleen
+voorbeeldbestanden en mag de productieconfiguratie niet vervangen.
+
+Het SQL-bestand zit bewust niet in het webpakket. Een SFTP-upload voert geen
+databasemigratie uit.
+
 Installeer lokaal eerst de Composer-dependencies en bouw daarna het pakket:
 
 ```powershell

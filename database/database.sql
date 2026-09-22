@@ -442,6 +442,35 @@ CREATE TABLE `shifts` (
   CONSTRAINT `chk_shifts_vergoeding_bedrag` CHECK ((`vergoeding_bedrag` >= 0))
 ) ENGINE=InnoDB AUTO_INCREMENT=23 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+DROP TABLE IF EXISTS `event_beheerders`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `event_beheerders` (
+  `event_id` int NOT NULL,
+  `lid_id` int NOT NULL,
+  `aangemaakt_door` int DEFAULT NULL,
+  `aangemaakt_op` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`event_id`,`lid_id`),
+  KEY `idx_event_beheerders_lid` (`lid_id`,`event_id`),
+  KEY `idx_event_beheerders_maker` (`aangemaakt_door`),
+  CONSTRAINT `fk_event_beheerders_event` FOREIGN KEY (`event_id`) REFERENCES `evenementen` (`event_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_event_beheerders_lid` FOREIGN KEY (`lid_id`) REFERENCES `leden` (`lid_id`) ON DELETE RESTRICT ON UPDATE CASCADE,
+  CONSTRAINT `fk_event_beheerders_maker` FOREIGN KEY (`aangemaakt_door`) REFERENCES `gebruikers` (`gebruiker_id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+DROP TABLE IF EXISTS `event_groepen`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `event_groepen` (
+  `event_id` int NOT NULL,
+  `groep_id` int NOT NULL,
+  `aangemaakt_op` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`event_id`,`groep_id`),
+  KEY `idx_event_groepen_groep` (`groep_id`,`event_id`),
+  CONSTRAINT `fk_event_groepen_event` FOREIGN KEY (`event_id`) REFERENCES `evenementen` (`event_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_event_groepen_groep` FOREIGN KEY (`groep_id`) REFERENCES `groepen` (`groep_id`) ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;

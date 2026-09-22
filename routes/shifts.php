@@ -3,7 +3,6 @@
 declare(strict_types=1);
 
 use App\Controllers\ShiftController;
-use App\Middleware\AdminMiddleware;
 use App\Middleware\AuthMiddleware;
 
 /** @var AEFS\Core\Router $router */
@@ -29,10 +28,7 @@ $router
             'create',
         ]
     )
-    ->middleware(
-        AuthMiddleware::class,
-        AdminMiddleware::class
-    )
+    ->middleware(AuthMiddleware::class)
     ->name('shifts.create');
 
 $router
@@ -43,10 +39,7 @@ $router
             'store',
         ]
     )
-    ->middleware(
-        AuthMiddleware::class,
-        AdminMiddleware::class
-    )
+    ->middleware(AuthMiddleware::class)
     ->name('shifts.store');
 
 $router
@@ -57,10 +50,7 @@ $router
             'planner',
         ]
     )
-    ->middleware(
-        AuthMiddleware::class,
-        AdminMiddleware::class
-    )
+    ->middleware(AuthMiddleware::class)
     ->name('shifts.planner');
 
 $router
@@ -84,10 +74,7 @@ $router
             'edit',
         ]
     )
-    ->middleware(
-        AuthMiddleware::class,
-        AdminMiddleware::class
-    )
+    ->middleware(AuthMiddleware::class)
     ->name('shifts.edit');
 
 $router
@@ -98,10 +85,7 @@ $router
             'update',
         ]
     )
-    ->middleware(
-        AuthMiddleware::class,
-        AdminMiddleware::class
-    )
+    ->middleware(AuthMiddleware::class)
     ->name('shifts.update');
 
 $router
@@ -112,10 +96,7 @@ $router
             'cancelShift',
         ]
     )
-    ->middleware(
-        AuthMiddleware::class,
-        AdminMiddleware::class
-    )
+    ->middleware(AuthMiddleware::class)
     ->name('shifts.cancel');
 
 $router
@@ -126,10 +107,7 @@ $router
             'destroy',
         ]
     )
-    ->middleware(
-        AuthMiddleware::class,
-        AdminMiddleware::class
-    )
+    ->middleware(AuthMiddleware::class)
     ->name('shifts.destroy');
 
 $router
@@ -140,10 +118,7 @@ $router
             'assign',
         ]
     )
-    ->middleware(
-        AuthMiddleware::class,
-        AdminMiddleware::class
-    )
+    ->middleware(AuthMiddleware::class)
     ->name('shifts.assign');
 
 $router
@@ -154,10 +129,7 @@ $router
             'approve',
         ]
     )
-    ->middleware(
-        AuthMiddleware::class,
-        AdminMiddleware::class
-    )
+    ->middleware(AuthMiddleware::class)
     ->name('shift-registrations.approve');
 
 $router
@@ -168,10 +140,7 @@ $router
             'reserve',
         ]
     )
-    ->middleware(
-        AuthMiddleware::class,
-        AdminMiddleware::class
-    )
+    ->middleware(AuthMiddleware::class)
     ->name('shift-registrations.reserve');
 
 $router
@@ -182,10 +151,7 @@ $router
             'reject',
         ]
     )
-    ->middleware(
-        AuthMiddleware::class,
-        AdminMiddleware::class
-    )
+    ->middleware(AuthMiddleware::class)
     ->name('shift-registrations.reject');
 
 $router
@@ -196,10 +162,7 @@ $router
             'cancelRegistration',
         ]
     )
-    ->middleware(
-        AuthMiddleware::class,
-        AdminMiddleware::class
-    )
+    ->middleware(AuthMiddleware::class)
     ->name('shift-registrations.cancel');
 
 $router
@@ -210,8 +173,5 @@ $router
             'presence',
         ]
     )
-    ->middleware(
-        AuthMiddleware::class,
-        AdminMiddleware::class
-    )
+    ->middleware(AuthMiddleware::class)
     ->name('shift-registrations.presence');

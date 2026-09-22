@@ -14,6 +14,7 @@ final class ReportService
     public function __construct(
         private readonly ShiftService $shiftService,
         private readonly EventService $eventService,
+        private readonly EventAccessService $access,
         private readonly ReportRepository $reportRepository,
         private readonly EncryptionService $encryption
     ) {
@@ -24,7 +25,12 @@ final class ReportService
      */
     public function shiftsForAttendance(): array
     {
-        $shifts = $this->shiftService->allForAdministration();
+        $shifts = array_values(array_filter(
+            $this->shiftService->allForAdministration(),
+            fn(Shift $shift): bool => $this->access->canManage(
+                $shift->eventId
+            )
+        ));
 
         usort(
             $shifts,
@@ -107,7 +113,12 @@ final class ReportService
      */
     public function eventsForCompensation(): array
     {
-        $events = $this->eventService->allForAdministration();
+        $events = array_values(array_filter(
+            $this->eventService->allForAdministration(),
+            fn(Event $event): bool => $this->access->canManage(
+                $event->eventId
+            )
+        ));
 
         usort(
             $events,

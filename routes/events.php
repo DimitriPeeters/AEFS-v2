@@ -36,6 +36,14 @@ $router
 
 $router
     ->post(
+        '/events/{id}/complete-profile-and-register',
+        [EventController::class, 'completeProfileAndRegister']
+    )
+    ->middleware(AuthMiddleware::class)
+    ->name('events.complete-profile-and-register');
+
+$router
+    ->post(
         '/events/{id}/cancel-registration',
         [EventController::class, 'cancelRegistration']
     )
@@ -49,18 +57,12 @@ $router
 
 $router
     ->get('/events/{id}/edit', [EventController::class, 'edit'])
-    ->middleware(
-        AuthMiddleware::class,
-        AdminMiddleware::class
-    )
+    ->middleware(AuthMiddleware::class)
     ->name('events.edit');
 
 $router
     ->post('/events/{id}/update', [EventController::class, 'update'])
-    ->middleware(
-        AuthMiddleware::class,
-        AdminMiddleware::class
-    )
+    ->middleware(AuthMiddleware::class)
     ->name('events.update');
 
 $router
@@ -76,10 +78,7 @@ $router
         '/event-registrations/{registrationId}/approve',
         [EventController::class, 'approveRegistration']
     )
-    ->middleware(
-        AuthMiddleware::class,
-        AdminMiddleware::class
-    )
+    ->middleware(AuthMiddleware::class)
     ->name('event-registrations.approve');
 
 $router
@@ -87,10 +86,7 @@ $router
         '/event-registrations/{registrationId}/reserve',
         [EventController::class, 'reserveRegistration']
     )
-    ->middleware(
-        AuthMiddleware::class,
-        AdminMiddleware::class
-    )
+    ->middleware(AuthMiddleware::class)
     ->name('event-registrations.reserve');
 
 $router
@@ -98,10 +94,7 @@ $router
         '/event-registrations/{registrationId}/reject',
         [EventController::class, 'rejectRegistration']
     )
-    ->middleware(
-        AuthMiddleware::class,
-        AdminMiddleware::class
-    )
+    ->middleware(AuthMiddleware::class)
     ->name('event-registrations.reject');
 
 $router
@@ -109,8 +102,5 @@ $router
         '/event-registrations/{registrationId}/confirm-cancellation',
         [EventController::class, 'confirmRegistrationCancellation']
     )
-    ->middleware(
-        AuthMiddleware::class,
-        AdminMiddleware::class
-    )
+    ->middleware(AuthMiddleware::class)
     ->name('event-registrations.confirm-cancellation');

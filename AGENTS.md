@@ -440,7 +440,16 @@ In particular:
 eventmanager
 ```
 
-is not currently a valid AEFS v2 role.
+is not a global AEFS v2 role. Event management is granted per event through
+the `event_beheerders` relation. A linked member with such an assignment keeps
+the global `lid` role and receives management access only for that event.
+
+An event manager may manage the assigned event, its shifts, participant
+decisions, non-confidential reports, and event-participant mailings. In those
+flows the manager may only see participant first name, last name, and email
+address. Confidential identifiers, bank details, the confidential compensation
+Excel export, global member/user administration, settings, and unrelated events
+remain administrator-only.
 
 ## Role ownership
 
@@ -817,7 +826,8 @@ registration starts as:
 wachtend
 ```
 
-An administrator decides whether an event registration becomes:
+An administrator or the manager assigned to that event decides whether an
+event registration becomes:
 
 ```text
 bevestigd
@@ -833,6 +843,18 @@ A previously cancelled/withdrawn event registration may be submitted again
 through the normal member flow. Reuse/reactivate the existing logical
 `(event_id, lid_id)` registration and return it to `wachtend`; do not create a
 duplicate row.
+
+An event may be restricted to one or more member groups through
+`event_groepen`. With no linked group the event is visible to every eligible
+member. With linked groups it is visible and open for registration only to
+members belonging to at least one linked group. Event-manager assignment does
+not bypass this member-registration eligibility rule.
+
+Before accepting an event registration, require the member's personal and
+address profile fields used by the registration flow to be complete. The UI
+must identify missing fields and allow the member to complete them without
+losing the selected event dates; the service remains authoritative and rejects
+incomplete profiles even without JavaScript.
 
 Publishing an event queues one personalized notification for every eligible
 active member. Queue this only when an event actually transitions from a
@@ -852,7 +874,8 @@ A member may cancel their own active registration for a future event.
   immediately.
 - With one or more active shift assignments, the cancellation remains pending
   until an administrator verifies it.
-- On administrator confirmation, all active shift assignments for that member
+- On confirmation by an administrator or that event's manager, all active
+  shift assignments for that member
   and event are cancelled in the same coherent workflow, while historical rows
   remain available.
 - Pending cancellation requests for past events must not be shown as actionable
@@ -997,7 +1020,8 @@ Do not invent synonyms or a second status system.
 
 Members never register themselves for shifts.
 
-Only an administrator may assign a member to a shift. The member must have a
+Only an administrator or a manager assigned to the shift's event may assign a
+member to that shift. The member must have a
 confirmed, active event registration that covers the calendar date of the
 shift. An administrative assignment starts as either:
 
@@ -1012,7 +1036,8 @@ route or service method may create a shift registration.
 
 ## Event registration prerequisite
 
-An administrator may only select members with a confirmed, active event
+An administrator or that event's manager may only select members with a
+confirmed, active event
 registration for that event and date. A pending event cancellation blocks new
 shift assignment.
 

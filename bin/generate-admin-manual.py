@@ -251,7 +251,7 @@ def cover_footer(canvas, doc) -> None:
     canvas.line(14 * mm, 13 * mm, width - 14 * mm, 13 * mm)
     canvas.setFillColor(MUTED)
     canvas.setFont(FONT, 7.5)
-    canvas.drawCentredString(width / 2, 8.5 * mm, "Versie 1.0 · 08/09/2026 · intern gebruik")
+    canvas.drawCentredString(width / 2, 8.5 * mm, "Versie 1.1 · 21/09/2026 · intern gebruik")
     canvas.restoreState()
 
 
@@ -459,9 +459,14 @@ def build_manual() -> None:
                 ("Nieuw event", "Vul titel, periode, locatie, capaciteit en beschrijving in."),
                 ("Meerdaags", "Controleer start- en einddatum; leden kunnen één of meer dagen kiezen."),
                 ("Groepen", "Schakel groepswerking alleen in als dit event per vereniging wordt afgerekend."),
+                ("Zichtbaarheid", "Koppel optioneel één of meer ledengroepen. Zonder koppeling ziet ieder lid het event; met koppelingen alleen leden uit minstens één gekozen groep."),
+                ("Eventbeheerder", "Koppel optioneel één of meer actieve leden die uitsluitend dit event, de shifts, beperkte rapporten en deelnemersmailings mogen beheren."),
                 ("Shiften", "Voeg functie, datum, 24-uurs tijden, capaciteit en vergoeding toe."),
                 ("Concept", "Sla eerst als concept op en voer een volledige controle uit."),
-                ("Publiceren", "Wijzig naar gepubliceerd wanneer de uitnodigingsmail mag worden ingepland."),
+                (
+                    "Publiceren",
+                    "Kies alle actieve leden of één ledengroep en wijzig daarna naar gepubliceerd.",
+                ),
             ]
         )
     )
@@ -469,8 +474,10 @@ def build_manual() -> None:
         callout(
             "Publicatiemail",
             "Alleen de overgang van niet-gepubliceerd naar <b>gepubliceerd</b> maakt één "
-            "gepersonaliseerde uitnodiging per geschikt actief lid. Een gewone wijziging aan "
-            "een al gepubliceerd event stuurt geen duplicaat.",
+            "gepersonaliseerde uitnodiging per geschikt actief lid van de gekozen doelgroep. "
+            "De beheerder kiest alle zichtbare actieve leden of één ledengroep. De permanente "
+            "eventzichtbaarheid wordt afzonderlijk via de gekoppelde ledengroepen bepaald. Een gewone wijziging aan een "
+            "al gepubliceerd event stuurt geen duplicaat.",
             "warn",
         )
     )
@@ -493,6 +500,24 @@ def build_manual() -> None:
         "Leden en administrators met een gekoppeld ledenprofiel schrijven zichzelf via dezelfde "
         "flow in voor een gepubliceerd event. Iedere inschrijving start als wachtend en wordt "
         "administratief beoordeeld.",
+    )
+    story.append(
+        callout(
+            "Eventbeheerder is geen globale rol",
+            "Een eventbeheerder blijft een gewoon lid en krijgt alleen toegang tot toegewezen events. "
+            "Hij of zij ziet bij deelnemers uitsluitend voornaam, achternaam en e-mailadres. "
+            "Ledenbeheer, gebruikersbeheer, instellingen, bankgegevens, nationale identificatienummers "
+            "en de vertrouwelijke Excel-export blijven uitsluitend voor administrators.",
+            "warn",
+        )
+    )
+    story.append(
+        callout(
+            "Volledig profiel vóór inschrijving",
+            "Bij een onvolledig persoonlijk of adresprofiel toont AEFS eerst de ontbrekende velden. "
+            "Het lid vult die in en kan daarna dezelfde eventinschrijving met de gekozen dagen afronden.",
+            "info",
+        )
     )
     story.append(
         callout(
@@ -584,7 +609,7 @@ def build_manual() -> None:
     story.append(
         bullets(
             [
-                "publicatie van een evenement naar alle geschikte actieve leden;",
+                "publicatie van een evenement naar alle geschikte actieve leden of één gekozen ledengroep;",
                 "bevestiging of reservestatus van een eventinschrijving naar het betrokken lid;",
                 "annulatie van een volledig evenement naar eventinschrijvers en bevestigde shiftvrijwilligers;",
                 "persoonlijk overzicht van alle ingeplande shiften via de eventknop.",
@@ -601,6 +626,14 @@ def build_manual() -> None:
                 ("Inplannen", "Bevestig pas na doelgroepcontrole; iedere ontvanger krijgt een afzonderlijke mail."),
                 ("Opvolgen", "Bekijk status en fouten in Mailings; plan mislukte afleveringen gericht opnieuw in."),
             ]
+        )
+    )
+    story.append(
+        callout(
+            "Mailing door eventbeheerder",
+            "Een eventbeheerder kan alleen actieve inschrijvingen van één toegewezen evenement mailen "
+            "en ziet uitsluitend de eigen handmatige mailings voor die events in de historiek.",
+            "info",
         )
     )
     story.append(

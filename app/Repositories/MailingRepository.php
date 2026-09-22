@@ -78,6 +78,39 @@ final class MailingRepository
         );
     }
 
+    /** @param int[] $eventIds @return Mailing[] */
+    public function latestForEvents(
+        array $eventIds,
+        int $createdBy,
+        int $limit = 100
+    ): array
+    {
+        $eventIds = $this->normalizeIds($eventIds);
+
+        if ($eventIds === []) {
+            return [];
+        }
+
+        $limit = max(1, min(500, $limit));
+        $statement = $this->database->prepare(
+            self::SELECT_MAILING
+            . PHP_EOL
+            . 'WHERE m.event_id IN (' . $this->integerList($eventIds) . ')'
+            . " AND m.type = 'manueel' AND m.doelgroep_type = 'evenement'"
+            . ' AND m.aangemaakt_door = :created_by'
+            . PHP_EOL
+            . 'ORDER BY m.mailing_id DESC'
+            . PHP_EOL
+            . 'LIMIT ' . $limit
+        );
+        $statement->execute(['created_by' => $createdBy]);
+
+        return array_map(
+            fn(array $row): Mailing => $this->mapper->mailing($row),
+            $statement->fetchAll(PDO::FETCH_ASSOC)
+        );
+    }
+
     public function find(int $mailingId): ?Mailing
     {
         $statement = $this->database->prepare(
@@ -154,6 +187,48 @@ final class MailingRepository
     }
 
     /**
+     * @param int[] $eventIds
+     * @return array{queued: int, sent: int, failed: int, total: int}
+     */
+    public function totalsForEvents(array $eventIds, int $createdBy): array
+    {
+        $eventIds = $this->normalizeIds($eventIds);
+
+        if ($eventIds === []) {
+            return [
+                'queued' => 0,
+                'sent' => 0,
+                'failed' => 0,
+                'total' => 0,
+            ];
+        }
+
+        $ids = $this->integerList($eventIds);
+        $statement = $this->database->prepare(<<<SQL
+            SELECT
+                COUNT(*) AS total,
+                COALESCE(SUM(mo.status IN ('in_wachtrij', 'bezig')), 0) AS queued,
+                COALESCE(SUM(mo.status = 'verzonden'), 0) AS sent,
+                COALESCE(SUM(mo.status = 'mislukt'), 0) AS failed
+            FROM mailing_ontvangers mo
+            INNER JOIN mailings m ON m.mailing_id = mo.mailing_id
+            WHERE m.event_id IN ($ids)
+              AND m.type = 'manueel'
+              AND m.doelgroep_type = 'evenement'
+              AND m.aangemaakt_door = :created_by
+            SQL);
+        $statement->execute(['created_by' => $createdBy]);
+        $row = $statement->fetch(PDO::FETCH_ASSOC);
+
+        return [
+            'queued' => (int) ($row['queued'] ?? 0),
+            'sent' => (int) ($row['sent'] ?? 0),
+            'failed' => (int) ($row['failed'] ?? 0),
+            'total' => (int) ($row['total'] ?? 0),
+        ];
+    }
+
+    /**
      * @return array{
      *     groups: array<int, array{id: int, label: string}>,
      *     events: array<int, array{id: int, label: string}>,
@@ -162,12 +237,6 @@ final class MailingRepository
      */
     public function audienceOptions(): array
     {
-        $groups = $this->database->query(<<<'SQL'
-            SELECT groep_id AS id, naam AS label
-            FROM groepen
-            ORDER BY naam ASC
-            SQL)->fetchAll(PDO::FETCH_ASSOC);
-
         $events = $this->database->query(<<<'SQL'
             SELECT
                 event_id AS id,
@@ -201,13 +270,7 @@ final class MailingRepository
             SQL)->fetchAll(PDO::FETCH_ASSOC);
 
         return [
-            'groups' => array_map(
-                static fn(array $row): array => [
-                    'id' => (int) $row['id'],
-                    'label' => (string) $row['label'],
-                ],
-                $groups
-            ),
+            'groups' => $this->groupOptions(),
             'events' => array_map(
                 static fn(array $row): array => [
                     'id' => (int) $row['id'],
@@ -227,6 +290,110 @@ final class MailingRepository
     }
 
     /**
+     * @param int[] $eventIds
+     * @return array{
+     *     groups: array<int, array{id: int, label: string}>,
+     *     events: array<int, array{id: int, label: string}>,
+     *     shifts: array<int, array{id: int, event_id: int, label: string}>
+     * }
+     */
+    public function audienceOptionsForEvents(array $eventIds): array
+    {
+        $eventIds = $this->normalizeIds($eventIds);
+
+        if ($eventIds === []) {
+            return ['groups' => [], 'events' => [], 'shifts' => []];
+        }
+
+        $ids = $this->integerList($eventIds);
+        $events = $this->database->query(<<<SQL
+            SELECT
+                event_id AS id,
+                CONCAT(titel, ' · ', DATE_FORMAT(startdatum, '%d/%m/%Y')) AS label
+            FROM evenementen
+            WHERE event_id IN ($ids)
+            ORDER BY startdatum DESC, titel ASC
+            SQL)->fetchAll(PDO::FETCH_ASSOC);
+
+        $shifts = $this->database->query(<<<SQL
+            SELECT
+                s.shift_id AS id,
+                s.event_id,
+                CONCAT(
+                    e.titel,
+                    ' · ',
+                    COALESCE(NULLIF(s.naam, ''), st.naam),
+                    ' · ',
+                    DATE_FORMAT(s.start_op, '%d/%m/%Y %H:%i')
+                ) AS label
+            FROM shifts s
+            INNER JOIN evenementen e ON e.event_id = s.event_id
+            INNER JOIN shift_types st ON st.type_id = s.type_id
+            WHERE s.event_id IN ($ids)
+              AND s.status = 'actief'
+            ORDER BY e.startdatum DESC, s.start_op ASC, s.shift_id ASC
+            SQL)->fetchAll(PDO::FETCH_ASSOC);
+
+        return [
+            'groups' => [],
+            'events' => array_map(
+                static fn(array $row): array => [
+                    'id' => (int) $row['id'],
+                    'label' => (string) $row['label'],
+                ],
+                $events
+            ),
+            'shifts' => array_map(
+                static fn(array $row): array => [
+                    'id' => (int) $row['id'],
+                    'event_id' => (int) $row['event_id'],
+                    'label' => (string) $row['label'],
+                ],
+                $shifts
+            ),
+        ];
+    }
+
+    /**
+     * @return array<int, array{id: int, label: string}>
+     */
+    public function groupOptions(): array
+    {
+        $groups = $this->database->query(<<<'SQL'
+            SELECT groep_id AS id, naam AS label
+            FROM groepen
+            ORDER BY naam ASC
+            SQL)->fetchAll(PDO::FETCH_ASSOC);
+
+        return array_map(
+            static fn(array $row): array => [
+                'id' => (int) $row['id'],
+                'label' => (string) $row['label'],
+            ],
+            $groups
+        );
+    }
+
+    public function groupExists(int $groupId): bool
+    {
+        if ($groupId <= 0) {
+            return false;
+        }
+
+        $statement = $this->database->prepare(<<<'SQL'
+            SELECT 1
+            FROM groepen
+            WHERE groep_id = :groep_id
+            LIMIT 1
+            SQL);
+        $statement->execute([
+            'groep_id' => $groupId,
+        ]);
+
+        return $statement->fetchColumn() !== false;
+    }
+
+    /**
      * @return array<int, array{
      *     lid_id: int,
      *     voornaam: string,
@@ -238,6 +405,45 @@ final class MailingRepository
     public function eligibleAllMembers(): array
     {
         return $this->eligibleMembers();
+    }
+
+    /** @return array<int, array<string, mixed>> */
+    public function eligibleMembersForPublishedEvent(
+        int $eventId,
+        ?int $groupId = null
+    ): array {
+        $eventId = max(0, $eventId);
+        $conditions = [
+            '(
+                NOT EXISTS (
+                    SELECT 1
+                    FROM event_groepen publication_visibility
+                    WHERE publication_visibility.event_id = ' . $eventId . '
+                )
+                OR EXISTS (
+                    SELECT 1
+                    FROM event_groepen publication_visibility
+                    INNER JOIN leden_groepen publication_member_group
+                        ON publication_member_group.groep_id = publication_visibility.groep_id
+                    WHERE publication_visibility.event_id = ' . $eventId . '
+                      AND publication_member_group.lid_id = l.lid_id
+                )
+            )',
+        ];
+
+        if ($groupId !== null && $groupId > 0) {
+            $conditions[] = 'EXISTS (
+                SELECT 1
+                FROM leden_groepen selected_publication_group
+                WHERE selected_publication_group.lid_id = l.lid_id
+                  AND selected_publication_group.groep_id = '
+                . $groupId . '
+            )';
+        }
+
+        return $this->eligibleMembers(
+            '(' . implode(' AND ', $conditions) . ')'
+        );
     }
 
     /**
@@ -957,6 +1163,18 @@ final class MailingRepository
         );
 
         return $ids !== [] ? implode(',', $ids) : '0';
+    }
+
+    /** @param int[] $ids @return int[] */
+    private function normalizeIds(array $ids): array
+    {
+        $ids = array_values(array_unique(array_filter(
+            array_map('intval', $ids),
+            static fn(int $id): bool => $id > 0
+        )));
+        sort($ids);
+
+        return $ids;
     }
 
     private function markPlanningSentWhenApplicable(int $mailingId): void

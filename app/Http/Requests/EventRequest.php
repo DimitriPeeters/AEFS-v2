@@ -104,6 +104,38 @@ final class EventRequest
     }
 
     /**
+     * @return array{type: string, groep_id: int|null}
+     */
+    public function publicationAudience(): array
+    {
+        $groupId = (int) ($this->input['publicatie_groep_id'] ?? 0);
+
+        return [
+            'type' => trim(
+                (string) (
+                    $this->input['publicatie_doelgroep']
+                    ?? 'alle_leden'
+                )
+            ),
+            'groep_id' => $groupId > 0
+                ? $groupId
+                : null,
+        ];
+    }
+
+    /** @return int[] */
+    public function managerIds(): array
+    {
+        return $this->integerList($this->input['eventbeheerder_ids'] ?? []);
+    }
+
+    /** @return int[] */
+    public function visibilityGroupIds(): array
+    {
+        return $this->integerList($this->input['zichtbare_groep_ids'] ?? []);
+    }
+
+    /**
      * @param array<string, mixed> $row
      */
     private function hasShiftInput(array $row): bool
@@ -156,5 +188,21 @@ final class EventRequest
             '.',
             ''
         );
+    }
+
+    /** @return int[] */
+    private function integerList(mixed $value): array
+    {
+        if (!is_array($value)) {
+            $value = [$value];
+        }
+
+        $ids = array_values(array_unique(array_filter(
+            array_map('intval', $value),
+            static fn(int $id): bool => $id > 0
+        )));
+        sort($ids);
+
+        return $ids;
     }
 }

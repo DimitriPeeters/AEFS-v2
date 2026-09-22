@@ -12,6 +12,7 @@ use App\Models\ShiftType;
 /** @var string|null $defaultShiftCompensation */
 /** @var string|null $defaultGroupSupplement */
 /** @var Shift[] $shifts */
+/** @var array<int, array{id: int, label: string}> $publicationGroups */
 
 $this->extend(
     'layouts.app',
@@ -51,6 +52,12 @@ $this->extend(
                 'defaultShiftCompensation' => $defaultShiftCompensation ?? '30.00',
                 'defaultGroupSupplement' => $defaultGroupSupplement ?? '10.00',
                 'defaultEventUsesGroups' => false,
+                'publicationGroups' => $publicationGroups ?? [],
+                'canManageAssignments' => $canManageAssignments ?? false,
+                'managerOptions' => $managerOptions ?? [],
+                'visibilityGroupOptions' => $visibilityGroupOptions ?? [],
+                'selectedManagerIds' => $selectedManagerIds ?? [],
+                'selectedVisibilityGroupIds' => $selectedVisibilityGroupIds ?? [],
             ]
         ) ?>
     </form>

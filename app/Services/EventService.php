@@ -29,6 +29,8 @@ final class EventService
         private readonly EventRegistrationValidator $registrationValidator,
         private readonly ShiftService $shiftService,
         private readonly MailService $mailService,
+        private readonly EventAccessService $access,
+        private readonly EventRegistrationProfileService $profiles,
         private readonly AuditLogService $auditLog
     ) {
     }
@@ -46,7 +48,11 @@ final class EventService
      */
     public function visibleToMembers(): array
     {
-        return $this->repository->visibleToMembers();
+        $memberId = Auth::memberId();
+
+        return $memberId !== null
+            ? $this->repository->visibleToMembers($memberId)
+            : [];
     }
 
     /**
@@ -70,7 +76,10 @@ final class EventService
 
         return $zoekterm === ''
             ? $this->visibleToMembers()
-            : $this->repository->searchVisibleToMembers($zoekterm);
+            : $this->repository->searchVisibleToMembers(
+                $zoekterm,
+                Auth::memberId() ?? 0
+            );
     }
 
     public function find(int $id): ?Event
@@ -88,7 +97,34 @@ final class EventService
             return null;
         }
 
-        return $this->repository->findVisibleToMembers($id);
+        return $this->repository->findVisibleToMembers(
+            $id,
+            Auth::memberId() ?? 0
+        );
+    }
+
+    /** @return Event[] */
+    public function visibleOrManagedForCurrentMember(string $search = ''): array
+    {
+        $memberId = Auth::memberId();
+
+        return $memberId !== null
+            ? $this->repository->visibleOrManagedForMember($memberId, $search)
+            : [];
+    }
+
+    /** @return Event[] */
+    public function managedForCurrentMember(): array
+    {
+        if (Auth::isAdmin()) {
+            return $this->allForAdministration();
+        }
+
+        $memberId = Auth::memberId();
+
+        return $memberId !== null
+            ? $this->repository->managedByMember($memberId)
+            : [];
     }
 
     /**
@@ -97,6 +133,14 @@ final class EventService
     public function activeShiftTypes(): array
     {
         return $this->shiftService->activeTypes();
+    }
+
+    /**
+     * @return array<int, array{id: int, label: string}>
+     */
+    public function publicationGroupOptions(): array
+    {
+        return $this->mailService->groupAudienceOptions();
     }
 
     /**
@@ -145,20 +189,44 @@ final class EventService
     /**
      * @param array<string, mixed> $data
      * @param array<int, array<string, mixed>> $shifts
+     * @param array{type?: string, groep_id?: int|null}|null $publicationAudience
      */
-    public function create(array $data, array $shifts = []): int
-    {
+    public function create(
+        array $data,
+        array $shifts = [],
+        ?array $publicationAudience = null,
+        array $managerIds = [],
+        array $visibilityGroupIds = []
+    ): int {
         $this->validator->validate($data);
 
         return $this->database->transaction(
-            function () use ($data, $shifts): int {
+            function () use (
+                $data,
+                $shifts,
+                $publicationAudience,
+                $managerIds,
+                $visibilityGroupIds
+            ): int {
                 $id = $this->repository->create($data);
+
+                $this->access->syncAssignments(
+                    $id,
+                    $managerIds,
+                    $visibilityGroupIds
+                );
 
                 $this->auditLog->created(
                     entity: 'event',
                     id: $id,
                     userId: Auth::id(),
-                    values: $data
+                    values: array_merge(
+                        $data,
+                        [
+                            'eventbeheerder_ids' => $managerIds,
+                            'zichtbare_groep_ids' => $visibilityGroupIds,
+                        ]
+                    )
                 );
 
                 $this->createShiftsForEvent($id, $shifts);
@@ -166,7 +234,10 @@ final class EventService
                 $event = $this->repository->find($id);
 
                 if ($event !== null && $event->isPublished()) {
-                    $this->mailService->queueEventPublished($event);
+                    $this->mailService->queueEventPublished(
+                        $event,
+                        $publicationAudience
+                    );
                 }
 
                 return $id;
@@ -177,11 +248,15 @@ final class EventService
     /**
      * @param array<string, mixed> $data
      * @param array<int, array<string, mixed>> $newShifts
+     * @param array{type?: string, groep_id?: int|null}|null $publicationAudience
      */
     public function update(
         int $id,
         array $data,
-        array $newShifts = []
+        array $newShifts = [],
+        ?array $publicationAudience = null,
+        ?array $managerIds = null,
+        ?array $visibilityGroupIds = null
     ): void {
         if ($id <= 0) {
             throw new InvalidArgumentException(
@@ -192,7 +267,14 @@ final class EventService
         $this->validator->validate($data);
 
         $this->database->transaction(
-            function () use ($id, $data, $newShifts): void {
+            function () use (
+                $id,
+                $data,
+                $newShifts,
+                $publicationAudience,
+                $managerIds,
+                $visibilityGroupIds
+            ): void {
                 $event = $this->repository->lockForUpdate($id);
 
                 if ($event === null) {
@@ -220,14 +302,45 @@ final class EventService
                     );
                 }
 
+                $oldManagerIds = $managerIds !== null
+                    ? $this->access->managerIds($id)
+                    : null;
+                $oldVisibilityGroupIds = $visibilityGroupIds !== null
+                    ? $this->access->groupIds($id)
+                    : null;
+
                 $this->repository->update($id, $data);
+
+                if ($managerIds !== null && $visibilityGroupIds !== null) {
+                    $this->access->syncAssignments(
+                        $id,
+                        $managerIds,
+                        $visibilityGroupIds
+                    );
+                }
 
                 $this->auditLog->updated(
                     entity: 'event',
                     id: $id,
                     userId: Auth::id(),
-                    oldValues: $event->toAuditArray(),
-                    newValues: $data
+                    oldValues: array_merge(
+                        $event->toAuditArray(),
+                        $oldManagerIds !== null
+                            ? ['eventbeheerder_ids' => $oldManagerIds]
+                            : [],
+                        $oldVisibilityGroupIds !== null
+                            ? ['zichtbare_groep_ids' => $oldVisibilityGroupIds]
+                            : []
+                    ),
+                    newValues: array_merge(
+                        $data,
+                        $managerIds !== null
+                            ? ['eventbeheerder_ids' => $managerIds]
+                            : [],
+                        $visibilityGroupIds !== null
+                            ? ['zichtbare_groep_ids' => $visibilityGroupIds]
+                            : []
+                    )
                 );
 
                 if (!$startsCancellation) {
@@ -266,7 +379,8 @@ final class EventService
                     }
 
                     $this->mailService->queueEventPublished(
-                        $publishedEvent
+                        $publishedEvent,
+                        $publicationAudience
                     );
                 }
             }
@@ -415,6 +529,23 @@ final class EventService
         if ($eventId <= 0 || $memberId <= 0) {
             throw new InvalidArgumentException(
                 'Ongeldige evenementinschrijving.'
+            );
+        }
+
+        if (
+            $this->repository->findVisibleToMembers(
+                $eventId,
+                $memberId
+            ) === null
+        ) {
+            throw new DomainException(
+                'Dit evenement is niet beschikbaar voor jouw ledengroep.'
+            );
+        }
+
+        if ($this->profiles->missingFields($memberId) !== []) {
+            throw new DomainException(
+                'Vul eerst de ontbrekende persoonsgegevens en adresgegevens aan.'
             );
         }
 

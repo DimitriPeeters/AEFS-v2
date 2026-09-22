@@ -18,7 +18,7 @@ final class ViewComposerServiceProvider
 
         $container->singleton(
             NavigationViewComposer::class,
-            static fn (): NavigationViewComposer => new NavigationViewComposer()
+            NavigationViewComposer::class
         );
     }
 

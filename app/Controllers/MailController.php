@@ -14,6 +14,8 @@ use AEFS\Core\Session;
 use AEFS\Core\View\Helper\CsrfHelper;
 use AEFS\Core\View\ViewFactory;
 use App\Http\Requests\MailingRequest;
+use App\Models\Mailing;
+use App\Services\EventAccessService;
 use App\Services\MailQueueProcessor;
 use App\Services\MailService;
 use DomainException;
@@ -25,6 +27,7 @@ final class MailController extends BaseController
         ViewFactory $views,
         Request $request,
         private readonly MailService $service,
+        private readonly EventAccessService $access,
         private readonly CsrfHelper $csrf,
         private readonly Config $config,
         private readonly MailQueueProcessor $queueProcessor
@@ -34,12 +37,28 @@ final class MailController extends BaseController
 
     public function index(): Response
     {
+        if (!$this->access->hasManagementAccess()) {
+            return $this->forbidden();
+        }
+
+        $eventIds = $this->access->managedEventIds();
+
         return $this->view(
             'mailings.index',
             [
                 'title' => 'Mailings',
-                'mailings' => $this->service->latest(),
-                'totals' => $this->service->totals(),
+                'mailings' => Auth::isAdmin()
+                    ? $this->service->latest()
+                    : $this->service->latestForEvents(
+                        $eventIds,
+                        Auth::id() ?? 0
+                    ),
+                'totals' => Auth::isAdmin()
+                    ? $this->service->totals()
+                    : $this->service->totalsForEvents(
+                        $eventIds,
+                        Auth::id() ?? 0
+                    ),
                 'mailConfigured' => $this->mailConfigured(),
                 'smtpHost' => (string) $this->config->get(
                     'mail.host',
@@ -86,11 +105,35 @@ final class MailController extends BaseController
 
     public function create(): Response
     {
+        if (!$this->access->hasManagementAccess()) {
+            return $this->forbidden();
+        }
+
+        $requestedEventId = max(
+            0,
+            (int) $this->request()->query->get('event_id', 0)
+        );
+
+        if (
+            $requestedEventId > 0
+            && !$this->access->canManage($requestedEventId)
+        ) {
+            return $this->forbidden();
+        }
+
         return $this->view(
             'mailings.create',
             [
                 'title' => 'Nieuwe mailing',
-                'options' => $this->service->audienceOptions(),
+                'options' => Auth::isAdmin()
+                    ? $this->service->audienceOptions()
+                    : $this->service->audienceOptionsForEvents(
+                        $this->access->managedEventIds()
+                    ),
+                'eventManagerMode' => !Auth::isAdmin(),
+                'selectedEventIds' => $requestedEventId > 0
+                    ? [$requestedEventId]
+                    : [],
                 'mailConfigured' => $this->mailConfigured(),
                 'recipientRestriction' => $this->service
                     ->recipientRestriction(),
@@ -105,7 +148,23 @@ final class MailController extends BaseController
         try {
             $this->validateCsrf($input);
             $request = new MailingRequest($input);
+            $data = $request->all();
             $attachment = $this->request()->file('bijlage');
+
+            if (!Auth::isAdmin()) {
+                $eventIds = $data['event_ids'];
+
+                if (
+                    $data['doelgroep_type'] !== 'evenement'
+                    || count($eventIds) !== 1
+                ) {
+                    throw new DomainException(
+                        'Een eventbeheerder kan uitsluitend deelnemers van één beheerd evenement mailen.'
+                    );
+                }
+
+                $this->access->requireManage($eventIds[0]);
+            }
 
             if (is_array($attachment)) {
                 throw new DomainException(
@@ -114,7 +173,7 @@ final class MailController extends BaseController
             }
 
             $mailingId = $this->service->queueManual(
-                $request->all(),
+                $data,
                 $attachment instanceof UploadedFile ? $attachment : null,
                 $this->requireUserId()
             );
@@ -159,6 +218,10 @@ final class MailController extends BaseController
             );
         }
 
+        if (!$this->canAccessMailing($mailing)) {
+            return $this->forbidden();
+        }
+
         return $this->view(
             'mailings.show',
             [
@@ -174,6 +237,23 @@ final class MailController extends BaseController
     public function retry(): Response
     {
         $mailingId = $this->routeId();
+        $mailing = $this->service->find($mailingId);
+
+        if ($mailing === null) {
+            return $this->view(
+                'core::errors.404',
+                [
+                    'title' => 'Mailing niet gevonden',
+                    'message' => 'De gevraagde mailing bestaat niet.',
+                ],
+                404
+            );
+        }
+
+        if (!$this->canAccessMailing($mailing)) {
+            return $this->forbidden();
+        }
+
         $input = $this->request()->request->all();
 
         try {
@@ -201,6 +281,11 @@ final class MailController extends BaseController
     public function sendShiftPlanning(): Response
     {
         $eventId = $this->routeId();
+
+        if (!$this->access->canManage($eventId)) {
+            return $this->forbidden();
+        }
+
         $input = $this->request()->request->all();
 
         try {
@@ -264,6 +349,29 @@ final class MailController extends BaseController
                 $this->config->get('mail.from_address', ''),
                 FILTER_VALIDATE_EMAIL
             ) !== false;
+    }
+
+    private function canAccessMailing(Mailing $mailing): bool
+    {
+        return Auth::isAdmin()
+            || (
+                $mailing->eventId !== null
+                && $mailing->type === 'manueel'
+                && $mailing->audienceType === 'evenement'
+                && $mailing->createdBy === Auth::id()
+                && $this->access->canManage($mailing->eventId)
+            );
+    }
+
+    private function forbidden(): Response
+    {
+        return $this->view(
+            'core::errors.403',
+            [
+                'message' => 'Je hebt geen toegang tot deze mailing.',
+            ],
+            403
+        );
     }
 
     /**

@@ -6,9 +6,15 @@ namespace App\ViewComposers;
 
 use AEFS\Core\Auth;
 use AEFS\Core\View\Composer\AbstractViewComposer;
+use App\Services\EventAccessService;
 
 final class NavigationViewComposer extends AbstractViewComposer
 {
+    public function __construct(
+        private readonly EventAccessService $eventAccess
+    ) {
+    }
+
     /**
      * @param array<string, mixed> $data
      *
@@ -55,7 +61,7 @@ final class NavigationViewComposer extends AbstractViewComposer
             ],
         ];
 
-        if (Auth::isAdmin()) {
+        if ($this->eventAccess->hasManagementAccess()) {
             $items[] = [
                 'label' => 'Mailings',
                 'path' => '/mailings',

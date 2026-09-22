@@ -8,6 +8,7 @@ use App\Models\Shift;
 /** @var ViewHelpers $helpers */
 /** @var Event $event */
 /** @var bool|null $isAdmin */
+/** @var bool|null $canManageEvent */
 /** @var bool|null $canManageOwnRegistration */
 /** @var EventRegistration|null $registration */
 /** @var EventRegistration[] $registrations */
@@ -15,6 +16,10 @@ use App\Models\Shift;
 /** @var string|null $title */
 
 $isAdmin ??= false;
+$canManageEvent ??= false;
+$missingProfileFields ??= [];
+$profileValues ??= [];
+$openProfileCompletion ??= false;
 $canManageOwnRegistration ??= false;
 $registration ??= null;
 $registrations ??= [];
@@ -29,7 +34,7 @@ $this->extend(
 
 $actions = '';
 
-if ($isAdmin) {
+if ($canManageEvent) {
     $actions = sprintf(
         '<a href="%s" class="btn btn-secondary">Vergoedingsrapport</a>'
         . '<a href="%s" class="btn btn-primary">Shift toevoegen</a>'
@@ -52,7 +57,8 @@ if ($isAdmin) {
     );
 }
 
-$oldDays = $helpers->old->get('dagen', null);
+$oldInput = $helpers->old->all();
+$oldDays = $oldInput['dagen'] ?? null;
 
 if (!is_array($oldDays)) {
     $oldDays = $registration?->dagen ?? [];
@@ -108,7 +114,7 @@ if (
                         <dt>Capaciteit</dt>
                         <dd><?= $this->escape($event->capacityLabel()) ?></dd>
                     </div>
-                    <?php if ($isAdmin): ?>
+                    <?php if ($canManageEvent): ?>
                         <div>
                             <dt>Groepsvergoedingen</dt>
                             <dd>
@@ -165,7 +171,7 @@ if (
                         </dd>
                     </div>
 
-                    <?php if ($isAdmin): ?>
+                    <?php if ($canManageEvent): ?>
                         <div>
                             <dt>Inschrijvingen</dt>
                             <dd><?= $event->aantalInschrijvingen ?></dd>
@@ -330,7 +336,7 @@ if (
         </section>
     <?php endif; ?>
 
-    <?php if ($isAdmin): ?>
+    <?php if ($canManageEvent): ?>
         <section class="card">
             <header class="card__header event-section-header">
                 <div>
@@ -384,7 +390,7 @@ if (
                                                             <?= $this->escape($eventRegistration->displayAnnulatieAangevraagdOp()) ?>
                                                         </span>
 
-                                                        <?php if ($eventRegistration->uitschrijfreden !== null): ?>
+                                                        <?php if ($isAdmin && $eventRegistration->uitschrijfreden !== null): ?>
                                                             <span>
                                                                 Reden: <?= $this->escape($eventRegistration->uitschrijfreden) ?>
                                                             </span>
@@ -478,6 +484,17 @@ if (
                     <a
                         href="<?= $this->escape(
                             $helpers->url->to(
+                                '/mailings/create?event_id=' . $event->eventId
+                            )
+                        ) ?>"
+                        class="btn btn-primary"
+                    >
+                        Deelnemers mailen
+                    </a>
+
+                    <a
+                        href="<?= $this->escape(
+                            $helpers->url->to(
                                 '/shifts/event/' . $event->eventId
                             )
                         ) ?>"
@@ -558,6 +575,117 @@ if (
             </form>
         <?php endif; ?>
     </div>
+
+    <?php if ($missingProfileFields !== []): ?>
+        <dialog
+            class="event-profile-dialog"
+            data-profile-completion-dialog
+            <?= $openProfileCompletion ? 'open' : '' ?>
+        >
+            <form
+                method="post"
+                action="<?= $this->escape(
+                    $helpers->url->to(
+                        '/events/' . $event->eventId
+                        . '/complete-profile-and-register'
+                    )
+                ) ?>"
+                data-profile-completion-form
+            >
+                <?= $helpers->csrf->field() ?>
+
+                <header>
+                    <div>
+                        <h2>Vul je profiel aan</h2>
+                        <p>
+                            Voor een evenementinschrijving hebben we je volledige
+                            persoonsgegevens en adres nodig.
+                        </p>
+                    </div>
+                    <button type="button" class="btn btn-secondary btn-sm" data-close-profile-dialog>
+                        Sluiten
+                    </button>
+                </header>
+
+                <ul class="event-profile-missing-list">
+                    <?php foreach ($missingProfileFields as $label): ?>
+                        <li><?= $this->escape($label) ?></li>
+                    <?php endforeach; ?>
+                </ul>
+
+                <div class="event-profile-fields">
+                    <?php foreach ($missingProfileFields as $field => $label): ?>
+                        <label>
+                            <span><?= $this->escape($label) ?> *</span>
+
+                            <?php if ($field === 'geslacht'): ?>
+                                <?php $genderValue = (string) (
+                                    $oldInput[$field] ?? $profileValues[$field] ?? ''
+                                ); ?>
+                                <select name="geslacht" required>
+                                    <option value="">— Selecteer —</option>
+                                    <option value="M" <?= $genderValue === 'M' ? 'selected' : '' ?>>Man</option>
+                                    <option value="V" <?= $genderValue === 'V' ? 'selected' : '' ?>>Vrouw</option>
+                                    <option value="X" <?= $genderValue === 'X' ? 'selected' : '' ?>>X</option>
+                                </select>
+                            <?php else: ?>
+                                <?php
+                                $type = $field === 'email'
+                                    ? 'email'
+                                    : ($field === 'telefoon' ? 'tel' : 'text');
+                                $autocomplete = match ($field) {
+                                    'voornaam' => 'given-name',
+                                    'achternaam' => 'family-name',
+                                    'email' => 'email',
+                                    'telefoon' => 'tel',
+                                    'geboortedatum' => 'bday',
+                                    'straat' => 'street-address',
+                                    'postcode' => 'postal-code',
+                                    'gemeente' => 'address-level2',
+                                    'land' => 'country-name',
+                                    default => 'off',
+                                };
+                                ?>
+                                <input
+                                    type="<?= $type ?>"
+                                    name="<?= $this->escape($field) ?>"
+                                    value="<?= $this->escape((string) (
+                                        $oldInput[$field]
+                                        ?? $profileValues[$field]
+                                        ?? ''
+                                    )) ?>"
+                                    autocomplete="<?= $autocomplete ?>"
+                                    <?= $field === 'geboortedatum'
+                                        ? 'placeholder="DD/mm/YYYY" maxlength="10"'
+                                        : '' ?>
+                                    required
+                                >
+                            <?php endif; ?>
+                        </label>
+                    <?php endforeach; ?>
+                </div>
+
+                <div data-profile-days>
+                    <?php foreach ($oldDays as $oldDay): ?>
+                        <input
+                            type="hidden"
+                            name="dagen[]"
+                            value="<?= $this->escape((string) $oldDay) ?>"
+                        >
+                    <?php endforeach; ?>
+                </div>
+
+                <footer>
+                    <button type="button" class="btn btn-secondary" data-close-profile-dialog>
+                        Annuleren
+                    </button>
+                    <button type="submit" class="btn btn-success">
+                        Profiel opslaan en inschrijven
+                    </button>
+                </footer>
+            </form>
+        </dialog>
+    <?php endif; ?>
 </div>
 <?php $this->endSection(); ?>
 
@@ -775,6 +903,86 @@ if (
         gap: 1rem;
     }
 
+    .event-profile-dialog {
+        width: min(720px, calc(100% - 2rem));
+        max-height: calc(100vh - 2rem);
+        padding: 0;
+        overflow: auto;
+        border: 0;
+        border-radius: var(--radius-large);
+        box-shadow: 0 24px 70px rgb(15 23 42 / 35%);
+    }
+
+    .event-profile-dialog::backdrop {
+        background: rgb(15 23 42 / 55%);
+    }
+
+    .event-profile-dialog form {
+        display: grid;
+        gap: 1rem;
+        padding: 1.25rem;
+    }
+
+    .event-profile-dialog header,
+    .event-profile-dialog footer {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 1rem;
+    }
+
+    .event-profile-dialog h2,
+    .event-profile-dialog p {
+        margin: 0;
+    }
+
+    .event-profile-dialog p {
+        margin-top: 0.3rem;
+        color: var(--color-text-muted);
+    }
+
+    .event-profile-missing-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.4rem;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    .event-profile-missing-list li {
+        padding: 0.3rem 0.55rem;
+        color: #9a3412;
+        font-size: 0.78rem;
+        font-weight: 700;
+        background: #ffedd5;
+        border-radius: 999px;
+    }
+
+    .event-profile-fields {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.9rem;
+    }
+
+    .event-profile-fields label {
+        display: grid;
+        gap: 0.35rem;
+        font-weight: 700;
+    }
+
+    .event-profile-fields input,
+    .event-profile-fields select {
+        width: 100%;
+        min-height: 42px;
+        padding: 0.65rem 0.75rem;
+        box-sizing: border-box;
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-small);
+        font: inherit;
+        font-weight: 400;
+    }
+
     @media (max-width: 900px) {
         .event-show-grid,
         .event-details,
@@ -804,15 +1012,55 @@ if (
         .event-show-actions form {
             width: 100%;
         }
+
+        .event-profile-fields {
+            grid-template-columns: 1fr;
+        }
+
+        .event-profile-dialog header,
+        .event-profile-dialog footer {
+            align-items: stretch;
+            flex-direction: column;
+        }
     }
 </style>
 <?php $this->endSection(); ?>
 
 <?php $this->startSection('scripts'); ?>
 <script>
+    const profileDialog = document.querySelector('[data-profile-completion-dialog]');
+    const profileForm = document.querySelector('[data-profile-completion-form]');
+    const profileDays = document.querySelector('[data-profile-days]');
+
+    const copySelectedDays = (registrationForm) => {
+        if (!(profileDays instanceof HTMLElement)) {
+            return;
+        }
+
+        profileDays.replaceChildren();
+        registrationForm.querySelectorAll('[data-event-day]:checked').forEach((day) => {
+            const hidden = document.createElement('input');
+            hidden.type = 'hidden';
+            hidden.name = 'dagen[]';
+            hidden.value = day.value;
+            profileDays.append(hidden);
+        });
+    };
+
     document.querySelectorAll('[data-event-registration-form]').forEach((form) => {
         const selectAll = form.querySelector('[data-select-all-event-days]');
         const dayInputs = Array.from(form.querySelectorAll('[data-event-day]'));
+
+        if (profileDialog instanceof HTMLDialogElement) {
+            form.addEventListener('submit', (event) => {
+                event.preventDefault();
+                copySelectedDays(form);
+
+                if (!profileDialog.open) {
+                    profileDialog.showModal();
+                }
+            });
+        }
 
         if (!(selectAll instanceof HTMLInputElement) || dayInputs.length === 0) {
             return;
@@ -834,6 +1082,28 @@ if (
 
         dayInputs.forEach((input) => input.addEventListener('change', updateSelectAll));
         updateSelectAll();
+
     });
+
+    document.querySelectorAll('[data-close-profile-dialog]').forEach((button) => {
+        button.addEventListener('click', () => profileDialog?.close());
+    });
+
+    if (
+        profileDialog instanceof HTMLDialogElement
+        && profileDialog.hasAttribute('open')
+        && typeof profileDialog.showModal === 'function'
+    ) {
+        const registrationForm = document.querySelector(
+            '[data-event-registration-form]'
+        );
+
+        if (registrationForm instanceof HTMLFormElement) {
+            copySelectedDays(registrationForm);
+        }
+
+        profileDialog.close();
+        profileDialog.showModal();
+    }
 </script>
 <?php $this->endSection(); ?>

@@ -26,6 +26,34 @@ $this->extend(
     ]
 );
 
+$planningNow = new DateTimeImmutable();
+
+usort(
+    $shifts,
+    static function (Shift $left, Shift $right) use ($planningNow): int {
+        $leftGroup = !$left->isActief()
+            ? 2
+            : ($left->isAfgelopen($planningNow) ? 1 : 0);
+        $rightGroup = !$right->isActief()
+            ? 2
+            : ($right->isAfgelopen($planningNow) ? 1 : 0);
+
+        if ($leftGroup !== $rightGroup) {
+            return $leftGroup <=> $rightGroup;
+        }
+
+        $dateComparison = strcmp($left->startOp, $right->startOp);
+
+        if ($dateComparison !== 0) {
+            return $leftGroup === 0
+                ? $dateComparison
+                : -$dateComparison;
+        }
+
+        return $left->shiftId <=> $right->shiftId;
+    }
+);
+
 $shiftCountByEvent = [];
 
 foreach ($shifts as $shift) {
@@ -38,6 +66,7 @@ $activeShifts = count(
     array_filter(
         $shifts,
         static fn(Shift $shift): bool => $shift->isActief()
+            && !$shift->isAfgelopen($planningNow)
     )
 );
 $confirmedTotal = array_sum(
@@ -180,7 +209,7 @@ $actions = $isAdmin
             <header class="card__header shift-card-header">
                 <div>
                     <h2 class="card__title">Alle shifts</h2>
-                    <p>Overzicht van alle ingeplande functies en hun bezetting.</p>
+                    <p>Lopende en komende shifts staan bovenaan; afgeronde en geannuleerde shifts volgen onderaan.</p>
                 </div>
             </header>
 

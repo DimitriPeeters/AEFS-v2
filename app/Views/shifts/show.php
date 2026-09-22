@@ -291,7 +291,9 @@ if ($isAdmin) {
                                 <tr>
                                     <th>Vrijwilliger</th>
                                     <th>Status</th>
-                                    <th>Opmerking</th>
+                                    <?php if (\AEFS\Core\Auth::isAdmin()): ?>
+                                        <th>Opmerking</th>
+                                    <?php endif; ?>
                                     <th>Aanwezig</th>
                                     <th>Acties</th>
                                 </tr>
@@ -310,11 +312,13 @@ if ($isAdmin) {
                                                 <?= $this->escape($registration->statusLabel()) ?>
                                             </span>
                                         </td>
-                                        <td>
-                                            <?= $registration->opmerkingLid !== null
-                                                ? nl2br($this->escape($registration->opmerkingLid))
-                                                : '<span class="shift-cell-muted">Geen</span>' ?>
-                                        </td>
+                                        <?php if (\AEFS\Core\Auth::isAdmin()): ?>
+                                            <td>
+                                                <?= $registration->opmerkingLid !== null
+                                                    ? nl2br($this->escape($registration->opmerkingLid))
+                                                    : '<span class="shift-cell-muted">Geen</span>' ?>
+                                            </td>
+                                        <?php endif; ?>
                                         <td>
                                             <?php if ($registration->isBevestigd()): ?>
                                                 <form

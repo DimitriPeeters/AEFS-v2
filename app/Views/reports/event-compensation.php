@@ -16,6 +16,7 @@ $events ??= [];
 $selectedEventId ??= 0;
 $selectedGroupKey ??= null;
 $report ??= null;
+$canExport ??= false;
 
 $event = $report['event'] ?? null;
 $dates = $report['dates'] ?? [];
@@ -43,15 +44,17 @@ if ($event instanceof Event) {
         $exportQuery['groep'] = $selectedGroupKey;
     }
 
-    $actions .= sprintf(
-        ' <a class="btn btn-secondary" href="%s">Excel exporteren</a>',
-        $this->escape(
-            $helpers->url->to(
-                '/reports/event-compensation/export?'
-                . http_build_query($exportQuery)
+    if ($canExport) {
+        $actions .= sprintf(
+            ' <a class="btn btn-secondary" href="%s">Excel exporteren</a>',
+            $this->escape(
+                $helpers->url->to(
+                    '/reports/event-compensation/export?'
+                    . http_build_query($exportQuery)
+                )
             )
-        )
-    );
+        );
+    }
     $actions .= ' <button class="btn btn-primary" type="button" data-print-report>Afdrukken / PDF</button>';
 }
 

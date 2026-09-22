@@ -12,6 +12,7 @@ use App\Models\Event;
 $events ??= [];
 $zoekterm ??= '';
 $isAdmin ??= false;
+$manageableEventIds ??= [];
 
 $this->extend(
     'layouts.app',
@@ -66,6 +67,7 @@ if ($isAdmin) {
                 [
                     'events' => $events,
                     'isAdmin' => $isAdmin,
+                    'manageableEventIds' => $manageableEventIds,
                 ]
             ),
         ]

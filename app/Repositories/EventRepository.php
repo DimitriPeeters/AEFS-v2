@@ -93,15 +93,18 @@ final class EventRepository
     /**
      * @return Event[]
      */
-    public function visibleToMembers(): array
+    public function visibleToMembers(int $memberId): array
     {
-        $statement = $this->database->query(
+        $statement = $this->database->prepare(
             self::SELECT_EVENT
             . PHP_EOL
             . "WHERE e.status <> 'concept'"
             . PHP_EOL
+            . 'AND ' . $this->memberVisibilityCondition()
+            . PHP_EOL
             . self::ORDER_EVENTS
         );
+        $statement->execute(['visible_lid_id' => $memberId]);
 
         return $this->mapRows(
             $statement->fetchAll(PDO::FETCH_ASSOC)
@@ -132,11 +135,15 @@ final class EventRepository
     /**
      * @return Event[]
      */
-    public function searchVisibleToMembers(string $zoekterm): array
+    public function searchVisibleToMembers(
+        string $zoekterm,
+        int $memberId
+    ): array
     {
         return $this->searchByVisibility(
             $zoekterm,
-            true
+            true,
+            $memberId
         );
     }
 
@@ -148,12 +155,91 @@ final class EventRepository
         );
     }
 
-    public function findVisibleToMembers(int $id): ?Event
+    public function findVisibleToMembers(
+        int $id,
+        int $memberId
+    ): ?Event
     {
         return $this->findByVisibility(
             $id,
-            true
+            true,
+            $memberId
         );
+    }
+
+    /** @return Event[] */
+    public function visibleOrManagedForMember(
+        int $memberId,
+        string $search = ''
+    ): array {
+        $conditions = [
+            '('
+            . "(e.status <> 'concept' AND "
+            . $this->memberVisibilityCondition()
+            . ') OR EXISTS ('
+            . 'SELECT 1 FROM event_beheerders eb '
+            . 'INNER JOIN leden manager ON manager.lid_id = eb.lid_id '
+            . 'WHERE eb.event_id = e.event_id AND eb.lid_id = :manager_lid_id '
+            . 'AND manager.actief = 1 '
+            . 'AND EXISTS (SELECT 1 FROM gebruikers manager_user '
+            . 'WHERE manager_user.lid_id = eb.lid_id '
+            . 'AND manager_user.actief = 1 '
+            . "AND manager_user.rol = 'lid' "
+            . "AND manager_user.goedkeuringsstatus = 'goedgekeurd')"
+            . '))',
+        ];
+        $parameters = [
+            'visible_lid_id' => $memberId,
+            'manager_lid_id' => $memberId,
+        ];
+
+        if (trim($search) !== '') {
+            $conditions[] = '('
+                . 'e.titel LIKE :zoek_titel '
+                . 'OR e.beschrijving LIKE :zoek_beschrijving '
+                . 'OR e.locatie LIKE :zoek_locatie'
+                . ')';
+            $value = '%' . trim($search) . '%';
+            $parameters['zoek_titel'] = $value;
+            $parameters['zoek_beschrijving'] = $value;
+            $parameters['zoek_locatie'] = $value;
+        }
+
+        $statement = $this->database->prepare(
+            self::SELECT_EVENT
+            . PHP_EOL
+            . 'WHERE ' . implode(' AND ', $conditions)
+            . PHP_EOL
+            . self::ORDER_EVENTS
+        );
+        $statement->execute($parameters);
+
+        return $this->mapRows($statement->fetchAll(PDO::FETCH_ASSOC));
+    }
+
+    /** @return Event[] */
+    public function managedByMember(int $memberId): array
+    {
+        $statement = $this->database->prepare(
+            self::SELECT_EVENT
+            . PHP_EOL
+            . 'WHERE EXISTS ('
+            . 'SELECT 1 FROM event_beheerders eb '
+            . 'INNER JOIN leden manager ON manager.lid_id = eb.lid_id '
+            . 'WHERE eb.event_id = e.event_id AND eb.lid_id = :lid_id '
+            . 'AND manager.actief = 1 '
+            . 'AND EXISTS (SELECT 1 FROM gebruikers manager_user '
+            . 'WHERE manager_user.lid_id = eb.lid_id '
+            . 'AND manager_user.actief = 1 '
+            . "AND manager_user.rol = 'lid' "
+            . "AND manager_user.goedkeuringsstatus = 'goedgekeurd')"
+            . ')'
+            . PHP_EOL
+            . self::ORDER_EVENTS
+        );
+        $statement->execute(['lid_id' => $memberId]);
+
+        return $this->mapRows($statement->fetchAll(PDO::FETCH_ASSOC));
     }
 
     public function lockForUpdate(int $id): ?Event
@@ -304,7 +390,8 @@ final class EventRepository
      */
     private function searchByVisibility(
         string $zoekterm,
-        bool $membersOnly
+        bool $membersOnly,
+        int $memberId = 0
     ): array {
         $conditions = [
             '('
@@ -316,6 +403,7 @@ final class EventRepository
 
         if ($membersOnly) {
             $conditions[] = "e.status <> 'concept'";
+            $conditions[] = $this->memberVisibilityCondition();
         }
 
         $sql = self::SELECT_EVENT
@@ -327,11 +415,17 @@ final class EventRepository
 
         $zoek = '%' . trim($zoekterm) . '%';
         $statement = $this->database->prepare($sql);
-        $statement->execute([
+        $parameters = [
             'zoek_titel' => $zoek,
             'zoek_beschrijving' => $zoek,
             'zoek_locatie' => $zoek,
-        ]);
+        ];
+
+        if ($membersOnly) {
+            $parameters['visible_lid_id'] = $memberId;
+        }
+
+        $statement->execute($parameters);
 
         return $this->mapRows(
             $statement->fetchAll(PDO::FETCH_ASSOC)
@@ -340,7 +434,8 @@ final class EventRepository
 
     private function findByVisibility(
         int $id,
-        bool $membersOnly
+        bool $membersOnly,
+        int $memberId = 0
     ): ?Event {
         $conditions = [
             'e.event_id = :event_id',
@@ -348,6 +443,7 @@ final class EventRepository
 
         if ($membersOnly) {
             $conditions[] = "e.status <> 'concept'";
+            $conditions[] = $this->memberVisibilityCondition();
         }
 
         $sql = self::SELECT_EVENT
@@ -358,9 +454,15 @@ final class EventRepository
             . 'LIMIT 1';
 
         $statement = $this->database->prepare($sql);
-        $statement->execute([
+        $parameters = [
             'event_id' => $id,
-        ]);
+        ];
+
+        if ($membersOnly) {
+            $parameters['visible_lid_id'] = $memberId;
+        }
+
+        $statement->execute($parameters);
 
         $row = $statement->fetch(PDO::FETCH_ASSOC);
 
@@ -380,5 +482,26 @@ final class EventRepository
             fn(array $row): Event => $this->mapper->fromDatabase($row),
             $rows
         );
+    }
+
+    private function memberVisibilityCondition(): string
+    {
+        return <<<'SQL'
+            (
+                NOT EXISTS (
+                    SELECT 1
+                    FROM event_groepen visibility_group
+                    WHERE visibility_group.event_id = e.event_id
+                )
+                OR EXISTS (
+                    SELECT 1
+                    FROM event_groepen visibility_group
+                    INNER JOIN leden_groepen member_group
+                        ON member_group.groep_id = visibility_group.groep_id
+                    WHERE visibility_group.event_id = e.event_id
+                      AND member_group.lid_id = :visible_lid_id
+                )
+            )
+            SQL;
     }
 }

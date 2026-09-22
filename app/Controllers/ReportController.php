@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
+use AEFS\Core\Auth;
 use AEFS\Core\Http\Request;
 use AEFS\Core\Http\Response;
 use AEFS\Core\View\ViewFactory;
 use App\Services\ReportExcelExportService;
+use App\Services\EventAccessService;
 use App\Services\ReportService;
 
 final class ReportController extends BaseController
@@ -16,6 +18,7 @@ final class ReportController extends BaseController
         ViewFactory $views,
         Request $request,
         private readonly ReportService $service,
+        private readonly EventAccessService $access,
         private readonly ReportExcelExportService $excelExport
     ) {
         parent::__construct($views, $request);
@@ -23,6 +26,10 @@ final class ReportController extends BaseController
 
     public function index(): Response
     {
+        if (!$this->access->hasManagementAccess()) {
+            return $this->forbidden();
+        }
+
         return $this->view(
             'reports.index',
             [
@@ -33,6 +40,10 @@ final class ReportController extends BaseController
 
     public function shiftAttendance(): Response
     {
+        if (!$this->access->hasManagementAccess()) {
+            return $this->forbidden();
+        }
+
         $shiftId = max(
             0,
             (int) $this->request()->query->get('shift_id', 0)
@@ -52,6 +63,13 @@ final class ReportController extends BaseController
             );
         }
 
+        if (
+            $report !== null
+            && !$this->access->canManage($report['shift']->eventId)
+        ) {
+            return $this->forbidden();
+        }
+
         return $this->view(
             'reports.shift-attendance',
             [
@@ -66,11 +84,19 @@ final class ReportController extends BaseController
 
     public function eventCompensation(): Response
     {
+        if (!$this->access->hasManagementAccess()) {
+            return $this->forbidden();
+        }
+
         $eventId = max(
             0,
             (int) $this->request()->query->get('event_id', 0)
         );
         $groupKey = $this->selectedGroupKey();
+
+        if ($eventId > 0 && !$this->access->canManage($eventId)) {
+            return $this->forbidden();
+        }
         $report = $eventId > 0
             ? $this->service->eventCompensation(
                 $eventId,
@@ -98,6 +124,7 @@ final class ReportController extends BaseController
                 'selectedGroupKey' => $report['selected_group_key']
                     ?? null,
                 'report' => $report,
+                'canExport' => Auth::isAdmin(),
             ]
         );
     }
@@ -147,5 +174,14 @@ final class ReportController extends BaseController
         }
 
         return $value;
+    }
+
+    private function forbidden(): Response
+    {
+        return $this->view(
+            'core::errors.403',
+            ['message' => 'Je hebt geen toegang tot dit rapport.'],
+            403
+        );
     }
 }

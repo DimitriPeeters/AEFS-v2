@@ -10,15 +10,38 @@ use App\Support\BelgianDateTime;
 /** @var Event|null $event */
 /** @var ShiftType[] $shiftTypes */
 /** @var Shift[] $shifts */
+/** @var array<int, array{id: int, label: string}> $publicationGroups */
+/** @var array<int, array{id: int, label: string, email: string}> $managerOptions */
+/** @var array<int, array{id: int, label: string}> $visibilityGroupOptions */
 
 $event ??= null;
 $shiftTypes ??= [];
 $shifts ??= [];
+$publicationGroups ??= [];
+$canManageAssignments ??= false;
+$managerOptions ??= [];
+$visibilityGroupOptions ??= [];
+$selectedManagerIds ??= [];
+$selectedVisibilityGroupIds ??= [];
 $defaultShiftCompensation ??= Shift::DEFAULT_COMPENSATION;
 $defaultGroupSupplement ??= '10.00';
 $defaultEventUsesGroups ??= false;
 
 $oldInput = $helpers->old->all();
+
+if (array_key_exists('eventbeheerder_ids', $oldInput)) {
+    $selectedManagerIds = array_map(
+        'intval',
+        (array) $oldInput['eventbeheerder_ids']
+    );
+}
+
+if (array_key_exists('zichtbare_groep_ids', $oldInput)) {
+    $selectedVisibilityGroupIds = array_map(
+        'intval',
+        (array) $oldInput['zichtbare_groep_ids']
+    );
+}
 
 $value = static function (
     string $key,
@@ -69,6 +92,18 @@ $status = (string) $value(
     'status',
     $event?->status ?? Event::STATUS_CONCEPT
 );
+
+$publicationAudience = (string) $value(
+    'publicatie_doelgroep',
+    'alle_leden'
+);
+
+$publicationGroupId = (int) $value(
+    'publicatie_groep_id',
+    0
+);
+
+$canChoosePublicationAudience = !($event?->isPublished() ?? false);
 
 $werktMetGroepen = filter_var(
     $value(
@@ -217,6 +252,177 @@ $oldShiftRows = is_array($oldShiftRows)
                     'max_deelnemers'
                 ) ?>
             </div>
+
+            <?php if ($canChoosePublicationAudience): ?>
+                <fieldset
+                    class="event-publication-audience event-form-field--full"
+                    data-event-publication-audience
+                >
+                    <legend>Publicatiemail</legend>
+
+                    <p>
+                        Bij deze publicatie wordt automatisch één uitnodiging
+                        klaargezet voor de gekozen doelgroep.
+                    </p>
+
+                    <div class="event-publication-audience__options">
+                        <label class="event-publication-audience__option">
+                            <input
+                                type="radio"
+                                name="publicatie_doelgroep"
+                                value="alle_leden"
+                                <?= $publicationAudience !== 'groep'
+                                    || $publicationGroups === []
+                                    ? 'checked'
+                                    : '' ?>
+                            >
+
+                            <span>
+                                <strong>Alle actieve leden</strong>
+                                <small>
+                                    De mail wordt klaargezet voor alle actieve leden
+                                    die dit evenement mogen zien en een geldig e-mailadres hebben.
+                                </small>
+                            </span>
+                        </label>
+
+                        <label class="event-publication-audience__option">
+                            <input
+                                type="radio"
+                                name="publicatie_doelgroep"
+                                value="groep"
+                                data-publication-group-choice
+                                <?= $publicationAudience === 'groep'
+                                    && $publicationGroups !== []
+                                    ? 'checked'
+                                    : '' ?>
+                                <?= $publicationGroups === []
+                                    ? 'disabled'
+                                    : '' ?>
+                            >
+
+                            <span>
+                                <strong>Eén ledengroep</strong>
+                                <small>
+                                    Alleen de actieve leden van de gekozen groep
+                                    ontvangen de publicatiemail.
+                                </small>
+                            </span>
+                        </label>
+                    </div>
+
+                    <div class="form-group event-publication-audience__group">
+                        <label class="form-label" for="publicatie_groep_id">
+                            Ledengroep
+                        </label>
+
+                        <select
+                            class="form-control"
+                            id="publicatie_groep_id"
+                            name="publicatie_groep_id"
+                            data-publication-group-select
+                            <?= $publicationGroups === []
+                                ? 'disabled'
+                                : '' ?>
+                        >
+                            <option value="">Kies een ledengroep</option>
+
+                            <?php foreach ($publicationGroups as $group): ?>
+                                <option
+                                    value="<?= (int) $group['id'] ?>"
+                                    <?= $publicationGroupId === (int) $group['id']
+                                        ? 'selected'
+                                        : '' ?>
+                                >
+                                    <?= $this->escape($group['label']) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+
+                        <?php if ($publicationGroups === []): ?>
+                            <small class="event-form-help">
+                                Er zijn nog geen ledengroepen beschikbaar.
+                            </small>
+                        <?php endif; ?>
+                    </div>
+
+                    <small class="event-publication-audience__notice">
+                        Deze keuze bepaalt alleen wie de eenmalige publicatiemail ontvangt.
+                        De permanente zichtbaarheid wordt hieronder afzonderlijk ingesteld.
+                    </small>
+                </fieldset>
+            <?php endif; ?>
+
+            <?php if ($canManageAssignments): ?>
+                <fieldset class="event-access-control event-form-field--full">
+                    <legend>Toegang en beheer</legend>
+
+                    <div class="event-access-control__grid">
+                        <div class="form-group">
+                            <label class="form-label" for="eventbeheerder_ids">
+                                Eventbeheerders
+                            </label>
+                            <input type="hidden" name="eventbeheerder_ids[]" value="">
+                            <select
+                                class="form-control"
+                                id="eventbeheerder_ids"
+                                name="eventbeheerder_ids[]"
+                                multiple
+                                size="6"
+                            >
+                                <?php foreach ($managerOptions as $manager): ?>
+                                    <option
+                                        value="<?= (int) $manager['id'] ?>"
+                                        <?= in_array(
+                                            (int) $manager['id'],
+                                            $selectedManagerIds,
+                                            true
+                                        ) ? 'selected' : '' ?>
+                                    >
+                                        <?= $this->escape($manager['label']) ?>
+                                        · <?= $this->escape($manager['email']) ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                            <small class="event-form-help">
+                                Optioneel. Deze leden beheren uitsluitend dit evenement,
+                                de bijbehorende shifts, beperkte rapporten en mailings.
+                            </small>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="zichtbare_groep_ids">
+                                Zichtbaar voor ledengroepen
+                            </label>
+                            <input type="hidden" name="zichtbare_groep_ids[]" value="">
+                            <select
+                                class="form-control"
+                                id="zichtbare_groep_ids"
+                                name="zichtbare_groep_ids[]"
+                                multiple
+                                size="6"
+                            >
+                                <?php foreach ($visibilityGroupOptions as $group): ?>
+                                    <option
+                                        value="<?= (int) $group['id'] ?>"
+                                        <?= in_array(
+                                            (int) $group['id'],
+                                            $selectedVisibilityGroupIds,
+                                            true
+                                        ) ? 'selected' : '' ?>
+                                    >
+                                        <?= $this->escape($group['label']) ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                            <small class="event-form-help">
+                                Geen selectie betekent zichtbaar voor alle leden.
+                                Met één of meer groepen zien alleen leden van die groepen het evenement.
+                            </small>
+                        </div>
+                    </div>
+                </fieldset>
+            <?php endif; ?>
 
             <div class="form-group event-form-field--full">
                 <input type="hidden" name="werkt_met_groepen" value="0">
@@ -516,6 +722,88 @@ $oldShiftRows = is_array($oldShiftRows)
         line-height: 1.45;
     }
 
+    .event-access-control {
+        padding: 1rem;
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-medium);
+    }
+
+    .event-access-control legend {
+        padding: 0 0.35rem;
+        font-weight: 800;
+    }
+
+    .event-access-control__grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1rem;
+    }
+
+    .event-publication-audience {
+        min-width: 0;
+        margin: 0;
+        padding: 1rem;
+        background: #f8fafc;
+        border: 1px solid var(--color-border, #e2e8f0);
+        border-radius: var(--radius-medium, 0.5rem);
+    }
+
+    .event-publication-audience legend {
+        padding: 0 0.35rem;
+        font-weight: 700;
+    }
+
+    .event-publication-audience > p {
+        margin: 0 0 0.85rem;
+        color: var(--color-text-muted, #64748b);
+    }
+
+    .event-publication-audience__options {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.75rem;
+    }
+
+    .event-publication-audience__option {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.75rem;
+        padding: 0.85rem;
+        cursor: pointer;
+        background: #fff;
+        border: 1px solid var(--color-border, #e2e8f0);
+        border-radius: var(--radius-medium, 0.5rem);
+    }
+
+    .event-publication-audience__option input {
+        width: 18px;
+        height: 18px;
+        flex: 0 0 auto;
+        margin-top: 0.1rem;
+    }
+
+    .event-publication-audience__option span,
+    .event-publication-audience__option small {
+        display: block;
+    }
+
+    .event-publication-audience__option small,
+    .event-publication-audience__notice {
+        margin-top: 0.2rem;
+        color: var(--color-text-muted, #64748b);
+        line-height: 1.4;
+    }
+
+    .event-publication-audience__group {
+        max-width: 34rem;
+        margin-top: 0.9rem;
+    }
+
+    .event-publication-audience__notice {
+        display: block;
+        margin-top: 0.85rem;
+    }
+
     .event-form-help {
         display: block;
         margin-top: 0.1rem;
@@ -611,8 +899,16 @@ $oldShiftRows = is_array($oldShiftRows)
             grid-template-columns: 1fr;
         }
 
+        .event-access-control__grid {
+            grid-template-columns: 1fr;
+        }
+
         .event-form-field--full {
             grid-column: auto;
+        }
+
+        .event-publication-audience__options {
+            grid-template-columns: 1fr;
         }
 
         .event-form-actions {
@@ -641,6 +937,58 @@ $oldShiftRows = is_array($oldShiftRows)
 </style>
 
 <script>
+    (() => {
+        const status = document.querySelector('#status');
+        const audience = document.querySelector(
+            '[data-event-publication-audience]'
+        );
+
+        if (!(status instanceof HTMLSelectElement)
+            || !(audience instanceof HTMLFieldSetElement)
+        ) {
+            return;
+        }
+
+        const groupChoice = audience.querySelector(
+            '[data-publication-group-choice]'
+        );
+        const groupSelect = audience.querySelector(
+            '[data-publication-group-select]'
+        );
+        const choices = audience.querySelectorAll(
+            'input[name="publicatie_doelgroep"]'
+        );
+
+        const updateGroupSelect = () => {
+            if (!(groupChoice instanceof HTMLInputElement)
+                || !(groupSelect instanceof HTMLSelectElement)
+            ) {
+                return;
+            }
+
+            const enabled = !audience.disabled
+                && !groupChoice.disabled
+                && groupChoice.checked;
+
+            groupSelect.disabled = !enabled;
+            groupSelect.required = enabled;
+        };
+
+        const updateAudience = () => {
+            const publishes = status.value === 'gepubliceerd';
+
+            audience.hidden = !publishes;
+            audience.disabled = !publishes;
+            updateGroupSelect();
+        };
+
+        choices.forEach((choice) => {
+            choice.addEventListener('change', updateGroupSelect);
+        });
+        status.addEventListener('change', updateAudience);
+        updateAudience();
+    })();
+
     (() => {
         const builder = document.querySelector('[data-event-shift-builder]');
 

@@ -23,6 +23,7 @@ $openProfileCompletion ??= false;
 $canManageOwnRegistration ??= false;
 $registration ??= null;
 $registrations ??= [];
+$memberOptions ??= [];
 $shifts ??= [];
 
 $this->extend(
@@ -359,6 +360,46 @@ if (
             </header>
 
             <div class="card__body event-table-body">
+                <?php if (!$event->isPast() && in_array($event->status, ['gepubliceerd', 'afgesloten'], true)): ?>
+                    <div class="event-manual-registration">
+                        <h3>Bestaand lid toevoegen</h3>
+                        <p class="event-muted">
+                            Het lid wordt meteen bevestigd voor de gekozen dagen. Wijs het daarna toe aan een shift;
+                            bij een bevestigde toewijzing komt de persoonlijke planningsmail in de wachtrij.
+                        </p>
+                        <?php if ($memberOptions === []): ?>
+                            <p>Er zijn geen beschikbare leden die voor dit evenement in aanmerking komen.</p>
+                        <?php else: ?>
+                            <form method="post" action="<?= $this->escape($helpers->url->to('/events/' . $event->eventId . '/add-member')) ?>">
+                                <?= $helpers->csrf->field() ?>
+                                <div class="form-group">
+                                    <label for="manual_member_id" class="form-label">Bestaand lid</label>
+                                    <select id="manual_member_id" name="lid_id" class="form-control" required>
+                                        <option value="">Kies een lid</option>
+                                        <?php foreach ($memberOptions as $memberOption): ?>
+                                            <option value="<?= (int) $memberOption['id'] ?>">
+                                                <?= $this->escape($memberOption['label'] . ' · ' . $memberOption['email']) ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+                                <fieldset>
+                                    <legend>Beschikbaar op</legend>
+                                    <div class="event-day-grid">
+                                        <?php foreach ($event->dates() as $date): ?>
+                                            <label class="event-day-option">
+                                                <input type="checkbox" name="dagen[]" value="<?= $this->escape($date) ?>"
+                                                    <?= $event->duurtMeerdereDagen() ? '' : 'checked' ?>>
+                                                <span><?= $this->escape((new DateTimeImmutable($date))->format('d/m/Y')) ?></span>
+                                            </label>
+                                        <?php endforeach; ?>
+                                    </div>
+                                </fieldset>
+                                <button type="submit" class="btn btn-success">Lid bevestigen voor evenement</button>
+                            </form>
+                        <?php endif; ?>
+                    </div>
+                <?php endif; ?>
                 <?php if ($registrations === []): ?>
                     <?= $this->component(
                         'empty-state',
@@ -870,6 +911,31 @@ if (
         padding-top: 0;
     }
 
+    .event-manual-registration {
+        padding: 1.25rem 0;
+        margin-bottom: 1.25rem;
+        border-bottom: 1px solid var(--color-border);
+    }
+
+    .event-manual-registration form {
+        display: grid;
+        gap: 1rem;
+    }
+
+    .event-manual-registration fieldset {
+        padding: 0;
+        border: 0;
+    }
+
+    .event-manual-registration legend {
+        margin-bottom: 0.8rem;
+        font-weight: 700;
+    }
+
+    .event-manual-registration .btn {
+        width: max-content;
+    }
+
     .event-table-muted {
         display: block;
         margin-top: 0.2rem;
@@ -1010,6 +1076,10 @@ if (
     }
 
     @media (max-width: 620px) {
+        .event-manual-registration .btn {
+            width: 100%;
+        }
+
         .event-day-grid {
             grid-template-columns: 1fr;
         }

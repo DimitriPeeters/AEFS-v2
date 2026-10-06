@@ -118,6 +118,69 @@ final class EventRegistrationRepository
     }
 
     /**
+     * @return array<int, array{id: int, label: string, email: string}>
+     */
+    public function membersAvailableForManualRegistration(int $eventId): array
+    {
+        $statement = $this->database->prepare(<<<'SQL'
+            SELECT
+                l.lid_id AS id,
+                CONCAT_WS(', ', TRIM(l.achternaam), TRIM(l.voornaam)) AS label,
+                LOWER(TRIM(l.email)) AS email
+            FROM leden l
+            WHERE l.actief = 1
+              AND l.email IS NOT NULL
+              AND TRIM(l.email) <> ''
+              AND l.email REGEXP '^[^[:space:]@]+@[^[:space:]@]+\\.[^[:space:]@]+$'
+              AND EXISTS (
+                  SELECT 1 FROM gebruikers u
+                  WHERE u.lid_id = l.lid_id
+                    AND u.actief = 1
+                    AND u.goedkeuringsstatus = 'goedgekeurd'
+              )
+              AND NOT EXISTS (
+                  SELECT 1 FROM gebruikers blacklist
+                  WHERE blacklist.lid_id = l.lid_id
+                    AND blacklist.mail_blacklist = 1
+              )
+              AND (
+                  NOT EXISTS (
+                      SELECT 1 FROM event_groepen eg
+                      WHERE eg.event_id = :visibility_event_id
+                  )
+                  OR EXISTS (
+                      SELECT 1 FROM event_groepen eg
+                      INNER JOIN leden_groepen lg ON lg.groep_id = eg.groep_id
+                      WHERE eg.event_id = :member_event_id
+                        AND lg.lid_id = l.lid_id
+                  )
+              )
+              AND NOT EXISTS (
+                  SELECT 1 FROM event_inschrijvingen ei
+                  WHERE ei.event_id = :registration_event_id
+                    AND ei.lid_id = l.lid_id
+                    AND ei.uitgeschreven_op IS NULL
+                    AND ei.status <> 'geweigerd'
+              )
+            ORDER BY l.achternaam ASC, l.voornaam ASC, l.lid_id ASC
+            SQL);
+        $statement->execute([
+            'visibility_event_id' => $eventId,
+            'member_event_id' => $eventId,
+            'registration_event_id' => $eventId,
+        ]);
+
+        return array_map(
+            static fn(array $row): array => [
+                'id' => (int) $row['id'],
+                'label' => (string) $row['label'],
+                'email' => (string) $row['email'],
+            ],
+            $statement->fetchAll(PDO::FETCH_ASSOC)
+        );
+    }
+
+    /**
      * @return EventRegistration[]
      */
     public function findConfirmedEligibleForShift(

@@ -117,6 +117,11 @@ final class EventController extends BaseController
                 'registrations' => $canManageEvent
                     ? $this->service->registrationsForEvent($id)
                     : [],
+                'memberOptions' => $canManageEvent
+                    && !$event->isPast()
+                    && in_array($event->status, ['gepubliceerd', 'afgesloten'], true)
+                    ? $this->service->membersAvailableForManualRegistration($id)
+                    : [],
                 'shifts' => $canManageEvent
                     ? $this->service->shiftsForEvent($id)
                     : [],
@@ -453,6 +458,36 @@ final class EventController extends BaseController
             },
             'De evenementinschrijving werd bevestigd.'
         );
+    }
+
+    public function addMember(): Response
+    {
+        $eventId = $this->routeId();
+
+        if (!$this->access->canManage($eventId)) {
+            return $this->forbidden();
+        }
+
+        $input = $this->request()->request->all();
+
+        try {
+            $this->validateCsrf($input);
+            $data = (new EventRegistrationRequest($input))->all();
+            $memberId = filter_var($input['lid_id'] ?? null, FILTER_VALIDATE_INT);
+
+            $this->service->addMemberByManager(
+                $eventId,
+                $memberId !== false ? (int) $memberId : 0,
+                $data['dagen']
+            );
+            $this->success(
+                'Het lid werd bevestigd voor dit evenement. Je kunt het nu aan een shift toewijzen.'
+            );
+        } catch (Throwable $throwable) {
+            $this->error($throwable->getMessage());
+        }
+
+        return $this->redirect('/events/' . $eventId);
     }
 
     public function reserveRegistration(): Response

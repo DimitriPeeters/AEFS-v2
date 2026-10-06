@@ -35,6 +35,11 @@ $router
     ->name('events.register');
 
 $router
+    ->post('/events/{id}/add-member', [EventController::class, 'addMember'])
+    ->middleware(AuthMiddleware::class)
+    ->name('events.add-member');
+
+$router
     ->post(
         '/events/{id}/complete-profile-and-register',
         [EventController::class, 'completeProfileAndRegister']

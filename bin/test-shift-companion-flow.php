@@ -328,7 +328,90 @@ try {
     } catch (DomainException) {
     }
 
-    echo "Controller- en servicestroom geslaagd: bevestiging, batchmail, aflevering, profiel, recursieve popup, toegangsrechten, capaciteit, eventdagen, rapport, Excel en deadline.\n";
+    $database->execute(<<<'SQL'
+        INSERT INTO evenementen (titel, startdatum, einddatum, status)
+        VALUES ('AEFS handmatige toewijzingstest', :startdatum, :einddatum, 'gepubliceerd')
+        SQL, ['startdatum' => $date, 'einddatum' => $nextDate]);
+    $manualEventId = (int) $pdo->lastInsertId();
+    $database->execute(<<<'SQL'
+        INSERT INTO event_beheerders (event_id, lid_id, aangemaakt_door)
+        VALUES (:event_id, :lid_id, :admin_id)
+        SQL, [
+            'event_id' => $manualEventId,
+            'lid_id' => $ids[0],
+            'admin_id' => $admin['gebruiker_id'],
+        ]);
+    $database->execute(<<<'SQL'
+        INSERT INTO shifts (event_id, type_id, naam, start_op, eind_op, max_personen)
+        VALUES (:event_id, :type_id, 'Handmatige testshift', :start_op, :eind_op, 2)
+        SQL, [
+            'event_id' => $manualEventId,
+            'type_id' => $typeId,
+            'start_op' => "$date 12:00:00",
+            'eind_op' => "$date 18:00:00",
+        ]);
+    $manualShiftId = (int) $pdo->lastInsertId();
+    $options = $eventService->membersAvailableForManualRegistration($manualEventId);
+    $profiles = $container->get(EventRegistrationProfileService::class);
+    $candidate = null;
+    foreach ($options as $option) {
+        if ($option['id'] !== $ids[0]
+            && $profiles->missingFields($option['id']) === []
+            && $policy->allows($option['email'])
+        ) {
+            $candidate = $option;
+            break;
+        }
+    }
+    $assert($candidate !== null, 'Er is geen compleet, mailbaar lokaal testlid voor de handmatige flow.');
+    $asUser((int) $admin['gebruiker_id'], $ids[2], 'lid', (string) $members[2]['email']);
+    $memberPage = $eventController($newRequest([], [], ['id' => $manualEventId]))->show();
+    $assert(!str_contains($memberPage->content(), 'Bestaand lid toevoegen'),
+        'Een gewoon lid ziet de handmatige beheeractie.');
+    $denied = $eventController($newRequest([], [
+        '_token' => $csrf->token(),
+        'lid_id' => (string) $candidate['id'],
+        'dagen' => [$date],
+    ], ['id' => $manualEventId]))->addMember();
+    $assert($denied->status() === 403, 'Een niet-toegewezen lid kan een eventlid toevoegen.');
+
+    $asUser((int) $admin['gebruiker_id'], $ids[0], 'lid', (string) $members[0]['email']);
+    $managerPage = $eventController($newRequest([], [], ['id' => $manualEventId]))->show();
+    $assert(str_contains($managerPage->content(), 'Bestaand lid toevoegen')
+        && str_contains($managerPage->content(), $candidate['email']),
+        'De eventbeheerder ziet de beperkte kandidatenlijst niet.');
+    $added = $eventController($newRequest([], [
+        '_token' => $csrf->token(),
+        'lid_id' => (string) $candidate['id'],
+        'dagen' => [$date],
+    ], ['id' => $manualEventId]))->addMember();
+    $assert($added->status() === 302, 'De eventbeheerder kon het bestaande lid niet toevoegen.');
+    $manualRegistration = $eventService->registrationForMember($manualEventId, $candidate['id']);
+    $assert($manualRegistration !== null
+        && $manualRegistration->isBevestigd()
+        && $manualRegistration->coversDate($date),
+        'Het handmatig toegevoegde lid is niet bevestigd voor de gekozen dag.');
+
+    $assigned = $shiftController($newRequest([], [
+        '_token' => $csrf->token(),
+        'lid_id' => (string) $candidate['id'],
+        'status' => 'bevestigd',
+    ], ['id' => $manualShiftId]))->assign();
+    $assert($assigned->status() === 302, 'De eventbeheerder kon het lid niet aan de shift toewijzen.');
+    $assignment = $shiftService->findMemberRegistration($manualShiftId, $candidate['id']);
+    $assert($assignment !== null && $assignment->isBevestigd(),
+        'De handmatige shifttoewijzing ontbreekt.');
+    $mailRows = $database->query("SELECT mo.lid_id, mo.inhoud_tekst FROM mailings m
+        INNER JOIN mailing_ontvangers mo ON mo.mailing_id = m.mailing_id
+        WHERE m.event_id = $manualEventId AND m.type = 'shift_toegewezen'")->fetchAll();
+    $assert(count($mailRows) === 1
+        && (int) $mailRows[0]['lid_id'] === $candidate['id']
+        && str_contains((string) $mailRows[0]['inhoud_tekst'], 'Handmatige testshift')
+        && str_contains((string) $mailRows[0]['inhoud_tekst'], '12:00')
+        && str_contains((string) $mailRows[0]['inhoud_tekst'], '18:00'),
+        'De persoonlijke mail bevat niet de juiste shift en uren.');
+
+    echo "Controller- en servicestroom geslaagd: bevestiging, batchmail, aflevering, profiel, recursieve popup, toegangsrechten, capaciteit, eventdagen, rapport, Excel, deadline en handmatige event-/shifttoewijzing met mail.\n";
 } finally {
     $pdo->rollBack();
     Session::remove('auth');

@@ -67,6 +67,7 @@ final class Mailing
             'event_reserve' => 'Event reserve',
             'event_geannuleerd' => 'Event geannuleerd',
             'shift_planning' => 'Shiftplanning',
+            'shift_toegewezen' => 'Shift toegewezen',
             'wachtwoord_reset' => 'Wachtwoordherstel',
             'manueel' => 'Manuele mailing',
             default => ucfirst(str_replace('_', ' ', $this->type)),

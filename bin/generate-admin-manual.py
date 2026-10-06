@@ -251,7 +251,7 @@ def cover_footer(canvas, doc) -> None:
     canvas.line(14 * mm, 13 * mm, width - 14 * mm, 13 * mm)
     canvas.setFillColor(MUTED)
     canvas.setFont(FONT, 7.5)
-    canvas.drawCentredString(width / 2, 8.5 * mm, "Versie 1.1 · 21/09/2026 · intern gebruik")
+    canvas.drawCentredString(width / 2, 8.5 * mm, "Versie 1.2 · 06/10/2026 · intern gebruik")
     canvas.restoreState()
 
 
@@ -540,6 +540,16 @@ def build_manual() -> None:
     )
     story.append(
         callout(
+            "Bestaand lid rechtstreeks toevoegen",
+            "Open het evenement en kies onder Evenementinschrijvingen een actief, goedgekeurd lid en de beschikbare dagen. "
+            "Een administrator of gekoppelde eventbeheerder bevestigt het lid hiermee meteen voor dat event. "
+            "Alleen leden die voor het event in aanmerking komen en een volledig profiel hebben, kunnen worden toegevoegd. "
+            "Open daarna de shift en wijs het lid daar toe; een bevestigde shifttoewijzing zet automatisch een persoonlijke mail met datum en uren in de wachtrij.",
+            "info",
+        )
+    )
+    story.append(
+        callout(
             "Samen op een shift",
             "Bevestig eerst de deelnemers en verstuur daarna de bevestigingsmails in een keer. "
             "Vanaf de werkelijke aflevering heeft elk lid zeven dagen om via Mijn profiel andere "
@@ -552,18 +562,10 @@ def build_manual() -> None:
         process_table(
             [
                 ("Geen shift", "De eventinschrijving wordt onmiddellijk ingetrokken."),
-                ("Actieve shift", "De aanvraag verschijnt op het dashboard en wacht op verificatie."),
+                ("Actieve shift", "De aanvraag verschijnt zonder algemene beheerdersmail op het dashboard en wacht op verificatie."),
                 ("Bevestigen", "AEFS annuleert de actieve shifttoewijzingen coherent en bewaart historiek."),
                 ("Opnieuw inschrijven", "Het lid mag later via de normale eventflow opnieuw inschrijven; de bestaande logische inschrijving wordt hergebruikt als wachtend."),
             ]
-        )
-    )
-    story.append(
-        callout(
-            "Geen beheerdersmail",
-            "Individuele annulatieaanvragen blijven bewust als platformmelding op het dashboard. "
-            "Er wordt hiervoor geen mail naar alle administrators gestuurd.",
-            "info",
         )
     )
     story.append(PageBreak())
@@ -579,10 +581,10 @@ def build_manual() -> None:
         process_table(
             [
                 ("Shift", "Controleer functie, volledige start/eindtijd, capaciteit en vergoeding."),
-                ("Toewijzen", "Selecteer een geschikt lid en kies bevestigd of reserve."),
+                ("Toewijzen", "Selecteer een voor de juiste dag bevestigd lid en kies bevestigd of reserve. Bevestigd zet meteen een persoonlijke planningsmail in de wachtrij; reserve nog niet."),
                 ("Samen plannen", "Na een bevestigde toewijzing biedt een pop-up de gekozen mededeelnemers individueel aan. Na toevoeging verschijnen hun eigen keuzes. Controleer elke stap; de capaciteit blijft gelden."),
                 ("Capaciteit", "Alleen bevestigde toewijzingen gebruiken de beschikbare plaatsen."),
-                ("Planning", "Gebruik op eventniveau de mailknop om ieder betrokken lid zijn persoonlijke shiftoverzicht te sturen."),
+                ("Planning", "Elke bevestigde toewijzing mailt de betrokken vrijwilliger individueel. De eventknop stuurt daarnaast desgewenst een volledig persoonlijk shiftoverzicht."),
                 ("Aanwezig", "Open de shift en gebruik de knop per bevestigde vrijwilliger; de pagina blijft op dezelfde scrollpositie."),
             ]
         )
@@ -621,6 +623,7 @@ def build_manual() -> None:
             [
                 "publicatie van een evenement naar alle geschikte actieve leden of één gekozen ledengroep;",
                 "bevestigingsmails per evenement na een expliciete beheeractie; reservestatus blijft een automatische mail naar het betrokken lid;",
+                "een persoonlijke planningsmail na iedere nieuwe bevestigde shifttoewijzing;",
                 "annulatie van een volledig evenement naar eventinschrijvers en bevestigde shiftvrijwilligers;",
                 "persoonlijk overzicht van alle ingeplande shiften via de eventknop.",
             ]

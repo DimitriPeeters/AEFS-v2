@@ -491,7 +491,9 @@ final class ShiftController extends BaseController
             );
 
             $this->success(
-                'De vrijwilliger werd aan de shift toegewezen.'
+                $data['status'] === 'bevestigd'
+                    ? 'De vrijwilliger werd ingepland. De persoonlijke planningsmail staat in de verzendwachtrij.'
+                    : 'De vrijwilliger werd op reserve geplaatst; er is nog geen definitieve planning gemaild.'
             );
             if ($data['status'] === 'bevestigd') {
                 $nextChain = $sourceId > 0
@@ -519,7 +521,7 @@ final class ShiftController extends BaseController
                     $registrationId
                 );
             },
-            'De inschrijving werd goedgekeurd.',
+            'De shifttoewijzing werd bevestigd. De persoonlijke planningsmail staat in de verzendwachtrij.',
             true
         );
     }

@@ -34,6 +34,7 @@ final class ShiftService
         private readonly EventRegistrationRepository $eventRegistrationRepository,
         private readonly ShiftValidator $shiftValidator,
         private readonly ShiftRegistrationValidator $registrationValidator,
+        private readonly MailService $mailService,
         private readonly AuditLogService $auditLog
     ) {
     }
@@ -345,6 +346,14 @@ final class ShiftService
                         userId: $userId,
                         oldValues: $existing->toAuditArray(),
                         newValues: $registration->toAuditArray()
+                    );
+                }
+
+                if ($status === ShiftRegistration::STATUS_BEVESTIGD) {
+                    $this->mailService->queueShiftAssignment(
+                        $event,
+                        $shift,
+                        $memberId
                     );
                 }
 
@@ -913,6 +922,14 @@ final class ShiftService
                     oldValues: $registration->toAuditArray(),
                     newValues: $updated->toAuditArray()
                 );
+
+                if ($targetStatus === ShiftRegistration::STATUS_BEVESTIGD) {
+                    $this->mailService->queueShiftAssignment(
+                        $event,
+                        $shift,
+                        $updated->lidId
+                    );
+                }
             }
         );
     }

@@ -15,6 +15,7 @@ use App\Models\Event;
 use App\Models\EventRegistration;
 use App\Models\Mailing;
 use App\Models\MailingRecipient;
+use App\Models\Shift;
 use App\Models\User;
 use App\Repositories\EventRepository;
 use App\Repositories\MailingRepository;
@@ -368,6 +369,42 @@ final class MailService
                     $event,
                     (string) ($member['voornaam'] ?? ''),
                     $shiftsByMember[(int) $member['lid_id']] ?? []
+                )
+        );
+    }
+
+    public function queueShiftAssignment(
+        Event $event,
+        Shift $shift,
+        int $memberId
+    ): int {
+        $member = $this->repository->eligibleMember($memberId);
+
+        if ($member === null
+            || !filter_var((string) $member['email'], FILTER_VALIDATE_EMAIL)
+            || !$this->recipientPolicy->allows((string) $member['email'])
+        ) {
+            throw new DomainException(
+                'Dit lid kan geen planningsmail ontvangen. Controleer het e-mailadres en de mailinstellingen; de shifttoewijzing is niet opgeslagen.'
+            );
+        }
+
+        return $this->createPersonalizedMailing(
+            type: 'shift_toegewezen',
+            audienceType: 'automatisch',
+            audience: [
+                'event_id' => $event->eventId,
+                'shift_id' => $shift->shiftId,
+                'lid_id' => $memberId,
+            ],
+            eventId: $event->eventId,
+            createdBy: Auth::id(),
+            members: [$member],
+            content: fn(array $recipient): MailContent => $this->templates
+                ->shiftAssignment(
+                    $event,
+                    $shift,
+                    (string) ($recipient['voornaam'] ?? '')
                 )
         );
     }

@@ -6,6 +6,7 @@ namespace App\Mail;
 
 use AEFS\Core\Config;
 use App\Models\Event;
+use App\Models\Shift;
 use App\Services\SettingsService;
 use DateTimeImmutable;
 use RuntimeException;
@@ -227,6 +228,48 @@ final class MailTemplateRenderer
             $subject,
             $this->layout($subject, $firstName, $html),
             $this->plainLayout(implode(PHP_EOL, $textLines))
+        );
+    }
+
+    public function shiftAssignment(
+        Event $event,
+        Shift $shift,
+        string $firstName
+    ): MailContent {
+        $subject = 'Je bent ingepland voor ' . $event->titel;
+        $start = new DateTimeImmutable($shift->startOp);
+        $end = new DateTimeImmutable($shift->eindOp);
+        $period = $start->format('d/m/Y H:i') . ' – '
+            . $end->format(
+                $start->format('Y-m-d') === $end->format('Y-m-d')
+                    ? 'H:i'
+                    : 'd/m/Y H:i'
+            );
+        $name = $shift->displayNaam();
+        $message = 'Je bent ingepland voor de volgende shift:';
+
+        $html = $this->paragraph($message);
+        $html .= $this->paragraph($name . ' · ' . $period);
+        if ($event->hasLocation()) {
+            $html .= $this->paragraph('Locatie: ' . $event->locatie);
+        }
+        $html .= $this->button('Mijn shift bekijken', '/shifts/' . $shift->shiftId);
+
+        $text = implode(PHP_EOL, array_filter([
+            $this->greeting($firstName),
+            '',
+            $message,
+            $event->titel,
+            $name . ': ' . $period,
+            $event->hasLocation() ? 'Locatie: ' . $event->locatie : null,
+            '',
+            $this->plainUrl('/shifts/' . $shift->shiftId),
+        ], static fn(?string $line): bool => $line !== null));
+
+        return new MailContent(
+            $subject,
+            $this->layout($subject, $firstName, $html),
+            $this->plainLayout($text)
         );
     }
 

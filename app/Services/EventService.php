@@ -163,6 +163,120 @@ final class EventService
         return $this->registrationRepository->findByEvent($eventId);
     }
 
+    /** @return array<int, array{id: int, label: string, email: string}> */
+    public function membersAvailableForManualRegistration(int $eventId): array
+    {
+        $this->access->requireManage($eventId);
+
+        return $this->registrationRepository
+            ->membersAvailableForManualRegistration($eventId);
+    }
+
+    /** @param string[] $days */
+    public function addMemberByManager(
+        int $eventId,
+        int $memberId,
+        array $days
+    ): int {
+        if ($eventId <= 0 || $memberId <= 0) {
+            throw new InvalidArgumentException(
+                'Kies een geldig evenement en lid.'
+            );
+        }
+
+        $this->access->requireManage($eventId);
+
+        return $this->database->transaction(
+            function () use ($eventId, $memberId, $days): int {
+                $event = $this->repository->lockForUpdate($eventId);
+
+                if (
+                    $event === null
+                    || $event->isCancelled()
+                    || $event->isPast()
+                    || !in_array(
+                        $event->status,
+                        [Event::STATUS_PUBLISHED, Event::STATUS_CLOSED],
+                        true
+                    )
+                ) {
+                    throw new DomainException(
+                        'Aan dit evenement kunnen geen leden meer worden toegevoegd.'
+                    );
+                }
+
+                $availableIds = array_column(
+                    $this->registrationRepository
+                        ->membersAvailableForManualRegistration($eventId),
+                    'id'
+                );
+                if (!in_array($memberId, $availableIds, true)) {
+                    throw new DomainException(
+                        'Dit lid is niet beschikbaar voor dit evenement of heeft al een actieve inschrijving.'
+                    );
+                }
+
+                if ($this->profiles->missingFields($memberId) !== []) {
+                    throw new DomainException(
+                        'Het ledenprofiel is onvolledig. Vraag het lid eerst zijn persoonsgegevens en adres aan te vullen.'
+                    );
+                }
+
+                $this->registrationValidator->validateDays($event, $days);
+
+                if (
+                    $event->maxDeelnemers !== null
+                    && $this->registrationRepository->countConfirmed($eventId)
+                        >= $event->maxDeelnemers
+                ) {
+                    throw new DomainException(
+                        'De maximumcapaciteit van dit evenement is bereikt.'
+                    );
+                }
+
+                $previous = $this->registrationRepository
+                    ->findByEventAndMember($eventId, $memberId);
+                $registrationId = $this->registrationRepository->submit(
+                    $eventId,
+                    $memberId
+                );
+                $this->registrationRepository->replaceDays($registrationId, $days);
+                $this->registrationRepository->setStatus(
+                    $registrationId,
+                    EventRegistration::STATUS_BEVESTIGD
+                );
+                $registration = $this->registrationRepository->find(
+                    $registrationId
+                );
+
+                if ($registration === null) {
+                    throw new RuntimeException(
+                        'De evenementinschrijving kon niet worden geladen.'
+                    );
+                }
+
+                if ($previous === null) {
+                    $this->auditLog->created(
+                        entity: 'event_registration',
+                        id: $registrationId,
+                        userId: Auth::id(),
+                        values: $registration->toAuditArray()
+                    );
+                } else {
+                    $this->auditLog->updated(
+                        entity: 'event_registration',
+                        id: $registrationId,
+                        userId: Auth::id(),
+                        oldValues: $previous->toAuditArray(),
+                        newValues: $registration->toAuditArray()
+                    );
+                }
+
+                return $registrationId;
+            }
+        );
+    }
+
     public function registrationForMember(
         int $eventId,
         int $memberId

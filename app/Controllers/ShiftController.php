@@ -135,6 +135,16 @@ final class ShiftController extends BaseController
             );
         }
 
+        $event = $canManage
+            ? $this->eventRepository->find($shift->eventId)
+            : null;
+        $isHistoricalCorrection = Auth::isAdmin()
+            && $event !== null
+            && $event->isPast();
+        $canAssign = $canManage
+            && ($isHistoricalCorrection
+                || new \DateTimeImmutable($shift->startOp) > new \DateTimeImmutable());
+
         $eligible = $canManage
             ? $this->service->eligibleEventRegistrationsForShift($shiftId)
             : [];
@@ -176,6 +186,8 @@ final class ShiftController extends BaseController
                 'title' => $shift->displayNaam(),
                 'shift' => $shift,
                 'isAdmin' => $canManage,
+                'canAssign' => $canAssign,
+                'isHistoricalCorrection' => $isHistoricalCorrection,
                 'registrations' => $canManage
                     ? $this->service->registrationsForShift(
                         $shiftId
@@ -446,6 +458,14 @@ final class ShiftController extends BaseController
             return $this->forbidden();
         }
 
+        $event = $this->eventRepository->find($shift->eventId);
+        if ($event === null) {
+            return $this->notFound('Evenement niet gevonden.');
+        }
+        if ($event->isPast() && !Auth::isAdmin()) {
+            return $this->forbidden();
+        }
+
         $redirect = '/shifts/' . $shiftId;
         try {
             $this->validateCsrf($input);
@@ -490,12 +510,12 @@ final class ShiftController extends BaseController
                 status: $data['status']
             );
 
-            $this->success(
-                $data['status'] === 'bevestigd'
+            $this->success($event->isPast()
+                ? 'De historische shifttoewijzing werd administratief opgeslagen. Er is geen mail ingepland.'
+                : ($data['status'] === 'bevestigd'
                     ? 'De vrijwilliger werd ingepland. De persoonlijke planningsmail staat in de verzendwachtrij.'
-                    : 'De vrijwilliger werd op reserve geplaatst; er is nog geen definitieve planning gemaild.'
-            );
-            if ($data['status'] === 'bevestigd') {
+                    : 'De vrijwilliger werd op reserve geplaatst; er is nog geen definitieve planning gemaild.'));
+            if ($data['status'] === 'bevestigd' && !$event->isPast()) {
                 $nextChain = $sourceId > 0
                     ? $chain . ',' . $data['lid_id']
                     : (string) $data['lid_id'];
@@ -767,8 +787,12 @@ final class ShiftController extends BaseController
                 $registrationId
             );
 
-            $this->success($successMessage);
-            if ($offerCompanions && !$registration->isBevestigd()) {
+            $event = $this->eventRepository->find($shift->eventId);
+            $isHistorical = $event !== null && $event->isPast();
+            $this->success($offerCompanions && $isHistorical
+                ? 'De historische shifttoewijzing werd bevestigd. Er is geen mail ingepland.'
+                : $successMessage);
+            if ($offerCompanions && !$isHistorical && !$registration->isBevestigd()) {
                 $redirect .= '?companion_chain=' . $registration->lidId;
             }
         } catch (Throwable $throwable) {

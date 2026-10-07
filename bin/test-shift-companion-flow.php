@@ -411,7 +411,120 @@ try {
         && str_contains((string) $mailRows[0]['inhoud_tekst'], '18:00'),
         'De persoonlijke mail bevat niet de juiste shift en uren.');
 
-    echo "Controller- en servicestroom geslaagd: bevestiging, batchmail, aflevering, profiel, recursieve popup, toegangsrechten, capaciteit, eventdagen, rapport, Excel, deadline en handmatige event-/shifttoewijzing met mail.\n";
+    $pastDate = (new DateTimeImmutable('-30 days'))->format('Y-m-d');
+    $database->execute(<<<'SQL'
+        INSERT INTO evenementen (titel, startdatum, einddatum, status)
+        VALUES ('AEFS historische correctietest', :startdatum, :einddatum, 'afgesloten')
+        SQL, ['startdatum' => $pastDate, 'einddatum' => $pastDate]);
+    $historicalEventId = (int) $pdo->lastInsertId();
+    $database->execute(<<<'SQL'
+        INSERT INTO event_beheerders (event_id, lid_id, aangemaakt_door)
+        VALUES (:event_id, :lid_id, :admin_id)
+        SQL, [
+            'event_id' => $historicalEventId,
+            'lid_id' => $ids[0],
+            'admin_id' => $admin['gebruiker_id'],
+        ]);
+    $database->execute(<<<'SQL'
+        INSERT INTO shifts (event_id, type_id, naam, start_op, eind_op, max_personen)
+        VALUES (:event_id, :type_id, 'Historische testshift', :start_op, :eind_op, 2)
+        SQL, [
+            'event_id' => $historicalEventId,
+            'type_id' => $typeId,
+            'start_op' => "$pastDate 12:00:00",
+            'eind_op' => "$pastDate 18:00:00",
+        ]);
+    $historicalShiftId = (int) $pdo->lastInsertId();
+    $database->execute(<<<'SQL'
+        INSERT INTO shifts (event_id, type_id, naam, start_op, eind_op, max_personen)
+        VALUES (:event_id, :type_id, 'Historische reserveshift', :start_op, :eind_op, 2)
+        SQL, [
+            'event_id' => $historicalEventId,
+            'type_id' => $typeId,
+            'start_op' => "$pastDate 18:00:00",
+            'eind_op' => "$pastDate 21:00:00",
+        ]);
+    $historicalReserveShiftId = (int) $pdo->lastInsertId();
+
+    $asUser((int) $admin['gebruiker_id'], $ids[0], 'lid', (string) $members[0]['email']);
+    $historicalManagerPage = $eventController($newRequest([], [], ['id' => $historicalEventId]))->show();
+    $assert(!str_contains($historicalManagerPage->content(), 'Bestaand lid toevoegen'),
+        'Een eventbeheerder ziet de historische toevoegactie.');
+    $denied = $eventController($newRequest([], [
+        '_token' => $csrf->token(),
+        'lid_id' => (string) $candidate['id'],
+        'dagen' => [$pastDate],
+    ], ['id' => $historicalEventId]))->addMember();
+    $assert($denied->status() === 403, 'Een eventbeheerder kon een historisch eventlid toevoegen.');
+    $historicalManagerShift = $shiftController($newRequest([], [], ['id' => $historicalShiftId]))->show();
+    $assert(!str_contains($historicalManagerShift->content(), 'Historische toewijzing toevoegen'),
+        'Een eventbeheerder ziet de historische shifttoewijzing.');
+    $denied = $shiftController($newRequest([], [
+        '_token' => $csrf->token(),
+        'lid_id' => (string) $candidate['id'],
+        'status' => 'bevestigd',
+    ], ['id' => $historicalShiftId]))->assign();
+    $assert($denied->status() === 403, 'Een eventbeheerder kon een historische shifttoewijzing maken.');
+
+    $asAdmin();
+    $database->execute('UPDATE gebruikers SET mail_blacklist = 1 WHERE lid_id = :lid_id', [
+        'lid_id' => $candidate['id'],
+    ]);
+    $historicalOptions = $eventService->membersAvailableForManualRegistration($historicalEventId);
+    $assert(in_array($candidate['id'], array_column($historicalOptions, 'id'), true),
+        'Een actief lid op de mailblocklist ontbreekt voor de historische correctie.');
+    $historicalAdminPage = $eventController($newRequest([], [], ['id' => $historicalEventId]))->show();
+    $assert(str_contains($historicalAdminPage->content(), 'Bestaand lid toevoegen'),
+        'De admin ziet de historische toevoegactie niet.');
+    $assert(str_contains($historicalAdminPage->content(), 'er vertrekt geen mail'),
+        'De historische adminactie vermeldt niet dat er geen mail vertrekt.');
+    $added = $eventController($newRequest([], [
+        '_token' => $csrf->token(),
+        'lid_id' => (string) $candidate['id'],
+        'dagen' => [$pastDate],
+    ], ['id' => $historicalEventId]))->addMember();
+    $assert($added->status() === 302, 'De admin kon het lid niet aan het voorbije event toevoegen.');
+    $historicalRegistration = $eventService->registrationForMember($historicalEventId, $candidate['id']);
+    $assert($historicalRegistration !== null
+        && $historicalRegistration->isBevestigd()
+        && $historicalRegistration->coversDate($pastDate),
+        'De historische evenementinschrijving is niet bevestigd voor de gekozen dag.');
+
+    $historicalAdminShift = $shiftController($newRequest([], [], ['id' => $historicalShiftId]))->show();
+    $assert(str_contains($historicalAdminShift->content(), 'Historische toewijzing toevoegen'),
+        'De admin ziet de historische shifttoewijzing niet.');
+    $assigned = $shiftController($newRequest([], [
+        '_token' => $csrf->token(),
+        'lid_id' => (string) $candidate['id'],
+        'status' => 'bevestigd',
+    ], ['id' => $historicalShiftId]))->assign();
+    $assert($assigned->status() === 302
+        && !str_contains((string) $assigned->headers()->get('Location'), 'companion_chain'),
+        'De historische shifttoewijzing gaf geen gewone redirect.');
+    $historicalAssignment = $shiftService->findMemberRegistration($historicalShiftId, $candidate['id']);
+    $assert($historicalAssignment !== null && $historicalAssignment->isBevestigd(),
+        'De historische bevestigde shifttoewijzing ontbreekt.');
+    $reserve = $shiftController($newRequest([], [
+        '_token' => $csrf->token(),
+        'lid_id' => (string) $candidate['id'],
+        'status' => 'reserve',
+    ], ['id' => $historicalReserveShiftId]))->assign();
+    $assert($reserve->status() === 302, 'De historische reservetoewijzing mislukte.');
+    $reserveRegistration = $shiftService->findMemberRegistration($historicalReserveShiftId, $candidate['id']);
+    $assert($reserveRegistration !== null && $reserveRegistration->isReserve(),
+        'De historische reservetoewijzing ontbreekt.');
+    $approved = $shiftController($newRequest([], [
+        '_token' => $csrf->token(),
+    ], ['registrationId' => $reserveRegistration->inschrijvingId]))->approve();
+    $assert($approved->status() === 302
+        && $shiftService->findRegistration($reserveRegistration->inschrijvingId)->isBevestigd(),
+        'De historische reservetoewijzing kon niet worden bevestigd.');
+    $historicalMailCount = (int) $database->query(
+        "SELECT COUNT(*) FROM mailings WHERE event_id = $historicalEventId"
+    )->fetchColumn();
+    $assert($historicalMailCount === 0, 'Een historische correctie heeft toch een mail ingepland.');
+
+    echo "Controller- en servicestroom geslaagd: bevestiging, batchmail, aflevering, profiel, recursieve popup, toegangsrechten, capaciteit, eventdagen, rapport, Excel, deadline, toekomstige toewijzing met mail en historische admincorrectie zonder mail.\n";
 } finally {
     $pdo->rollBack();
     Session::remove('auth');

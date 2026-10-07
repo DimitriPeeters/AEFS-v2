@@ -227,15 +227,6 @@ final class ShiftService
                     );
                 }
 
-                if (
-                    new DateTimeImmutable($shift->startOp)
-                    <= new DateTimeImmutable()
-                ) {
-                    throw new DomainException(
-                        'Deze shift is al gestart.'
-                    );
-                }
-
                 $event = $this->eventRepository->lockForUpdate(
                     $shift->eventId
                 );
@@ -249,6 +240,22 @@ final class ShiftService
                 if ($event->isCancelled()) {
                     throw new DomainException(
                         'Aan een geannuleerd evenement kan niemand meer aan een shift worden toegewezen.'
+                    );
+                }
+
+                if ($event->isPast() && !Auth::isAdmin()) {
+                    throw new DomainException(
+                        'Alleen een administrator kan achteraf iemand aan een shift van een voorbije evenement toewijzen.'
+                    );
+                }
+
+                if (
+                    new DateTimeImmutable($shift->startOp)
+                    <= new DateTimeImmutable()
+                    && !$event->isPast()
+                ) {
+                    throw new DomainException(
+                        'Deze shift is al gestart.'
                     );
                 }
 
@@ -349,7 +356,9 @@ final class ShiftService
                     );
                 }
 
-                if ($status === ShiftRegistration::STATUS_BEVESTIGD) {
+                if ($status === ShiftRegistration::STATUS_BEVESTIGD
+                    && !$event->isPast()
+                ) {
                     $this->mailService->queueShiftAssignment(
                         $event,
                         $shift,
@@ -923,7 +932,9 @@ final class ShiftService
                     newValues: $updated->toAuditArray()
                 );
 
-                if ($targetStatus === ShiftRegistration::STATUS_BEVESTIGD) {
+                if ($targetStatus === ShiftRegistration::STATUS_BEVESTIGD
+                    && !$event->isPast()
+                ) {
                     $this->mailService->queueShiftAssignment(
                         $event,
                         $shift,

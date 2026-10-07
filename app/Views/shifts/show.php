@@ -8,12 +8,16 @@ use App\Models\ShiftRegistration;
 /** @var ViewHelpers $helpers */
 /** @var Shift $shift */
 /** @var bool|null $isAdmin */
+/** @var bool|null $canAssign */
+/** @var bool|null $isHistoricalCorrection */
 /** @var ShiftRegistration[] $registrations */
 /** @var ShiftRegistration|null $memberRegistration */
 /** @var EventRegistration[] $eligibleEventRegistrations */
 /** @var string|null $title */
 
 $isAdmin ??= false;
+$canAssign ??= false;
+$isHistoricalCorrection ??= false;
 $registrations ??= [];
 $memberRegistration ??= null;
 $eligibleEventRegistrations ??= [];
@@ -229,13 +233,16 @@ if ($isAdmin) {
     <?php endif; ?>
 
     <?php if ($isAdmin): ?>
-        <?php if ($shift->isActief()): ?>
+        <?php if ($shift->isActief() && $canAssign): ?>
             <section class="card">
                 <header class="card__header">
-                    <h2 class="card__title">Vrijwilliger toewijzen</h2>
+                    <h2 class="card__title"><?= $isHistoricalCorrection ? 'Historische toewijzing toevoegen' : 'Vrijwilliger toewijzen' ?></h2>
                 </header>
 
                 <div class="card__body">
+                    <?php if ($isHistoricalCorrection): ?>
+                        <p class="shift-assignment-note">Alleen administrators kunnen dit achteraf registreren. Er vertrekt geen planningsmail.</p>
+                    <?php endif; ?>
                     <?php if ($eligibleEventRegistrations === []): ?>
                         <?= $this->component(
                             'empty-state',

@@ -118,7 +118,7 @@ final class EventController extends BaseController
                     ? $this->service->registrationsForEvent($id)
                     : [],
                 'memberOptions' => $canManageEvent
-                    && !$event->isPast()
+                    && ($isAdmin || !$event->isPast())
                     && in_array($event->status, ['gepubliceerd', 'afgesloten'], true)
                     ? $this->service->membersAvailableForManualRegistration($id)
                     : [],
@@ -463,8 +463,15 @@ final class EventController extends BaseController
     public function addMember(): Response
     {
         $eventId = $this->routeId();
+        $event = $this->service->find($eventId);
 
-        if (!$this->access->canManage($eventId)) {
+        if ($event === null) {
+            return $this->notFound();
+        }
+
+        if (!$this->access->canManage($eventId)
+            || ($event->isPast() && !Auth::isAdmin())
+        ) {
             return $this->forbidden();
         }
 
@@ -480,9 +487,9 @@ final class EventController extends BaseController
                 $memberId !== false ? (int) $memberId : 0,
                 $data['dagen']
             );
-            $this->success(
-                'Het lid werd bevestigd voor dit evenement. Je kunt het nu aan een shift toewijzen.'
-            );
+            $this->success($event->isPast()
+                ? 'Het lid werd administratief bevestigd voor dit voorbije evenement. Er is geen mail ingepland.'
+                : 'Het lid werd bevestigd voor dit evenement. Je kunt het nu aan een shift toewijzen.');
         } catch (Throwable $throwable) {
             $this->error($throwable->getMessage());
         }

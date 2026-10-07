@@ -360,12 +360,17 @@ if (
             </header>
 
             <div class="card__body event-table-body">
-                <?php if (!$event->isPast() && in_array($event->status, ['gepubliceerd', 'afgesloten'], true)): ?>
+                <?php if (($isAdmin || !$event->isPast()) && in_array($event->status, ['gepubliceerd', 'afgesloten'], true)): ?>
                     <div class="event-manual-registration">
                         <h3>Bestaand lid toevoegen</h3>
                         <p class="event-muted">
-                            Het lid wordt meteen bevestigd voor de gekozen dagen. Wijs het daarna toe aan een shift;
-                            bij een bevestigde toewijzing komt de persoonlijke planningsmail in de wachtrij.
+                            <?php if ($event->isPast()): ?>
+                                Alleen een administrator kan hier achteraf een actief lid bevestigen voor de gekozen dagen.
+                                Dit is een administratieve correctie; er vertrekt geen mail.
+                            <?php else: ?>
+                                Het lid wordt meteen bevestigd voor de gekozen dagen. Wijs het daarna toe aan een shift;
+                                bij een bevestigde toewijzing komt de persoonlijke planningsmail in de wachtrij.
+                            <?php endif; ?>
                         </p>
                         <?php if ($memberOptions === []): ?>
                             <p>Er zijn geen beschikbare leden die voor dit evenement in aanmerking komen.</p>
@@ -378,7 +383,7 @@ if (
                                         <option value="">Kies een lid</option>
                                         <?php foreach ($memberOptions as $memberOption): ?>
                                             <option value="<?= (int) $memberOption['id'] ?>">
-                                                <?= $this->escape($memberOption['label'] . ' · ' . $memberOption['email']) ?>
+                                                <?= $this->escape($memberOption['label'] . ($memberOption['email'] !== '' ? ' · ' . $memberOption['email'] : '')) ?>
                                             </option>
                                         <?php endforeach; ?>
                                     </select>

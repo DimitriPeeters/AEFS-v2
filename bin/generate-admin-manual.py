@@ -251,7 +251,7 @@ def cover_footer(canvas, doc) -> None:
     canvas.line(14 * mm, 13 * mm, width - 14 * mm, 13 * mm)
     canvas.setFillColor(MUTED)
     canvas.setFont(FONT, 7.5)
-    canvas.drawCentredString(width / 2, 8.5 * mm, "Versie 1.2 · 06/10/2026 · intern gebruik")
+    canvas.drawCentredString(width / 2, 8.5 * mm, "Versie 1.3 · 07/10/2026 · intern gebruik")
     canvas.restoreState()
 
 
@@ -513,18 +513,9 @@ def build_manual() -> None:
     )
     story.append(
         callout(
-            "Volledig profiel vóór inschrijving",
-            "Bij een onvolledig persoonlijk of adresprofiel toont AEFS eerst de ontbrekende velden. "
-            "Het lid vult die in en kan daarna dezelfde eventinschrijving met de gekozen dagen afronden.",
-            "info",
-        )
-    )
-    story.append(
-        callout(
-            "Administrator als deelnemer",
-            "Een administrator kan zichzelf voor een event inschrijven en beschikbare dagen kiezen, "
-            "maar kan zichzelf nooit rechtstreeks op een shift inschrijven. De gewone beoordeling en "
-            "administratieve shifttoewijzing blijven gelden.",
+            "Deelname en profiel",
+            "Een lid vult ontbrekende persoonlijke en adresgegevens aan vóór inschrijving; de gekozen dagen blijven bewaard. "
+            "Een administrator kan zichzelf via dezelfde eventflow inschrijven, maar niet zelf op een shift plaatsen.",
             "info",
         )
     )
@@ -535,26 +526,25 @@ def build_manual() -> None:
                 ("Bevestigd", "Het lid neemt deel. Verzending volgt pas na de aparte knop Bevestigingsmails versturen op het evenement."),
                 ("Reserve", "Het lid staat op reserve en ontvangt automatisch een reservemail."),
                 ("Geweigerd", "Gebruik wanneer deelname niet kan worden toegestaan."),
+                ("Samen plannen", "Verstuur bevestigingsmails in één keer. Vanaf aflevering heeft elk lid zeven dagen om via Mijn profiel andere bevestigde deelnemers als shiftvoorkeur te kiezen."),
             ]
         )
     )
     story.append(
         callout(
             "Bestaand lid rechtstreeks toevoegen",
-            "Open het evenement en kies onder Evenementinschrijvingen een actief, goedgekeurd lid en de beschikbare dagen. "
-            "Een administrator of gekoppelde eventbeheerder bevestigt het lid hiermee meteen voor dat event. "
-            "Alleen leden die voor het event in aanmerking komen en een volledig profiel hebben, kunnen worden toegevoegd. "
-            "Open daarna de shift en wijs het lid daar toe; een bevestigde shifttoewijzing zet automatisch een persoonlijke mail met datum en uren in de wachtrij.",
+            "Kies bij een toekomstig event een actief, goedgekeurd en geschikt lid met volledig profiel en de beschikbare dagen. "
+            "Een administrator of gekoppelde eventbeheerder bevestigt het lid meteen. Wijs het daarna op de shift toe; "
+            "bij bevestiging gaat een persoonlijke mail met datum en uren in de wachtrij.",
             "info",
         )
     )
     story.append(
         callout(
-            "Samen op een shift",
-            "Bevestig eerst de deelnemers en verstuur daarna de bevestigingsmails in een keer. "
-            "Vanaf de werkelijke aflevering heeft elk lid zeven dagen om via Mijn profiel andere "
-            "bevestigde deelnemers als shiftvoorkeur te kiezen. Daarna sluit de keuzeperiode.",
-            "info",
+            "Administratieve correctie achteraf",
+            "Alleen een administrator kan een actief, geschikt lid alsnog voor historische eventdagen bevestigen en op een voorbije shift plaatsen. "
+            "Profiel-, groeps-, dag- en capaciteitscontroles blijven gelden; er worden geen mails ingepland.",
+            "warn",
         )
     )
     story.append(p("Annulatie door een lid", "h2"))
@@ -582,6 +572,7 @@ def build_manual() -> None:
             [
                 ("Shift", "Controleer functie, volledige start/eindtijd, capaciteit en vergoeding."),
                 ("Toewijzen", "Selecteer een voor de juiste dag bevestigd lid en kies bevestigd of reserve. Bevestigd zet meteen een persoonlijke planningsmail in de wachtrij; reserve nog niet."),
+                ("Historisch", "Alleen een administrator kan achteraf aan een voorbije shift van een afgelopen event toewijzen. Dit corrigeert de administratie zonder planningsmail."),
                 ("Samen plannen", "Na een bevestigde toewijzing biedt een pop-up de gekozen mededeelnemers individueel aan. Na toevoeging verschijnen hun eigen keuzes. Controleer elke stap; de capaciteit blijft gelden."),
                 ("Capaciteit", "Alleen bevestigde toewijzingen gebruiken de beschikbare plaatsen."),
                 ("Planning", "Elke bevestigde toewijzing mailt de betrokken vrijwilliger individueel. De eventknop stuurt daarnaast desgewenst een volledig persoonlijk shiftoverzicht."),
@@ -623,7 +614,7 @@ def build_manual() -> None:
             [
                 "publicatie van een evenement naar alle geschikte actieve leden of één gekozen ledengroep;",
                 "bevestigingsmails per evenement na een expliciete beheeractie; reservestatus blijft een automatische mail naar het betrokken lid;",
-                "een persoonlijke planningsmail na iedere nieuwe bevestigde shifttoewijzing;",
+                "een persoonlijke planningsmail na iedere nieuwe bevestigde shifttoewijzing voor een niet-afgelopen event;",
                 "annulatie van een volledig evenement naar eventinschrijvers en bevestigde shiftvrijwilligers;",
                 "persoonlijk overzicht van alle ingeplande shiften via de eventknop.",
             ]

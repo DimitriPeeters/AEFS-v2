@@ -168,8 +168,21 @@ final class EventService
     {
         $this->access->requireManage($eventId);
 
+        $event = $this->repository->find($eventId);
+        if ($event === null
+            || $event->isCancelled()
+            || !in_array(
+                $event->status,
+                [Event::STATUS_PUBLISHED, Event::STATUS_CLOSED],
+                true
+            )
+            || ($event->isPast() && !Auth::isAdmin())
+        ) {
+            return [];
+        }
+
         return $this->registrationRepository
-            ->membersAvailableForManualRegistration($eventId);
+            ->membersAvailableForManualRegistration($eventId, $event->isPast());
     }
 
     /** @param string[] $days */
@@ -193,7 +206,7 @@ final class EventService
                 if (
                     $event === null
                     || $event->isCancelled()
-                    || $event->isPast()
+                    || ($event->isPast() && !Auth::isAdmin())
                     || !in_array(
                         $event->status,
                         [Event::STATUS_PUBLISHED, Event::STATUS_CLOSED],
@@ -207,7 +220,10 @@ final class EventService
 
                 $availableIds = array_column(
                     $this->registrationRepository
-                        ->membersAvailableForManualRegistration($eventId),
+                        ->membersAvailableForManualRegistration(
+                            $eventId,
+                            $event->isPast()
+                        ),
                     'id'
                 );
                 if (!in_array($memberId, $availableIds, true)) {

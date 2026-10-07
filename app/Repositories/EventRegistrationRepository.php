@@ -120,15 +120,12 @@ final class EventRegistrationRepository
     /**
      * @return array<int, array{id: int, label: string, email: string}>
      */
-    public function membersAvailableForManualRegistration(int $eventId): array
+    public function membersAvailableForManualRegistration(
+        int $eventId,
+        bool $historical = false
+    ): array
     {
-        $statement = $this->database->prepare(<<<'SQL'
-            SELECT
-                l.lid_id AS id,
-                CONCAT_WS(', ', TRIM(l.achternaam), TRIM(l.voornaam)) AS label,
-                LOWER(TRIM(l.email)) AS email
-            FROM leden l
-            WHERE l.actief = 1
+        $mailRequirements = $historical ? '' : <<<'SQL'
               AND l.email IS NOT NULL
               AND TRIM(l.email) <> ''
               AND l.email REGEXP '^[^[:space:]@]+@[^[:space:]@]+\\.[^[:space:]@]+$'
@@ -143,6 +140,16 @@ final class EventRegistrationRepository
                   WHERE blacklist.lid_id = l.lid_id
                     AND blacklist.mail_blacklist = 1
               )
+            SQL;
+
+        $statement = $this->database->prepare(<<<SQL
+            SELECT
+                l.lid_id AS id,
+                CONCAT_WS(', ', TRIM(l.achternaam), TRIM(l.voornaam)) AS label,
+                LOWER(TRIM(COALESCE(l.email, ''))) AS email
+            FROM leden l
+            WHERE l.actief = 1
+            $mailRequirements
               AND (
                   NOT EXISTS (
                       SELECT 1 FROM event_groepen eg
